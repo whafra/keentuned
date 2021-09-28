@@ -1,0 +1,36 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path} {target_ip}",
+      "local_script_path": "benchmark/wrk/ack_nginx_http_long_base.py",
+      "host_weight": 100,
+      "host": "127.0.0.1:9874",
+      "items": {
+        "Requests_sec": {
+          "parser": "echo '$out' | grep 'Throughput' | awk '{print $3}'",
+          "negative": false,
+          "weight": 100,
+          "strict": false
+        },
+        "Transfer_sec": {
+          "parser": "echo '$out' | grep 'Throughput_stdev' | awk '{print $3}'",
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        },
+        "Latency_90": {
+          "parser": "echo '$out' | grep 'Latency' | awk '{print $3}'",
+          "negative": true,
+          "weight": 0,
+          "strict": true
+        },
+        "Latency_99": {
+          "parser": "echo '$out' | grep 'Latency_stdev' | awk '{print $3}'",
+          "negative": true,
+          "weight": 0,
+          "strict": true
+        }
+      }
+    }
+  ]
+}

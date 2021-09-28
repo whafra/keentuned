@@ -1,0 +1,1005 @@
+{
+    "sysctl":{
+        "fs.aio-max-nr":{
+            "desc":"Maximum number of AIO requests",
+            "dtype":"int",
+            "range":[
+                102400,
+                10240000
+            ],
+            "step":102400,
+            "type":"discrete"
+        },
+        "fs.file-max":{
+            "desc":"Number of file handles that can be opened by all processes in the system at the same time",
+            "dtype":"int",
+            "range":[
+                102400,
+                10240000
+            ],
+            "step":10240,
+            "type":"discrete"
+        },
+        "fs.inotify.max_user_instances":{
+            "desc":"Maximum number of inotify instances that can be started by each user",
+            "dtype":"int",
+            "range":[
+                64,
+                65535
+            ],
+            "step":64,
+            "type":"discrete"
+        },
+        "fs.inotify.max_user_watches":{
+            "desc":"Sets the number of processes for each user to run the inotifywait or inotifywatch command.",
+            "dtype":"int",
+            "range":[
+                4096,
+                819200
+            ],
+            "step":4096,
+            "type":"discrete"
+        },
+        "fs.nr_open":{
+            "desc":"Maximum number of file handles that can be concurrently opened by a process",
+            "dtype":"int",
+            "range":[
+                65535,
+                1024000
+            ],
+            "step":1024,
+            "type":"discrete"
+        },
+        "fs.suid_dumpable":{
+            "desc":"This value can be used to query and set the core dump mode for setuid or otherwise protected/tainted binaries. 0: default 1: debug 2: suidsafe",
+            "dtype":"int",
+            "range":[
+                0,
+                2
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "kernel.core_uses_pid":{
+            "desc":"Whether to add the application pid to the core file name as an extension. 0: no 1: add",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.dmesg_restrict":{
+            "desc":"Which users are restricted from viewing syslogs? 0: no restriction 1: Only privileged users can view the information.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.hung_task_timeout_secs":{
+            "desc":"Timeout interval of a hung_task (in seconds). When a process is in the TASK_UNINTERRUPTIBLE state for a period longer than the timeout interval, a hung_task occurs.",
+            "dtype":"int",
+            "range":[
+                30,
+                1200
+            ],
+            "step":30,
+            "type":"discrete"
+        },
+        "kernel.msgmax":{
+            "desc":"Maximum number of bytes of a single message in a message queue.",
+            "dtype":"int",
+            "range":[
+                4096,
+                1048576
+            ],
+            "step":4096,
+            "type":"discrete"
+        },
+        "kernel.msgmnb":{
+            "desc":"Maximum length of bytes in a single message queue",
+            "dtype":"int",
+            "range":[
+                4096,
+                1048576
+            ],
+            "step":4096,
+            "type":"discrete"
+        },
+        "kernel.msgmni":{
+            "desc":"System Message Queue Length",
+            "dtype":"int",
+            "range":[
+                8000,
+                128000
+            ],
+            "step":8000,
+            "type":"discrete"
+        },
+        "kernel.nmi_watchdog":{
+            "desc":"Enabling nmi_watchdog 0: disabled 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.numa_balancing":{
+            "desc":"Specifies whether to enable NUMA automatic balancing.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.pid_max":{
+            "desc":"Maximum process ID.",
+            "dtype":"int",
+            "range":[
+                1048576,
+                4194304
+            ],
+            "step":1048576,
+            "type":"discrete"
+        },
+        "kernel.randomize_va_space":{
+            "desc":"Setting Memory Address Randomization",
+            "dtype":"int",
+            "range":[
+                0,
+                2
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "kernel.sched_autogroup_enabled":{
+            "desc":"When enabled, the kernel creates task groups to optimize desktop program scheduling. 0: disabled 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.sched_migration_cost_ns":{
+            "desc":"This variable is used to determine whether a process is still hot. If the running time of a process is shorter than the value of this variable, the kernel considers that the code of the process is still in the cache. Therefore, the process is still hot and is not considered during migration.",
+            "dtype":"int",
+            "range":[
+                100000,
+                5000000
+            ],
+            "step":100000,
+            "type":"discrete"
+        },
+        "kernel.sched_rt_runtime_us":{
+            "desc":"This parameter, together with sched_rt_period, determines the period of the real-time process.",
+            "dtype":"int",
+            "range":[
+                950000,
+                1000000
+            ],
+            "step":10000,
+            "type":"discrete"
+        },
+        "kernel.sem":{
+            "desc":"The file contains four values: 1. Maximum number of signals of the same type (semmsl) 2. Maximum number of signals in the system, =semmni*semmsl (semmns) 3. Maximum number of operations (maximum number of semaphores that can be invoked) contained in each system invoking (semopm) 4. Maximum number of signal types in the system. A signal identifier represents a type (semmni).",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "16000 512000000 256 16000",
+                "32000 1024000000 500 32000",
+                "64000 2048000000 1000 64000"
+            ],
+            "type":"discrete"
+        },
+        "kernel.shmall":{
+            "desc":"The total amount of shared memory available on the system in bytes",
+            "dtype":"int",
+            "range":[
+                1073741824,
+                8589934592
+            ],
+            "step":1073741824,
+            "type":"discrete"
+        },
+        "kernel.shmmax":{
+            "desc":"The maximum size, in bytes, of the shared memory segment allowed by the system.",
+            "dtype":"int",
+            "range":[
+                17179869184,
+                68719476736
+            ],
+            "step":17179869184,
+            "type":"discrete"
+        },
+        "kernel.shmmni":{
+            "desc":"Maximum number of shared memory segments in the system.",
+            "dtype":"int",
+            "range":[
+                1024,
+                16384
+            ],
+            "step":1024,
+            "type":"discrete"
+        },
+        "kernel.sysrq":{
+            "desc":"The file specifies a non-zero value, which activates the sysrq key on the keyboard.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "kernel.threads-max":{
+            "desc":"Maximum number of processes (including threads) in the system",
+            "dtype":"int",
+            "range":[
+                655360,
+                65536000
+            ],
+            "step":655360,
+            "type":"discrete"
+        },
+        "kernel.timer_migration":{
+            "desc":"Disable Clock Migration",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.core.busy_poll":{
+            "desc":"Timeout interval for performing the poll and select operations on network devices (us) by default. The value is determined by the number of sockets.",
+            "dtype":"int",
+            "range":[
+                0,
+                200
+            ],
+            "step":10,
+            "type":"discrete"
+        },
+        "net.core.busy_read":{
+            "desc":"Timeout interval for reading data frames in the device frame queue (us) by default. The recommended value is 50.",
+            "dtype":"int",
+            "range":[
+                0,
+                200
+            ],
+            "step":10,
+            "type":"discrete"
+        },
+        "net.core.dev_weight":{
+            "desc":"Maximum number of network packets that can be processed by each CPU in an NAPI interrupt",
+            "dtype":"int",
+            "range":[
+                16,
+                1024
+            ],
+            "step":16,
+            "type":"discrete"
+        },
+        "net.core.netdev_budget":{
+            "desc":"Number of network packets processed in each software interrupt",
+            "dtype":"int",
+            "range":[
+                100,
+                1000
+            ],
+            "step":100,
+            "type":"discrete"
+        },
+        "net.core.netdev_max_backlog":{
+            "desc":"Maximum number of packets that can be sent to the queue when each network interface receives packets faster than the kernel processes them",
+            "dtype":"int",
+            "range":[
+                1000,
+                100000
+            ],
+            "step":1000,
+            "type":"discrete"
+        },
+        "net.core.optmem_max":{
+            "desc":"Maximum size of the buffer allowed by each socket(in bytes).",
+            "dtype":"int",
+            "range":[
+                20480,
+                204800
+            ],
+            "step":20480,
+            "type":"discrete"
+        },
+        "net.core.rmem_default":{
+            "desc":"Sets the default buffer size (bytes) of the receive socket.",
+            "dtype":"int",
+            "range":[
+                8192,
+                1048576
+            ],
+            "step":8192,
+            "type":"discrete"
+        },
+        "net.core.rmem_max":{
+            "desc":"Maximum system socket read buffer The default value is 229376. You are advised to change the value to 16777216.",
+            "dtype":"int",
+            "range":[
+                1048576,
+                67108864
+            ],
+            "step":1048576,
+            "type":"discrete"
+        },
+        "net.core.rps_sock_flow_entries":{
+            "desc":"RFS (Receiver Flow Control) extends the performance of RPS to increase the CPU cache hit ratio and reduce network latency.",
+            "dtype":"int",
+            "range":[
+                0,
+                131072
+            ],
+            "step":1024,
+            "type":"discrete"
+        },
+        "net.core.somaxconn":{
+            "desc":"Defines the maximum length of the listening queue of each port in the system. This is a global parameter. The default value is 128. You are advised to change the value to 1024.",
+            "dtype":"int",
+            "range":[
+                128,
+                65536
+            ],
+            "step":128,
+            "type":"discrete"
+        },
+        "net.core.wmem_default":{
+            "desc":"Default TCP send window size (bytes)",
+            "dtype":"int",
+            "range":[
+                8192,
+                1048576
+            ],
+            "step":8192,
+            "type":"discrete"
+        },
+        "net.core.wmem_max":{
+            "desc":"The maximum size of the system socket write buffer is increased to prevent buffer overflow caused by a large number of new connections. As a result, connections cannot be established. The default value is 229376. You are advised to change the value to 16777216.",
+            "dtype":"int",
+            "range":[
+                1048576,
+                67108864
+            ],
+            "step":1048576,
+            "type":"discrete"
+        },
+        "net.ipv4.conf.all.accept_redirects":{
+            "desc":"Receives and sends ICMP redirection messages. The default value is True for hosts and False for routers. 0: disabled 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.all.promote_secondaries":{
+            "desc":"0: When the primary IP address of an interface is removed, all secondary IP addresses are deleted. 1: When the primary IP address of an interface is removed, the secondary IP address becomes the primary IP address.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.all.secure_redirects":{
+            "desc":"Receives only ICMP redirect messages sent to gateways in the default gateway list. 0: disabled 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.default.accept_redirects":{
+            "desc":"Receives and sends ICMP redirection messages. The default value is True for hosts and False for routers. 0: disabled 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.default.forwarding":{
+            "desc":"Enable the forwarding function on the interface. 0: disabled 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.default.promote_secondaries":{
+            "desc":"0: When the primary IP address of an interface is removed, all secondary IP addresses are deleted. 1: When the primary IP address of an interface is removed, the secondary IP address becomes the primary IP address.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.default.rp_filter":{
+            "desc":"The kernel sets the policy for responding to ARP queries.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.conf.default.secure_redirects":{
+            "desc":"Receives only ICMP redirect messages sent to gateways in the default gateway list. 0: disabled 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.icmp_echo_ignore_broadcasts":{
+            "desc":"Ignore all received ICMP Echo request broadcasts. 0: not ignore 1: ignore",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.ip_default_ttl":{
+            "desc":"Specifies the lifetime of IP packets sent from the local device. The value is an integer ranging from 0 to 128. The default value is 64.",
+            "dtype":"int",
+            "range":[
+                64,
+                128
+            ],
+            "step":8,
+            "type":"discrete"
+        },
+        "net.ipv4.ip_local_port_range":{
+            "desc":"The range of available ports has been increased to prevent performance deterioration caused by continuous search of available ports for new connections when a large number of connections occupy ports.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "32768 60999",
+                "1024 65535",
+                "8192 65535"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.ip_no_pmtu_disc":{
+            "desc":"Setting the MTU for Automatic Socket Detection",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.route.max_size":{
+            "desc":"Maximum number of entries in the routing cache. If the number of entries in the routing cache exceeds the maximum, the old entries are cleared.",
+            "dtype":"int",
+            "range":[
+                67108864,
+                2080374784
+            ],
+            "step":67108864,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_adv_win_scale":{
+            "desc":"Calculating the Buffer Overhead",
+            "dtype":"int",
+            "range":[
+                0,
+                4
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_congestion_control":{
+            "desc":"TCP congestion scheduling algorithm",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "cubic",
+                "reno",
+                "bbr"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_dsack":{
+            "desc":"Indicates whether to allow TCP to send two identical SACKs. 0: disabled 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_ecn":{
+            "desc":"Indicates whether to enable the direct TCP congestion notification function. 0: disabled; 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1",
+                "2"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_fack":{
+            "desc":"Enables the forwarding acknowledgment. The selective acknowledgment (SACK) can be performed to reduce the occurrence of congestion. This option should also be enabled.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_fastopen":{
+            "desc":"Whether to enable the TCP quick open mode is to avoid the three-way handshake of hot requests. This greatly improves the performance in the scenario where small objects are moved.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "1",
+                "2",
+                "4"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_fin_timeout":{
+            "desc":"Maximum duration for a socket to remain in the FIN_WAIT_2 state.",
+            "dtype":"int",
+            "range":[
+                1,
+                120
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_keepalive_intvl":{
+            "desc":"Indicates the frequency of sending TCP probe packets. The value multiplied by tcp_keepalive_probes indicates the duration when no TCP connection is available.",
+            "dtype":"int",
+            "range":[
+                30,
+                300
+            ],
+            "step":15,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_keepalive_probes":{
+            "desc":"This file indicates the maximum number of times that TCP keepalive detection is performed before a TCP connection is discarded. Keep-alive connections are sent only when the SO_KEEPALIVE socket option is turned on.",
+            "dtype":"int",
+            "range":[
+                3,
+                144
+            ],
+            "step":3,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_keepalive_time":{
+            "desc":"Interval for sending keepalive detection messages(in seconds). This parameter is used to check whether the TCP connection is valid.",
+            "dtype":"int",
+            "range":[
+                600,
+                36000
+            ],
+            "step":600,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_low_latency":{
+            "desc":"Allows the TCP/IP stack to adapt to low latency in high throughput scenarios. This option is generally disabled. (But when building a Beowulf cluster, it helps to open it.) 0: disabled 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_max_orphans":{
+            "desc":"Number of sockets that can be processed by the system and do not belong to any process. When a large number of connections need to be quickly established, pay attention to this parameter.",
+            "dtype":"int",
+            "range":[
+                65536,
+                16777216
+            ],
+            "step":65536,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_max_syn_backlog":{
+            "desc":"Indicates the length of the SYN queue. A larger queue length can accommodate more network connections waiting for connections. The default value is 2048. You are advised to change the value to 8192.",
+            "dtype":"int",
+            "range":[
+                1024,
+                262144
+            ],
+            "step":1024,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_max_tw_buckets":{
+            "desc":"Reduce the number of TIME_WAIT connections to prevent excessive TIME_WAIT connections from occupying network resources and increasing the latency. The default value is 2048. You are advised to change the value to 360000.",
+            "dtype":"int",
+            "range":[
+                32768,
+                1048576
+            ],
+            "step":32768,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_mem":{
+            "desc":"TCP overall cache setting, which controls all TCP memory usage (in pages). The parameter indicates the no-pressure value of the TCP overall memory, the threshold for enabling the pressure mode, and the maximum usage value in sequence. This parameter is used to control whether the new cache is successfully allocated.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "6168306 8224411 12336612",
+                "12336612 16448822 24673224"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_min_tso_segs":{
+            "desc":"Minimal number of segments per TSO frame.",
+            "dtype":"int",
+            "needrestart":"false",
+            "range":[
+                1,
+                16
+            ],
+            "type":"continuous"
+        },
+        "net.ipv4.tcp_moderate_rcvbuf":{
+            "desc":"Whether to adjust the receive buffer when receiving data 0: no adjustment 1: yes",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_no_metrics_save":{
+            "desc":"After a TCP connection is closed, the saved parameters can be used to initialize the connection when the same connection is created next time as long as dst_entry is valid.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_orphan_retries":{
+            "desc":"Number of retries before the local end discards the TCP connection. The default value is 7.",
+            "dtype":"int",
+            "range":[
+                0,
+                15
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_reordering":{
+            "desc":"Maximum number of reordered data packets in TCP flows",
+            "dtype":"int",
+            "range":[
+                2,
+                10
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_retrans_collapse":{
+            "desc":"Provides compatibility for bugs on some printers. (Generally, this support is not required. You can disable it.)",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_retries2":{
+            "desc":"The number of retries required before discarding an active (established traffic condition) TCP connection. The default value is 15.",
+            "dtype":"int",
+            "range":[
+                3,
+                30
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_rmem":{
+            "desc":"Size of the read buffer. The first value is the minimum value of the read buffer, the third value is the maximum value, and the middle value is the default value. The default value is 4096 87380 6291456. You are advised to change the value to 4096 87380 16777216.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "4096 16384 4194304",
+                "4096 32768 8388608",
+                "4096 65536 16777216"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_sack":{
+            "desc":"Indicates whether to enable the selective acknowledgment function. This function improves the performance by selectively responding to out-of-order received packets. In this way, the sender can send only lost packet segments. This function should be enabled for WAN communication, however, this increases the CPU usage. 0: no 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_syn_retries":{
+            "desc":"Number of times that the local device retransmits TCP SYN packets due to timeout. The value cannot be greater than 255. This parameter is valid only for outgoing connections. For incoming connections, this parameter is controlled by tcp_retries1.",
+            "dtype":"int",
+            "range":[
+                3,
+                64
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_synack_retries":{
+            "desc":"For the remote connection request SYN, the kernel sends a SYN + ACK packet to acknowledge the receipt of the previous SYN connection request packet. It's called a three-way handshake. This parameter determines the number of SYN+ACK packets sent by the kernel before the kernel discards the connection.",
+            "dtype":"int",
+            "range":[
+                3,
+                64
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_syncookies":{
+            "desc":"Indicates whether to enable the TCP synchronization label (syncookie).",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_thin_linear_timeouts":{
+            "desc":"Check whether the TCP stream is thin after the retransmission times out.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_timestamps":{
+            "desc":"Indicates whether to enable the calculation of the RTT in a more accurate way than timeout retransmission (see RFC 1323). This option should be enabled for better performance. 0: no 1: enabled",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_tw_reuse":{
+            "desc":"The value 1 indicates that TIME-WAIT sockets can be used for new TCP connections, and the value 0 indicates that TIME-WAIT sockets are disabled.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1",
+                "2"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_window_scaling":{
+            "desc":"The window scaling defined in RFC 1323 is enabled. To support a TCP window larger than 64 KB, this parameter must be set to 1. The maximum size of a TCP window is 1 GB. This parameter takes effect only when both parties of a TCP connection are enabled.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.tcp_wmem":{
+            "desc":"Size of the write buffer. The first value is the minimum value of the read buffer, the third value is the maximum value, and the middle value is the default value. The default value is 4096 16384 4194304. You are advised to change the value to 4096 65536 16777216.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "4096 16384 4194304",
+                "4096 32768 8388608",
+                "4096 65536 16777216"
+            ],
+            "type":"discrete"
+        },
+        "net.ipv4.udp_mem":{
+            "desc":"The file saves three values: low: When the number of memory pages used by UDP is less than the value of this parameter, UDP does not release memory. assure: When the number of memory pages used by UDP exceeds the value of this parameter, UDP attempts to stabilize the memory usage and enters the pressure mode. When the memory usage is less than the value of low, UDP exits the pressure mode. high: indicates the number of pages that can be used by all UDP sockets to queue and buffer datagrams.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "12582912 16777216 25165824",
+                "25165824 33554432 50331648",
+                "50331648 100663296"
+            ],
+            "type":"discrete"
+        },
+        "net.unix.max_dgram_qlen":{
+            "desc":"Maximum number of datagrams in a UDP queue",
+            "dtype":"int",
+            "range":[
+                128,
+                1048576
+            ],
+            "step":128,
+            "type":"discrete"
+        },
+        "vm.dirty_background_ratio":{
+            "desc":"When the percentage of dirty pages reaches dirty_background_ratio, the write function wakes up the flusher thread of the kernel to write back dirty page data until the percentage is less than the value of dirty_background_ratio.",
+            "dtype":"int",
+            "range":[
+                0,
+                100
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "vm.dirty_expire_centisecs":{
+            "desc":"Expiration time of dirty data. When the flusher thread of the kernel is woken up after the expiration time, dirty data is written back to the disk. The unit is 1% second.",
+            "dtype":"int",
+            "range":[
+                100,
+                1000
+            ],
+            "step":100,
+            "type":"discrete"
+        },
+        "vm.dirty_ratio":{
+            "desc":"The percentage of dirty data in the memory cannot exceed this value.",
+            "dtype":"int",
+            "range":[
+                0,
+                100
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "vm.dirty_writeback_centisecs":{
+            "desc":"Sets the interval for waking up the flusher kernel thread. This thread is used to write dirty pages back to the disk. The unit is 1% second.",
+            "dtype":"int",
+            "range":[
+                100,
+                1000
+            ],
+            "step":100,
+            "type":"discrete"
+        },
+        "vm.max_map_count":{
+            "desc":"Defines the maximum memory area that a process can have.",
+            "dtype":"int",
+            "range":[
+                100000,
+                10000000
+            ],
+            "step":100000,
+            "type":"discrete"
+        },
+        "vm.min_free_kbytes":{
+            "desc":"Size of memory reserved in each memory area, in KB.",
+            "dtype":"int",
+            "range":[
+                10240,
+                1024000
+            ],
+            "step":10240,
+            "type":"discrete"
+        },
+        "vm.overcommit_memory":{
+            "desc":"Indicates whether to allow excessive memory allocation. The process can allocate more memory than it actually uses.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1"
+            ],
+            "type":"discrete"
+        },
+        "vm.overcommit_ratio":{
+            "desc":"When overcommit_memory is set to 2, the percentage of physical RAM that is considered is set.",
+            "dtype":"int",
+            "range":[
+                0,
+                100
+            ],
+            "step":10,
+            "type":"discrete"
+        },
+        "vm.page-cluster":{
+            "desc":"Number of pages written to the swap partition each time.",
+            "dtype":"int",
+            "range":[
+                0,
+                8
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "vm.stat_interval":{
+            "desc":"VM information update frequency (in seconds)",
+            "dtype":"int",
+            "range":[
+                1,
+                100
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "vm.swappiness":{
+            "desc":"A larger value indicates that the swap partition is used more actively. A smaller value indicates that the memory is used more actively.",
+            "dtype":"int",
+            "range":[
+                0,
+                100
+            ],
+            "step":1,
+            "type":"discrete"
+        },
+        "vm.vfs_cache_pressure":{
+            "desc":"Indicates the tendency of the kernel to reclaim the memory used for directory and inode cache.",
+            "dtype":"int",
+            "range":[
+                0,
+                500
+            ],
+            "step":50,
+            "type":"discrete"
+        },
+        "vm.watermark_scale_factor":{
+            "desc":"Controls the radical degree of the kswapd process, that is, how much memory needs to be released for the system (NUMA node) from wakeup to hibernation.",
+            "dtype":"int",
+            "range":[
+                10,
+                1000
+            ],
+            "step":10,
+            "type":"discrete"
+        },
+        "vm.zone_reclaim_mode":{
+            "desc":"This parameter is valid only when CONFIG_NUMA is enabled. zone_reclaim_mode is used to control how to reclaim memory when the memory domain OOM is enabled.",
+            "dtype":"string",
+            "needrestart":"false",
+            "options":[
+                "0",
+                "1",
+                "2",
+                "4"
+            ],
+            "type":"discrete"
+        }
+    }
+}
