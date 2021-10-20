@@ -10,6 +10,8 @@ import (
 	m "keentune/daemon/modules"
 	"encoding/json"
 	"fmt"
+	"os"
+	"io/ioutil"
 )
 
 type TrainFlag struct {
@@ -32,9 +34,10 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 }
 
 func runTrain(flags TrainFlag) {
-	log.SensitizeTrain += ":" + flags.Log
+	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
 	com.SystemRun = true
 	com.IsSensitizing = true
+	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
 		log.ClearCliLog(log.SensitizeTrain)
 		config.ProgramNeedExit <- true

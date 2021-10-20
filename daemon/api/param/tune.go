@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+	"os"
 )
 
 // TuneFlag tune options
@@ -37,7 +38,9 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 func runTuning(flag TuneFlag) {
 	com.SystemRun = true
 	com.IsTuning = true
-	log.ParamTune += ":" + flag.Log
+	log.ParamTune =  "param tune" + ":" + flag.Log
+	// create log file
+	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
 	defer func() {
 		log.ClearCliLog(log.ParamTune)
 		config.ProgramNeedExit <- true
@@ -49,7 +52,7 @@ func runTuning(flag TuneFlag) {
 	go com.HeartbeatCheck()
 
 	if isTuneNameRepeat(flag.Name) {
-		log.Errorf(log.ParamTune, "The specified name [%v] already exists. Please delete the original job by [keentune param delete --name %v] or specify a new name and try again", flag.Name, flag.Name)
+		log.Errorf(log.ParamTune, "The specified name [%v] already exists. Please delete the original job by [keentune param delete --job %v] or specify a new name and try again", flag.Name, flag.Name)
 		return
 	}
 
@@ -134,7 +137,7 @@ func getBenchmark(bench map[string][]m.Benchmark, index int) *m.Benchmark {
 }
 
 func isTuneNameRepeat(name string) bool {
-	tuneList, err := file.WalkFilePath(m.GetTuningWorkPath("") + "/", "", true)
+	tuneList, err := file.WalkFilePath(m.GetTuningWorkPath("") + "/", "", true, "/generate/")
 	if err != nil {
 		return false
 	}

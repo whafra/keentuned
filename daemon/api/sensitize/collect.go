@@ -6,6 +6,8 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"fmt"
+	"os"
+	"io/ioutil"
 )
 
 type Service struct {
@@ -24,8 +26,8 @@ func (s *Service) Collect(flag param.TuneFlag, reply *string) error {
 func runCollect(flag param.TuneFlag) {
 	com.SystemRun = true
 	com.IsSensitizing = true
-	log.SensitizeCollect += ":" + flag.Log
-	
+	log.SensitizeCollect = "sensitize collect" +":" + flag.Log
+	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
 	defer func() {
 		log.ClearCliLog(log.SensitizeCollect)
 		config.ProgramNeedExit <- true

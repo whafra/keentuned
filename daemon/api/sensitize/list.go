@@ -24,7 +24,7 @@ func (s *Service) List(flag string, reply *string) error {
 		return nil
 	}
 
-	log.Infof(log.SensitizeList, "Get sensitive parameter identification record successfully, and the details displayed in the terminal.")
+	log.Infof(log.SensitizeList, "Get sensitive parameter identification results successfully, and the details displayed in the terminal.")
 	
 	log.Infof(log.SensitizeList, "%s show table end.", fmt.Sprintf("%s;%s", "data name,application scenario,algorithm", sensiList))
 	return nil
