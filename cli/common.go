@@ -26,6 +26,7 @@ func rollbackCmd(parentCmd string) *cobra.Command {
 		Use:   "rollback",
 		Short: "Restore initial state",
 		Long:  "Restore initial state",
+		Example: fmt.Sprintf("\tkeentune %v rollback", parentCmd),
 		Run: func(cmd *cobra.Command, args []string) {
 			flag.Cmd = parentCmd
 			RunRollbackRemote(cmd.Context(), flag)
@@ -62,6 +63,7 @@ func stopCmd(flag string) *cobra.Command {
 		Use:   "stop",
 		Short: description,
 		Long:  description,
+		Example: fmt.Sprintf("\tkeentune %v stop", flag),
 		Run: func(cmd *cobra.Command, args []string) {
 			StopRemote(cmd.Context(), flag)
 			return

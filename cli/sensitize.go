@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	egCollect = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --job collect_test --iteration 10"
-	egTrain = "\tkeentune sensitize train --job collect_test --output train_test --trials 2"
-	egDelete = "\tkeentune sensitize delete --job collect_test"
+	egCollect = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --data collect_test --iteration 10"
+	egTrain = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
+	egDelete = "\tkeentune sensitize delete --data collect_test"
 	egSensitiveList = "\tkeentune sensitize list"
 	egSensitiveStop = "\tkeentune sensitize stop"
 )
@@ -132,6 +132,7 @@ func deleteSensitivityCmd() *cobra.Command {
 		Use:   "delete",
 		Short: "Delete the sensitivity identification data",
 		Long:  "Delete the sensitivity identification data",
+		Example: egDelete,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
