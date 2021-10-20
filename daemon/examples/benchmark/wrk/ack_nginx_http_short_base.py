@@ -4,6 +4,9 @@
 import re
 import sys
 import subprocess
+import logging
+logger = logging.getLogger(__name__)
+
 
 """
 Wrk Http short link benchmark

@@ -26,7 +26,7 @@ type Benchmark struct {
 type BenchResult struct {
 	Success bool              `json:"suc"`
 	Result  map[string]Result `json:"result,omitempty"`
-	Message string            `json:"msg,omitempty"`
+	Message interface{}       `json:"msg,omitempty"`
 }
 
 type Result struct {
@@ -34,14 +34,14 @@ type Result struct {
 }
 
 // RunBenchmark : run benchmark script or command in client
-func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbose bool) (map[string]ItemDetail, string, error) {
+func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbose bool) (map[string][]float32, map[string]ItemDetail, string, error) {
 	start := time.Now()
 	var scores = map[string][]float32{}
 	var sumScore = map[string]float32{}
 	
 	respIP, err := utils.GetExternalIP()
 	if err != nil {
-		return nil, "", fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
+		return scores, nil, "", fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
 	}
 
 	var requestBody = map[string]interface{}{}
@@ -53,13 +53,13 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 		resp, err := http.RemoteCall("POST", benchmark.Host+"/benchmark", requestBody)
 		if err != nil {
 			log.Errorf(log.ParamTune, "%vth benchmark remote call return err:%v\n", i, err)
-			return nil, "", err
+			return scores, nil, "", err
 		}
 
 		score, err := parseScore(resp)
 		if err != nil {
 			log.Errorf(log.ParamTune, "%vth benchmark parse score err:%v\n", i, err)
-			return nil, "", err
+			return scores, nil, "", err
 		}
 
 		for name, value := range score {
@@ -71,7 +71,8 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 
 	benchmark.round = num
 	benchmark.verbose = verbose
-	return benchmark.getScore(scores, sumScore, start, benchTime)
+	benchScoreResult, resultString, err := benchmark.getScore(scores, sumScore, start, benchTime)
+	return scores, benchScoreResult, resultString, err
 }
 
 func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[string]float32, start time.Time, benchTime *time.Duration) (map[string]ItemDetail, string, error) {
@@ -122,11 +123,11 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 }
 
 // SendScript : send script file to client
-func (benchmark Benchmark) sendScript(sendTime *time.Duration) (bool, string, error) {
+func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, error) {
 	start := time.Now()
-	benchBytes, err := ioutil.ReadFile(config.KeenTune.Home + benchmark.FilePath)
+	benchBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", config.KeenTune.Home, benchmark.FilePath))
 	if err != nil {
-		return false, "", fmt.Errorf("sendScript readFile err:%v", err)
+		return false, "", fmt.Errorf("SendScript readFile err:%v", err)
 	}
 
 	requestBody := map[string]interface{}{
@@ -137,7 +138,7 @@ func (benchmark Benchmark) sendScript(sendTime *time.Duration) (bool, string, er
 
 	err = http.ResponseSuccess("POST", benchmark.Host+"/sendfile", requestBody)
 	if err != nil {
-		return false, "", fmt.Errorf("sendScript remote call err:%v", err)
+		return false, "", fmt.Errorf("SendScript remote call err:%v", err)
 	}
 	
 	timeCost := utils.Runtime(start)
@@ -159,6 +160,7 @@ func parseScore(body []byte) (map[string]float32, error) {
 
 	var resultMap =map[string]float32{}
 
+	config.IsInnerRequests = true
 	select {
 	case bytes := <-config.BenchmarkResultChan:	
 		log.Debugf("", "get benchmark result:%s", bytes)

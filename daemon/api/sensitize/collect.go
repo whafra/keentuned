@@ -5,6 +5,7 @@ import (
 	"keentune/daemon/api/param"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
+	"fmt"
 )
 
 type Service struct {
@@ -12,26 +13,29 @@ type Service struct {
 
 // Collect run sensitize collect service
 func (s *Service) Collect(flag param.TuneFlag, reply *string) error {
+	if com.SystemRun {
+		log.Errorf("", "An instance is running. You can wait the process finish or run \"keentune %v stop\" and try a new job again, if you want give up the old job.", com.GetRunningTask())
+		return fmt.Errorf("Collect failed, an instance is running. You can wait the process finish or run \"keentune %v stop\" and try a new job again, if you want give up the old job.", com.GetRunningTask())
+	}
+
 	go runCollect(flag)
 	return nil
 }
 func runCollect(flag param.TuneFlag) {
-	if com.SystemRun {
-		log.Info(log.SensitizeCollect, "An instance is running, please wait for it to finish and re-initiate the request.")
-		return
-	}
-
 	com.SystemRun = true
-	log.ClearCliLog(log.SensitizeCollect)
-
+	com.IsSensitizing = true
+	log.SensitizeCollect += ":" + flag.Log
+	
 	defer func() {
+		log.ClearCliLog(log.SensitizeCollect)
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.SystemRun = false
+		com.IsSensitizing = false
 	}()
 
 	go com.HeartbeatCheck()
-	log.Infof(log.SensitizeCollect, "\nStep1. Parameter auto Sensitize start, using algorithm = %v.\n", config.KeenTune.Sensitize.Algorithm)
+	log.Infof(log.SensitizeCollect, "Step1. Parameter auto Sensitize start, using algorithm = %v.", config.KeenTune.Sensitize.Algorithm)
 
 	if com.IsDataNameUsed(flag.Name) {
 		log.Errorf(log.SensitizeCollect, "Please check the data name specified, already exists")

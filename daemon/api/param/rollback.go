@@ -18,6 +18,6 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		return err
 	}
 
-	log.Infof(log.ParamRollback, fmt.Sprintf("[%v rollback] success", flag.Cmd))
+	log.Infof(log.ParamRollback, fmt.Sprintf("[ok] %v rollback successfully", flag.Cmd))
 	return nil
 }

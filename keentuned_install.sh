@@ -2,9 +2,8 @@
 # keentuned configuration and installation script
 
 #############################################手动配置部分开始##########################################
-# 1. Definition of some important configuration parameters
-# Only by correctly configuring the defined parameters (step 1) can the keentune command be generated successfully.
-# code_home 代码仓的位置, 写到daemon这一级
+# 1. 配置文件修改部分，可以按需修改配置参数，也可以执行完脚本后，手动按需修改 /etc/keentune/conf/keentuned.conf。
+# code_home 代码仓的位置, 写到daemon这一级，该值不需要修改。
 code_home=`pwd`
 # keentuned_home keentune依赖的配置文件位置
 keentuned_home="/etc/keentune"
@@ -16,23 +15,27 @@ bench_json_file="benchmark/wrk/bench_wrk_nginx_long.json"
 # 执行的目标benchmark对应的Python3 脚本，目录为 $keentuned_home/benchmark/ ，可以在其下创建自己的目录和文件，保证写入的目录和文件存在即可
 local_script_path="benchmark/wrk/ack_nginx_http_long_base.py"
 
-# 执行benchmark 机器的主机host
-bench_host="localhost:9874"
-# 指定调优的AI 算法
+# 注意：以下部分是修改配置文件的内容，
+
+# 指定param tune调优的AI 算法
 algorithm="tpe"
+# 指定sensitize collect 敏感参数采集的算法
+sensitive_algorithm="random"
 # 指定调优的算法的运行的机器ip
 brain_ip="localhost"
 # 调优目标机器的ip
 target_ip="localhost"
+# benchmark打压机器的ip
+bench_ip="localhost"
 
 # 调优开始前的基线benchmark打压执行次数
-base_round=1
+base_round=5
 # 每轮调优的benchmark打压执行次数
-tune_round=2
+tune_round=3
 # 最优配置的benchmark打压执行次数
-check_round=1
-
-sensi_round=1
+check_round=4
+# sensitize collect 敏感参数采集的benchmark打压执行次数
+sensi_round=3
 
 #############################################手动配置部分结束############################################
 
@@ -70,7 +73,9 @@ fi
 # modify keentuned.conf
 sed -i "s#KEENTUNED_HOME = .*#KEENTUNED_HOME = "${keentuned_home}"#" $keentuned_home/conf/keentuned.conf
 sed -i "s/BRAIN_IP = .*/BRAIN_IP = "${brain_ip}"/" $keentuned_home/conf/keentuned.conf
+sed -i "s/BENCH_IP = .*/BENCH_IP = "${bench_ip}"/" $keentuned_home/conf/keentuned.conf
 sed -i "17s/ALGORITHM = .*/ALGORITHM = "${algorithm}"/" $keentuned_home/conf/keentuned.conf
+sed -i "51s/ALGORITHM = .*/ALGORITHM = "${sensitive_algorithm}"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/TARGET_IP = .*/TARGET_IP = "${target_ip}"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/BASELINE_BENCH_ROUND = .*/BASELINE_BENCH_ROUND = "$base_round"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/TUNING_BENCH_ROUND = .*/TUNING_BENCH_ROUND = "$tune_round"/" $keentuned_home/conf/keentuned.conf
@@ -79,7 +84,6 @@ sed -i "54s/BENCH_ROUND = .*/BENCH_ROUND = "${sensi_round}"/" $keentuned_home/co
 
 # modify bench_json_file
 sed -i "s%\"local_script_path\":[^,]*%\"local_script_path\": \"${local_script_path}\"%" $keentuned_home/$bench_json_file
-sed -i "s%\"host\":[^,]*%\"host\": \"${bench_host}\"%" $keentuned_home/$bench_json_file
 
 #3. Generate compiled files, and take effect global commands
 go env -w GO111MODULE=on

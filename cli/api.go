@@ -6,15 +6,17 @@ import (
 	"log"
 	"net/rpc"
 	"strings"
+	"os"
 )
 
 // TuneFlag tune options
 type TuneFlag struct {
-	Name      string
+	Name      string // job specific name 
 	Round     int
 	BenchConf string
 	ParamConf string
 	Verbose   bool
+	Log       string // log file
 }
 
 // DumpFlag ...
@@ -33,6 +35,7 @@ type TrainFlag struct {
 	Data   string
 	Trials int
 	Force  bool
+	Log    string // log file
 }
 
 type DeleteFlag struct {
@@ -45,12 +48,18 @@ type RollbackFlag struct {
 	Cmd string
 }
 
+type BenchmarkFlag struct {
+	Round     int
+	BenchConf string
+	Name      string
+}
+
 var (
-	outputTips = "\n\toutput: When a duplicate name appears, the original file is overwritten, y(yes) or n(no)?\n"
-	deleteTips = "\n\tdelete: Be careful! It cannot be restored after deletion, y(yes) or n(no)?\n"
+	outputTips = "If the %v name is duplicated, overwrite? Y(yes)/N(no)"
+	deleteTips = "Are you sure you want to permanently delete job data"
 )
 
-func remoteImpl(callName string, flag interface{}) error {
+func remoteImpl(callName string, flag interface{}) {
 	client, err := rpc.Dial("tcp", "localhost:9870")
 	if err != nil {
 		log.Fatal("dialing:", err)
@@ -59,80 +68,114 @@ func remoteImpl(callName string, flag interface{}) error {
 	var reply string
 	err = client.Call(callName, flag, &reply)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("%v %v failed, msg: %v\n", ColorString("red", "[ERROR]"), callName, err)
+		os.Exit(1)
 	}
+	
+	showReply(reply)
+	return
+}
 
+func showReply(reply string) {
 	if strings.Contains(reply, "displayed in the terminal.") {
 		start := strings.Index(reply, "displayed in the terminal.")
 		end := strings.Index(reply, "show table end.")
 
-		fmt.Printf("\n%v\n", reply[:start+len("displayed in the terminal.")])
+		fmt.Printf("%v\n",reply[:start+len("displayed in the terminal.")])
 		showInTable(reply[start+len("displayed in the terminal.") : end])
-		fmt.Printf("\n%v", strings.TrimLeft(reply[end+len("show table end."):], "\n"))
-		return nil
+		fmt.Printf("\n%v",strings.TrimLeft(reply[end+len("show table end."):],"\n"))
+		return
 	}
-
-	fmt.Printf("\n%v", reply)
-	return nil
+	
+	fmt.Printf("%v",reply)
+	return
 }
 
-func RunTuneRemote(ctx context.Context, flag TuneFlag) error {
-	return remoteImpl("param.Tune", flag)
+func RunTuneRemote(ctx context.Context, flag TuneFlag) {	
+	remoteImpl("param.Tune", flag)
+	
+	fmt.Printf("%v Running Param Tune Success.\n", ColorString("green", "[ok]"))
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
+	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	return	
 }
 
-func RunDumpRemote(ctx context.Context, flag DumpFlag) error {
-	fmt.Printf("%s", outputTips)
+func RunDumpRemote(ctx context.Context, flag DumpFlag) {
+	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
 	flag.Force = confirm()
-	return remoteImpl("param.Dump", flag)
+	remoteImpl("param.Dump", flag)
 }
 
-func RunListRemote(ctx context.Context, flag string) error {
-	return remoteImpl(fmt.Sprintf("%s.List", flag), flag)
+func RunListRemote(ctx context.Context, flag string) {
+	remoteImpl(fmt.Sprintf("%s.List", flag), flag)
 }
 
-func RunRollbackRemote(ctx context.Context, flag RollbackFlag) error {
-	return remoteImpl(fmt.Sprintf("%s.Rollback", flag.Cmd), flag)
+func RunRollbackRemote(ctx context.Context, flag RollbackFlag) {
+	remoteImpl(fmt.Sprintf("%s.Rollback", flag.Cmd), flag)
 }
 
-func RunDeleteRemote(ctx context.Context, flag DeleteFlag) error {
-	fmt.Printf("%s", deleteTips)
+func RunDeleteRemote(ctx context.Context, flag DeleteFlag) {
+	fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yelllow", "[Warning]"), deleteTips, flag.Name)
 	if !confirm() {
-		fmt.Println("process exit")
-		return nil
+		fmt.Println("[-] Give Up Delete")
+		return
+	}	
+
+	remoteImpl(fmt.Sprintf("%s.Delete", flag.Cmd), flag)
+}
+
+func RunInfoRemote(ctx context.Context, flag string) {
+	remoteImpl("profile.Info", flag)
+}
+
+func RunSetRemote(ctx context.Context, flag SetFlag) {
+	remoteImpl("profile.Set", flag)
+}
+
+func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
+	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
+	flag.Force = confirm()
+	remoteImpl("profile.Generate", flag)
+}
+
+func RunCollectRemote(ctx context.Context, flag TuneFlag) {
+	remoteImpl("sensitize.Collect", flag)
+	
+	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
+	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	return
+}
+
+func RunTrainRemote(ctx context.Context, flag TrainFlag) {
+	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
+	flag.Force = confirm()
+	remoteImpl("sensitize.Train", flag)
+	
+	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
+	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\toutput: %v\n",flag.Trials, flag.Data, flag.Output)
+	fmt.Printf("\n\tsee more detailsby log file:  \"%v\"\n", flag.Log)
+	return
+}
+
+func StopRemote(ctx context.Context, flag string) {
+	var job string
+	if flag== "param" {
+		job = "parameter optimization"
 	}
 
-	return remoteImpl(fmt.Sprintf("%s.Delete", flag.Cmd), flag)
+	if flag == "sensitize" {
+		job = "sensibility identification"
+	}
+
+	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job) 
+	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
 }
 
-func RunInfoRemote(ctx context.Context, flag string) error {
-	return remoteImpl("profile.Info", flag)
+func RunJobsRemote(ctx context.Context) {
+	remoteImpl("param.Jobs", "")
 }
 
-func RunSetRemote(ctx context.Context, flag SetFlag) error {
-	return remoteImpl("profile.Set", flag)
-}
-
-func RunGenerateRemote(ctx context.Context, flag DumpFlag) error {
-	fmt.Printf("%s", outputTips)
-	flag.Force = confirm()
-	return remoteImpl("profile.Generate", flag)
-}
-
-func RunCollectRemote(ctx context.Context, flag TuneFlag) error {
-	return remoteImpl("sensitize.Collect", flag)
-}
-
-func RunTrainRemote(ctx context.Context, flag TrainFlag) error {
-	fmt.Printf("%s", outputTips)
-	flag.Force = confirm()
-	return remoteImpl("sensitize.Train", flag)
-}
-
-func MsgRemote(tx context.Context, flag string) error {
-	return remoteImpl("system.Message", flag)
-}
-
-func StopRemote(ctx context.Context, flag string) error {
-	fmt.Printf("stop remote %v task of running. \n", flag)
-	return remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
+func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
+	remoteImpl("system.Benchmark", flag)
 }

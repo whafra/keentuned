@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"fmt"
+	"strings"
 )
 
 // Parameter define a os parameter value scope, operating command and value
@@ -25,8 +26,8 @@ type Parameter struct {
 }
 
 
-// UpdateParameter update the partial param by the total param
-func UpdateParameter(partial, total *Parameter) {
+// updateParameter update the partial param by the total param
+func updateParameter(partial, total *Parameter) {
 	if partial.Dtype == "" {
 		partial.Dtype = total.Dtype
 	}
@@ -61,21 +62,20 @@ return params list
 params[0] : *Configuration for request client with apply api;
 params[1] : map[string]interface{} for request brain with init api
 */
-func generateInitParams(paramConf string) (*Configuration, map[string]interface{}) {
-	paramFile := config.KeenTune.Home + paramConf
-	userParamMap, err := file.ReadFile2Map(paramFile)
+func generateInitParams(filePath string) (*Configuration, map[string]interface{}) {
+	userParamMap, err := file.ReadFile2Map(filePath)
 	if err != nil {
-		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", paramFile, err)
+		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", filePath, err)
 		return nil, nil
 	}
 
-	if paramConf == config.ParamAllFile {
+	if strings.Contains(filePath, strings.TrimPrefix(config.ParamAllFile, "parameter/")) {
 		return AssembleParams(userParamMap)
 	}
 
-	totalParamMap, err := file.ReadFile2Map(config.KeenTune.Home + config.ParamAllFile)
+	totalParamMap, err := file.ReadFile2Map(fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile))
 	if err != nil {
-		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", config.KeenTune.Home+config.ParamAllFile, err)
+		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
 		return nil, nil
 	}
 
@@ -100,7 +100,7 @@ func AssembleParams(userParam map[string]interface{}, totalParamMap ...map[strin
 		if len(totalParamMap) > 0 {
 			compareMap = utils.Parse2Map(domainName, totalParamMap[0])
 			if compareMap == nil {
-				log.Warnf(log.ParamTune, "modify the user params parse local total param domain [%v] is not exist", domainName)
+				log.Warnf(log.ParamTune, "find param domain [%v] does not exist when modify user params by parsing local total param file", domainName)
 			}
 		}
 
@@ -156,7 +156,7 @@ func modifyParam(originMap, compareMap map[string]interface{}, domainName, param
 		return nil, fmt.Errorf("modifyParam parse compareMap %+v to struct err:%v", compareMap, err)
 	}
 
-	UpdateParameter(&userParam, &totalParam)
+	updateParameter(&userParam, &totalParam)
 	resultParamMap, err := utils.Struct2Map(userParam)
 	if err != nil {
 		return nil, fmt.Errorf("modifyParam struct %+v To map  err:%v", userParam, err)

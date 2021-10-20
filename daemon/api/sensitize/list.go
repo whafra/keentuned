@@ -13,10 +13,10 @@ func (s *Service) List(flag string, reply *string) error {
 		log.ClearCliLog(log.SensitizeList)
 	}()
 
-	_, sensiList, err := com.GetDataList()
+	_, _, sensiList, err := com.GetDataList()
 	if err != nil {
-		log.Errorf(log.SensitizeList, "get sensitize List err:%v", err)
-		return err
+		log.Errorf(log.SensitizeList, "Get sensitize Data List err:%v", err)
+		return fmt.Errorf("Get sensitize Data List err:%v", err)
 	}
 
 	if len(sensiList) == 0 {

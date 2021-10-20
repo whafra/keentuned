@@ -6,13 +6,20 @@ import (
 	"keentune/daemon/common/utils/http"
 	"fmt"
 	"os"
-	"strings"
 )
 
 var StopSig chan os.Signal
 
 func GetTuningWorkPath(fileName string) string {
 	return assembleFilePath(config.KeenTune.DumpConf.DumpHome, "parameter", fileName)
+}
+
+func GetGenerateWorkPath(fileName string) string {
+	return assembleFilePath(config.KeenTune.DumpConf.DumpHome, "parameter/generate", fileName)
+}
+
+func GetBenchHomePath() string {
+	return assembleFilePath(config.KeenTune.Home, "benchmark", "")
 }
 
 func GetProfileWorkPath(fileName string) string {
@@ -24,13 +31,16 @@ func GetSensitizePath() string {
 }
 
 func GetParamHomePath() string {
-	return assembleFilePath(strings.TrimRight(config.KeenTune.Home, "/"), "parameter", "") + "/"
+	return assembleFilePath(config.KeenTune.Home, "parameter", "") + "/"
 }
 
 func GetProfileHomePath() string {
-	return assembleFilePath(strings.TrimRight(config.KeenTune.Home, "/"), "profile", "") + "/"
+	return assembleFilePath(config.KeenTune.Home, "profile", "") + "/"
 }
 
+func GetDumpCSVPath() string {
+	return assembleFilePath(config.KeenTune.DumpConf.DumpHome, "csv", "")
+}
 
 func assembleFilePath(prefix, partition, fileName string) string {
 	if fileName == "" {
@@ -53,6 +63,8 @@ func isInterrupted() bool {
 func rollback() {
 	url := config.KeenTune.TargetIP + ":" + config.KeenTune.TargetPort + "/rollback"
 	if err := http.ResponseSuccess("POST", url, nil); err != nil {
-		log.Errorf(log.ParamTune, "rollback failed when the system is interrupted, err :%v", err)
+		log.Errorf(log.ParamTune, "rollback failed err :%v", err)
 	}
+
+	config.IsInnerRequests = false
 }

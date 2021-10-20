@@ -42,10 +42,14 @@ type DumpFlag struct {
 	Force  bool
 }
 
-var SystemRun bool
+var (
+	SystemRun     bool
+	IsTuning      bool
+	IsSensitizing bool
+)
 
 func IsDataNameUsed(name string) bool {
-	dataList, _, err := GetDataList()
+	dataList, _, _, err := GetDataList()
 	if err != nil {
 		return false
 	}
@@ -59,10 +63,10 @@ func IsDataNameUsed(name string) bool {
 	return false
 }
 
-func GetDataList() ([]string, string, error) {
+func GetDataList() ([]string, string, string, error) {
 	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/sensitize_list", nil)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	var sensiList struct {
@@ -71,22 +75,26 @@ func GetDataList() ([]string, string, error) {
 	}
 
 	if err = json.Unmarshal(resp, &sensiList); err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 
 	if !sensiList.Success {
-		return nil, "", fmt.Errorf("remotecall sensitize_list return suc is false")
+		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
 	}
 
 	var paramString string
 	var dataList []string
+	var collectList string
 
 	for _, value := range sensiList.Data {
 		paramString += fmt.Sprintf("%s,%s,%s;", value.Name, value.Scenario, value.Algorithm)
 		dataList = append(dataList, value.Name)
+		if value.Scenario == "collect" {
+			collectList += fmt.Sprintf("\n\t%v", value.Name)
+		}
 	}
 
-	return dataList, paramString, nil
+	return dataList, collectList, paramString, nil
 }
 
 func KeenTunedService(quit chan os.Signal) {
@@ -133,25 +141,25 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 
 	if err := inst.check(flag.Name); err != nil {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
-		return nil
+		return fmt.Errorf("Check name failed: %v", err.Error())
 	}
 	
 	if err := inst.delete(); err != nil {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
-		return nil
+		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
-	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully.", flag.Name)
+	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
 	return nil
 }
 
 func (d *deleter) check(inputName string) error {
-	if strings.Contains(d.fileName, strings.TrimRight(config.KeenTune.Home, "/")) {
+	if strings.Contains(d.fileName, config.KeenTune.Home) {
 		return fmt.Errorf("%v is not supported to delete", d.fileName)
 	}
 
 	if d.fileName == inputName {
-		return fmt.Errorf("%v is non-existent", d.fileName)
+		return fmt.Errorf("File %v is non-existent", d.fileName)
 	}
 
 	if d.cmd == "param" {
@@ -183,9 +191,9 @@ func RollbackImpl(flag RollbackFlag, reply *string) error {
 	url := config.KeenTune.TargetIP + ":" + config.KeenTune.TargetPort + "/rollback"
 	err := utilhttp.ResponseSuccess("POST", url, nil)
 	if err != nil {
-		log.Errorf(fmt.Sprintf("%s rollback", flag.Cmd), "exec param rollback err: %v", err)
+		log.Errorf(fmt.Sprintf("%s rollback", flag.Cmd), "Rollback failed: %v", err)
 		*reply = log.ClientLogMap[fmt.Sprintf("%s rollback", flag.Cmd)]
-		return err
+		return fmt.Errorf("Rollback failed: %v", err)
 	}
 
 	return nil
@@ -217,5 +225,86 @@ func GetParameterPath(fileName string) string {
 		return homePath
 	}
 
+	generatePath := m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(fileName, ".json"), ".json"))
+	if file.IsPathExist(generatePath) {
+		return generatePath
+	}
+
 	return fileName
+}
+
+/* GetAbsolutePath  fileName support absolute path, relative path, file. 
+	e.g.
+		file: param.json
+		relative path: parameter/param.json
+		absolute path: /etc/keentune/parameter/param.json
+ */
+func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
+	if fileName == "" {
+		return fileName
+	}
+
+	// Absolute path, start with "/"
+	if string(fileName[0]) == "/" {
+		if strings.Contains(fileName, fileType) {
+			return fileName
+		}
+
+		parts := strings.Split(fileName, "/")
+		partLen := len(parts)
+
+		return fmt.Sprintf("%s/%s%s", fileName, parts[partLen-1], extraSufix)
+	}
+
+	// Relative path, start with "./" or other
+	var relativePath string
+	relativePath = strings.Trim(fileName, "./")
+	parts := strings.Split(relativePath, "/")
+	partLen := len(parts)
+
+	if file.IsPathExist(m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(parts[partLen-1], ".json"), ".json"))) && fileType == ".json" {
+		return m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(parts[partLen-1], ".json"), ".json"))
+	}
+
+	var workPath string
+
+	switch partLen {
+	// Only a file name, work directory has priority
+	case 1:
+		if strings.Contains(parts[0], fileType) {
+			workPath = fmt.Sprintf("%s/%s/%s", config.KeenTune.DumpConf.DumpHome, class, parts[0])
+			if file.IsPathExist(workPath) {
+				return workPath
+			}
+
+			return fmt.Sprintf("%s/%s/%s", config.KeenTune.Home, class, parts[0])
+		}
+
+		return fmt.Sprintf("%s/%s/%s/%s%s", config.KeenTune.DumpConf.DumpHome, class, parts[0], parts[0], extraSufix)
+	// File relative path, work directory has priority
+	default:
+		// If the first element of the split has the same name as the specified class, then it will Trim the class+"/"
+		if strings.Contains(parts[partLen-1], fileType) {
+			workPath = fmt.Sprintf("%s/%s/%s", config.KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
+			if file.IsPathExist(workPath) {
+				return workPath
+			}
+
+			return fmt.Sprintf("%s/%s/%s", config.KeenTune.Home, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
+		}
+
+		return fmt.Sprintf("%s/%s/%s/%s%s", config.KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
+	}
+}
+
+func GetRunningTask() string {
+	if IsTuning {
+		return "param"
+	}
+	
+	if IsSensitizing {
+		return "sensitize"
+	}
+
+	return ""
 }

@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"io/ioutil"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
@@ -47,11 +48,11 @@ type consoleLogFormater struct {
 
 // command name
 const (
-	ParamDump     = "param dump"
-	ParamTune     = "param tune"
+	ParamDump     = "param dump"	
 	ParamList     = "param list"
 	ParamDel      = "param delete"
 	ParamRollback = "param rollback"
+	ParamJobs     = "param jobs"
 
 	ProfInfo     = "profile info"
 	ProfGenerate = "profile generate"
@@ -61,14 +62,18 @@ const (
 	ProfRollback = "profile rollback"
 
 	SensitizeDel     = "sensitize delete"
+	
+	SensitizeList    = "sensitize list"
+	Benchmark        = "benchmark"
+)
+
+var (
+	ParamTune        = "param tune"
 	SensitizeCollect = "sensitize collect"
 	SensitizeTrain   = "sensitize train"
-	SensitizeList    = "sensitize list"
 )
 
 var ClientLogMap = make(map[string]string)
-
-const logDir = "/var/log"
 
 func getLevel(lvl string) logrus.Level {
 	ret, err := logrus.ParseLevel(lvl)
@@ -80,7 +85,7 @@ func getLevel(lvl string) logrus.Level {
 }
 
 func init() {
-	fileName := fmt.Sprintf("%v/%s", logDir, config.KeenTune.LogConf.FileName)
+	fileName := fmt.Sprintf("%v/log/%s", "/var", config.KeenTune.LogConf.FileName)
 
 	// 1 set log segmentation method
 	writer, err := rotatelogs.New(
@@ -127,6 +132,15 @@ func (s *consoleLogFormater) Format(entry *logrus.Entry) ([]byte, error) {
 
 func updateClientLog(cmd, msg string) {
 	ClientLogMap[cmd] += msg
+	if (strings.Contains(cmd, ParamTune) || strings.Contains(cmd, SensitizeCollect) || strings.Contains(cmd, SensitizeTrain)) && ClientLogMap[cmd] != "" {
+		fullPath := strings.Split(cmd, ":")[1]
+		resultBytes := []byte(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(ClientLogMap[cmd], "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", ""))
+		err := ioutil.WriteFile(fullPath, resultBytes, os.ModePerm)
+		if err != nil {
+			Errorf("", "Write to file [%v] err:[%v] ", fullPath, err)
+			return
+		}
+	}
 }
 
 func ClearCliLog(cmd string) {

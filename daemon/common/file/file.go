@@ -2,11 +2,13 @@ package file
 import (
 	"io/ioutil"
 	"encoding/json"
+	"encoding/csv"
 	"fmt"	
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sort"
 )
 
 // IsPathExist ...
@@ -25,20 +27,20 @@ func IsPathExist(path string) bool {
 	return true
 }
 
-// DecoratePath ...
+// DecoratePath cut the end of the path separator "/"
 func DecoratePath(path string) string {
-	var retPath string
-	if len(path) > 0 {
-		if string(path[len(path)-1]) == "/" {
-			return path
-		}
-
-		retPath = path + "/"
-		return retPath
+	if len(path) == 0 {
+		return path
+	}
+	
+	if string(path[len(path)-1]) == "/" {
+		return strings.TrimSuffix(path, "/")
 	}
 
-	return retPath
+	return path
 }
+
+
 
 // ReadFile2Map ...
 func ReadFile2Map(path string) (map[string]interface{}, error) {
@@ -82,8 +84,12 @@ func Dump2File(path, fileName string, info interface{}) error {
 
 //  WalkFilePath walk file path for file or path list by onlyDir
 // return file list  while onlyDir is false, else return path list.
-func WalkFilePath(folder , match string, onlyDir bool) ([]string, error) {
+func WalkFilePath(folder , match string, onlyDir bool, separators ...string) ([]string, error) {
     var result []string
+	var separator string
+	if len(separators) != 0 {
+		separator = separators[0]
+	}
 
     filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
         if err != nil {
@@ -95,15 +101,17 @@ func WalkFilePath(folder , match string, onlyDir bool) ([]string, error) {
 			return fmt.Errorf("get path [%v] Sections is null", path)
 		}
 
+		var fileName string
+
 		if fi.IsDir() && onlyDir {			
-			fileName := pathSections[len(pathSections)-1]
-			if fileName != ""{
+			fileName = pathSections[len(pathSections)-1]
+			if fileName != "" && !strings.Contains(fileName, strings.Trim(separator, "/")) {
 				result = append(result, fileName)
-			}			
+			}
 		}
 
-        if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {			
-			fileName := pathSections[len(pathSections)-1]
+        if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {
+			fileName = pathSections[len(pathSections)-1]
             result = append(result, fileName)
         }
 
@@ -188,4 +196,70 @@ func readLine(line string) (map[string]interface{}, error) {
 	}
 
 	return param, nil
+}
+
+func Save2CSV(path, fileName string, data map[string][]float32) error {
+	if !IsPathExist(path) {
+		err := os.MkdirAll(path, os.ModePerm)
+		if err != nil {
+			fmt.Printf("save to %v cvs file, make dir err:[%v]\n", fileName, err)
+			return fmt.Errorf("make dir err:[%v]", err)
+		}
+	}
+
+	if len(data) == 0 {
+		fmt.Printf("save to %v cvs file, data length is 0\n", fileName)
+		return nil
+	}
+
+	fullName:= fmt.Sprintf("%s/%s", path, fileName)
+
+	newFile, err := os.Create(fullName)	
+    if err != nil {
+		fmt.Printf("creat %v cvs file failed\n", fullName)
+        return fmt.Errorf("create [%v] failed", fullName)
+    }
+
+    defer newFile.Close()        
+    
+	w := csv.NewWriter(newFile)
+	var headers []string
+	for name, _ := range data {
+		headers = append(headers, name)	
+	}	
+
+	dataPair := make([][]string, len(data[headers[0]]))
+	
+	sort.Strings(headers)
+	contents := [][]string {
+	    headers,
+	}
+	
+	for index:=0; index < len(headers); index ++ {				
+		for row, value := range data[headers[index]] {
+			dataPair[row] = append(dataPair[row], fmt.Sprintf("%v", value))
+		}
+	}
+
+	contents = append(contents, dataPair...)
+	w.WriteAll(contents)
+	w.Flush()
+	return nil
+}
+
+func GetWalkPath(folder, match string) (string, error) {
+    var result string
+    filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
+        if err != nil {
+            return err
+        }
+
+        if !fi.IsDir() && strings.Contains(path, match) {
+            result = path
+        }
+
+        return nil
+    })
+
+    return result, nil
 }

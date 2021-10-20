@@ -72,6 +72,9 @@ var (
 
 	// ParamAllFile ...
 	ParamAllFile = "parameter/sysctl.json"
+
+	// IsInnerRequests is inner requests
+	IsInnerRequests bool
 )
 
 func init() {

@@ -3,15 +3,36 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 	"github.com/spf13/cobra"
+)
+
+const (
+	egCollect = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --job collect_test --iteration 10"
+	egTrain = "\tkeentune sensitize train --job collect_test --output train_test --trials 2"
+	egDelete = "\tkeentune sensitize delete --job collect_test"
+	egSensitiveList = "\tkeentune sensitize list"
+	egSensitiveStop = "\tkeentune sensitize stop"
 )
 
 func createSensitizeCmds() *cobra.Command {
 	sensitizeCmd := &cobra.Command{
-		Use:   "sensitize",
-		Short: "sensitive paramater recognization commands, see details with '-h'",
-		Long: "\n\tsensitive paramater recognization commands, see details with '-h'",
+		Use:   "sensitize [command]",
+		Short: "Sensitive parameter identification and explanation with AI algorithms",
+		Long: "Sensitive parameter identification and explanation with AI algorithms",
+		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveList, egSensitiveStop, egTrain),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "list" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
+					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				}
+				
+			}
+
+			if len(args) == 0 {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+			}
+
 			return cmd.Help()
 		},
 	}
@@ -33,28 +54,23 @@ func collectCmd() *cobra.Command {
 	var flag TuneFlag
 	cmd := &cobra.Command{
 		Use:   "collect",
-		Short: "perform sensitive parameter collection",
-		Long: `
-		perform sensitive parameter collection, the PROJECT_JSON which you can refer to Documentation xxx.json.json.
-			example: keentune sensitize --name g6_long_latency --param_conf  parameter/sysctl.json --bench_conf benchmark/wrk/bench_wrk_nginx_long.json`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("\nrequired arguments: name=[%v], bench_conf=[%v]\n", flag.Name, flag.BenchConf)
-			fmt.Printf("optional arguments: iteration=[%v], param_conf=[%v], debug=[%v]\n", flag.Round, flag.ParamConf, flag.Verbose)
-
-			if strings.Trim(flag.Name, " ") == "" {
-				return fmt.Errorf("command flag --name is invalid argument")
+		Short: "Collecting parameter and benchmark score as sensitivity identification data randomly",
+		Long:  "Collecting parameter and benchmark score as sensitivity identification data randomly",
+		Example: egCollect,
+		Run: func(cmd *cobra.Command, args []string) {
+			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" || strings.Trim(flag.ParamConf, " ") == "" {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
 			}
 
-			if strings.Trim(flag.BenchConf, " ") == "" {
-				return fmt.Errorf("command flag --bench_conf is invalid argument")
-			}
-
-			return RunCollectRemote(cmd.Context(), flag)
+			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log", "keentuned-sensitize-collect", time.Now().Unix())
+			RunCollectRemote(cmd.Context(), flag)
+			return
 		},
 	}
 
 	setTuneFlag("sensitize", cmd, &flag)
-
 	return cmd
 }
 
@@ -62,32 +78,35 @@ func trainCmd() *cobra.Command {
 	var trainflags TrainFlag
 	cmd := &cobra.Command{
 		Use:   "train",
-		Short: "train sensitive parameters",
-		Long:  "\n\ttrain sensitive parameters\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("\nrequired arguments: data_name=[%v], output_name=[%v]\n", trainflags.Data, trainflags.Output)
-			fmt.Printf("optional arguments: trials=[%v]\n", trainflags.Trials)
-
+		Short: "Deploy and start a sensitivity identification job",
+		Long:  "Deploy and start a sensitivity identification job",
+		Example: egTrain,
+		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(trainflags.Data, " ") == "" {
-				return fmt.Errorf("command option --data_name is invalid argument")
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
 			}
 
 			if strings.Trim(trainflags.Output, " ") == "" {
-				return fmt.Errorf("command option --output_name is invalid argument")
+				trainflags.Output = trainflags.Data
 			}
 
 			if trainflags.Trials > 10 || trainflags.Trials < 1 {
-				return fmt.Errorf("command option --trials is out of range [1,10], pleast check and try again")
+				fmt.Println("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
+				return
 			}
 
-			return RunTrainRemote(cmd.Context(), trainflags)
+			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log", "keentuned-sensitize-train", time.Now().Unix())
+
+			RunTrainRemote(cmd.Context(), trainflags)
 		},
 	}
 
 	flags := cmd.Flags()
-	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "the sensitize trials")
-	flags.StringVar(&trainflags.Data, "data_name", "", "the specified training sensitive data")
-	flags.StringVar(&trainflags.Output, "output_name", "", "the training result output name")
+	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize list\"")
+	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials")
+	flags.StringVarP(&trainflags.Output, "output", "o", "", "output file of sensitive parameter identification and explanation")
 
 	return cmd
 }
@@ -95,10 +114,12 @@ func trainCmd() *cobra.Command {
 func listSensitivityCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
-		Short: "list brief info of sensitive data",
-		Long:  "\n\tlist brief info of sensitive data\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return RunListRemote(cmd.Context(), "sensitize")
+		Short: "List available sensitivity identification data",
+		Long:  "List available sensitivity identification data",
+		Example: egSensitiveList,
+		Run: func(cmd *cobra.Command, args []string) {
+			RunListRemote(cmd.Context(), "sensitize")
+			return
 		},
 	}
 
@@ -109,21 +130,22 @@ func deleteSensitivityCmd() *cobra.Command {
 	var flag DeleteFlag
 	cmd := &cobra.Command{
 		Use:   "delete",
-		Short: "delete the specified sensitive parameters",
-		Long:  "\n\tdelete the specified sensitive parameters\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("\nrequired arguments: name=[%v]\n", flag.Name)
+		Short: "Delete the sensitivity identification data",
+		Long:  "Delete the sensitivity identification data",
+		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
-				return fmt.Errorf("command option --name is invalid argument")
-			}			
-			
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
+			}
+
 			flag.Cmd = "sensitize"
-			return RunDeleteRemote(cmd.Context(), flag)
+			RunDeleteRemote(cmd.Context(), flag)
+			return
 		},
 	}
 
-	flags := cmd.Flags()
-	flags.StringVar(&flag.Name, "name", "", "the sensitize data wanted to delete")
+	cmd.Flags().StringVarP(&flag.Name, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize list\"")
 
 	return cmd
 }

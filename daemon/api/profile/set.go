@@ -31,37 +31,36 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 
 	configFile, err := checkProfilePath(flag.Name)
 	if err != nil{
-		log.Errorf(log.ProfSet, "check file [%v] err:%v", flag.Name, err)
-		return err
+		log.Errorf(log.ProfSet, "Check file [%v] err:%v", flag.Name, err)
+		return nil
 	}
 	
 	requestInfo, err := getConfigParamInfo(configFile)
 	if err != nil {
-		log.Errorf(log.ProfSet, "get request info from specified file [%v] err:%v", flag.Name, err)
-		return err
+		log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", flag.Name, err)
+		return fmt.Errorf("Get request info from specified file [%v] err:%v", flag.Name, err)
 	}
 
 	if err := prepareBeforeSet(requestInfo); err != nil {
-		log.Errorf(log.ProfSet, "prepare before Set err:%v", err)
-		return err
+		log.Errorf(log.ProfSet, "Prepare before Set err:%v", err)
+		return fmt.Errorf("Prepare before Set err:%v", err)
 	}
 
-	log.Infof(log.ProfSet, "\nStep1. [Set profile] get ready.")
-
-	if err := setConfiguration(requestInfo); err != nil {
-		log.Errorf(log.ProfSet, "failed to exec [profile set], err:%v", err)
-		return nil
+	setResult, err := setConfiguration(requestInfo)
+	if err != nil {
+		log.Errorf(log.ProfSet, "Set failed:%v", err)
+		return fmt.Errorf("Set failed:%v", err)
 	}
-
-	log.Infof(log.ProfSet, "\nStep2. [Set profile] set configuration successfully.")
-
+	
 	activeFile := m.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(activeFile, []byte(flag.Name)); err != nil {
-		log.Errorf(log.ProfSet, "update active file err:%v", err)
-		return nil
+		log.Errorf(log.ProfSet, "Update active file err:%v", err)
+		return fmt.Errorf("Update active file err:%v", err)
+
 	}
 
-	log.Infof(log.ProfSet, "\nStep3. [Set profile] update active configure file successfully, and the process finish.")
+	log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), flag.Name, setResult)
+
 	return nil
 }
 
@@ -76,7 +75,7 @@ func checkProfilePath(name string) (string, error) {
 		return demoProfPath, nil
 	}
 
-	return "", fmt.Errorf("find the configuration file [%v] neither in[] nor in []", name, fmt.Sprintf("%s/profile", config.KeenTune.Home), fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
+	return "", fmt.Errorf("find the configuration file [%v] neither in[%v] nor in [%v]", name, fmt.Sprintf("%s/profile", config.KeenTune.Home), fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
 }
 
 func prepareBeforeSet(configInfo map[string]interface{}) error {	
@@ -119,19 +118,20 @@ func getConfigParamInfo(configFile string) (map[string]interface{}, error) {
 	return retRequst, nil
 }
 
-func setConfiguration(request interface{}) error {
+func setConfiguration(request interface{}) (string, error) {
 	uri := fmt.Sprintf("%s:%s/configure", config.KeenTune.TargetIP, config.KeenTune.TargetPort)
 
 	resp, err := http.RemoteCall("POST", uri, request)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	if err = parseSetResponse(resp); err != nil {
-		return err
+	setResult, err := parseSetResponse(resp)
+	if err != nil {
+		return "", err
 	}
 
-	return nil
+	return setResult, nil
 }
 
 func updateActiveFile(fileName string, info []byte) error {
@@ -146,10 +146,10 @@ func backup(uri string, request interface{}) error {
 	return http.ResponseSuccess("POST", uri, request)
 }
 
-func parseSetResponse(sucBytes []byte) error {
+func parseSetResponse(sucBytes []byte) (string, error) {
 	applyMap, err := m.GetApplyResult(sucBytes)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	var appliedInfo struct {
@@ -165,17 +165,17 @@ func parseSetResponse(sucBytes []byte) error {
 	for _, paramMaps := range applyMap {
 		paramMap, ok := paramMaps.(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("[parseSetResponse] assert param type [%v] to map failed", reflect.TypeOf(paramMaps))
+			return "", fmt.Errorf("[parseSetResponse] assert param type [%v] to map failed", reflect.TypeOf(paramMaps))
 		}
 
 		for name, orgValue := range paramMap {
 			orgParamMap, ok := orgValue.(map[string]interface{})
 			if !ok {
-				return fmt.Errorf("[parseSetResponse] assert param orgin value type[%v] to map failed", reflect.TypeOf(orgValue))
+				return "", fmt.Errorf("[parseSetResponse] assert param orgin value type[%v] to map failed", reflect.TypeOf(orgValue))
 			}
 
 			if err = utils.Map2Struct(orgParamMap, &appliedInfo); err != nil {
-				return fmt.Errorf("[parseSetResponse] MapToStruct err:[%v]", err)
+				return "", fmt.Errorf("[parseSetResponse] MapToStruct err:[%v]", err)
 			}
 
 			if appliedInfo.Success {
@@ -189,14 +189,15 @@ func parseSetResponse(sucBytes []byte) error {
 
 	}
 
-	if failedCount == 0 {
-		log.Infof(log.ProfSet, "\tSet result: total param counts: %v; successed: %v; failed: %v.", sucCount+failedCount, sucCount, failedCount)
+	var setResult string
 
-		return nil
+	if failedCount == 0 {
+		setResult = fmt.Sprintf("total param %v, successed %v, failed %v.", sucCount, sucCount, failedCount)
+
+		return setResult, nil
 	}
 
-	log.Infof(log.ProfSet, "\tSet result: total param counts: %v; successed: %v; failed: %v; the failed details displayed in the terminal.", sucCount+failedCount, sucCount, failedCount)
-	
-	log.Infof(log.ProfSet, "%s show table end.", failedInfo)
-	return nil
+	setResult = fmt.Sprintf("total param %v, successed %v, failed %v; the failed details displayed in the terminal.%s show table end.", sucCount+failedCount, sucCount, failedCount, failedInfo)
+
+	return setResult, nil
 }

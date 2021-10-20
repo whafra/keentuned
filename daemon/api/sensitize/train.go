@@ -17,26 +17,30 @@ type TrainFlag struct {
 	Data   string
 	Trials int
 	Force  bool
+	Log    string
 }
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
+	if com.SystemRun {
+		log.Errorf("", "An instance is running. You can wait the process finish or run \"keentune %v stop\" for trying a new job again if you want give up the old job.", com.GetRunningTask())
+		return fmt.Errorf("Train failed, an instance is running. You can wait the process finish or run \"keentune %v stop\" and try a new job again, if you want give up the old job.", com.GetRunningTask())
+	}
+
 	go runTrain(flags)
 	return nil
 }
 
-func runTrain(flags TrainFlag) {	
-	if com.SystemRun {
-		log.Info(log.SensitizeTrain, "An instance is running, please wait for it to finish and re-initiate the request.")
-		return
-	}
-
-	log.ClearCliLog(log.SensitizeTrain)
+func runTrain(flags TrainFlag) {
+	log.SensitizeTrain += ":" + flags.Log
 	com.SystemRun = true
+	com.IsSensitizing = true
 	defer func() {
+		log.ClearCliLog(log.SensitizeTrain)
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.SystemRun = false
+		com.IsSensitizing = false
 	}()
 
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
@@ -59,15 +63,14 @@ func runTrain(flags TrainFlag) {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "Step3. Get sensitivity result success and result info displayed in the terminal.")
+	log.Infof(log.SensitizeTrain, "Step3. Get sensitive parameter identification results successfully, and the details are as follows.%v", resultString)
 	
-	log.Infof(log.SensitizeTrain, "%s show table end.", fmt.Sprintf("%s,%s;%s", "parameter name", "sensitivity ratio", resultString))
 
 	if err = dumpSensitivityResult(resultMap, flags.Output); err != nil {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to [%v] successfully, and [sensitize train] finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))	
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))	
 }
 
 func initiateSensitization(flags *TrainFlag) error {
@@ -97,19 +100,23 @@ func initiateSensitization(flags *TrainFlag) error {
 
 func getSensitivityResult() (string, map[string]interface{}, error) {
 	var sensitizeParams struct {
-		Success bool         `json:"suc"`
-		Result []m.Parameter `json:"result"`
-		Msg     string       `json:"msg"`
+		Success bool          `json:"suc"`
+		Result  []m.Parameter `json:"result"`
+		Msg     interface{}   `json:"msg"`
 	}
 
-	resultBytes := <-config.SensitizeReusltChan
-	log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
-	if len(resultBytes) == 0 {
-		return "", nil, fmt.Errorf("get sensitivity result is nil")
-	}
+	config.IsInnerRequests = true
 
-	if err := json.Unmarshal(resultBytes, &sensitizeParams); err != nil {
-		return "", nil, err
+	select {
+	case resultBytes := <-config.SensitizeReusltChan :
+		log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
+		if len(resultBytes) == 0 {
+			return "", nil, fmt.Errorf("get sensitivity result is nil")
+		}
+
+		if err := json.Unmarshal(resultBytes, &sensitizeParams); err != nil {
+			return "", nil, err
+		}
 	}
 
 	if !sensitizeParams.Success {
@@ -119,12 +126,16 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 	domainMap := make(map[string][]map[string]interface{})
 	resultMap := make(map[string]interface{})
 	var resultString string
+	if len(sensitizeParams.Result) >0 {
+		resultString += fmt.Sprintf("\n\t| %v | %v |", "parameter name", "sensitivity ratio")
+	}
+
 	for _, param := range sensitizeParams.Result {
 		paramInfo := map[string]interface{}{
 			param.ParaName: map[string]interface{}{"weight": param.Weight},
 		}
 
-		resultString += fmt.Sprintf("%s,%v;", param.ParaName, param.Weight)
+		resultString += fmt.Sprintf("\n\t| %v \t|  %v \t|", param.ParaName, param.Weight)
 		domainMap[param.DomainName] = append(domainMap[param.DomainName], paramInfo)
 	}
 

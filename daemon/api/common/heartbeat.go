@@ -32,6 +32,7 @@ func HeartbeatCheck() {
 
 	if IsClientOffline(uri) {
 		log.Error("", "target machine client is offline, please retry after check it is ready")
+		config.ServeFinish <- true
 		return
 	} else {
 		log.Info("", "\tKeenTuned heartbeat check : keentuned and target connection success")

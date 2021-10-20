@@ -4,7 +4,6 @@
       "benchmark_cmd": "python3 {remote_script_path} {target_ip}",
       "local_script_path": "benchmark/wrk/ack_nginx_http_long_base.py",
       "host_weight": 100,
-      "host": "127.0.0.1:9874",
       "items": {
         "Requests_sec": {
           "parser": "echo '$out' | grep 'Throughput' | awk '{print $3}'",

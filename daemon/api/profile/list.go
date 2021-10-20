@@ -7,6 +7,7 @@ import (
 	m "keentune/daemon/modules"
 	"fmt"
 	"io/ioutil"
+	"strings"
 )
 
 // List run profile list service
@@ -18,8 +19,8 @@ func (s *Service) List(flag string, reply *string) error {
 
 	proFileList, err := walkProfileAllFiles()
 	if err != nil {
-		log.Errorf(log.ProfList, "msg:%v", err)
-		return fmt.Errorf("[Error] msg:%v", err)
+		log.Errorf(log.ProfList, "Walk file path failed: %v", err)
+		return fmt.Errorf("Walk file path failed: %v", err)
 	}
 
 	var fileListInfo string
@@ -28,7 +29,7 @@ func (s *Service) List(flag string, reply *string) error {
 	
 	for _, value := range proFileList {
 		if string(activeNameBytes) == value {
-			fileListInfo += fmt.Sprintf("\n\t%s\t%v", utils.ColorString("GREEN", "[active]"), value)
+			fileListInfo += fmt.Sprintf("%s\t%v\n", utils.ColorString("GREEN", "[active]"), value)
 			continue
 		}
 
@@ -36,7 +37,7 @@ func (s *Service) List(flag string, reply *string) error {
 			continue
 		}
 
-		fileListInfo += fmt.Sprintf("\n\t[available]\t%v", value)
+		fileListInfo += fmt.Sprintf("[available]\t%v\n", value)
 	}
 
 	if len(fileListInfo) == 0 {
@@ -44,7 +45,7 @@ func (s *Service) List(flag string, reply *string) error {
 		return nil
 	}
 
-	log.Infof(log.ProfList, "Find the profile file as follows:\n%v", fileListInfo)
+	log.Infof(log.ProfList, "%v", strings.TrimSuffix(fileListInfo, "\n"))
 
 	return nil
 }
@@ -55,7 +56,7 @@ func walkProfileAllFiles() ([]string, error) {
 		return proFileList, fmt.Errorf("walk dump folder failed :%v", err)
 	}
 
-	homeFileList, err := file.WalkFilePath(m.GetProfileHomePath(), "", false)
+	homeFileList, err := file.WalkFilePath(m.GetProfileHomePath(), ".conf", false)
 	if err != nil {
 		return proFileList, fmt.Errorf("walk home folder failed :%v", err)
 	}

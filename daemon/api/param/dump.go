@@ -25,22 +25,22 @@ func (s *Service) Dump(dump com.DumpFlag, reply *string) error {
 	err := checkDumpParam(tunedTaskPath, outputFile, dump.Force)
 	if err != nil {
 		log.Errorf(log.ParamDump, "Check dump param failed, err:%v", err)
-		return err
+		return fmt.Errorf("Check dump param failed, err:%v", err)
 	}
 
 	jsonFile := fmt.Sprintf("%s/%s_best.json", tunedTaskPath, dump.Name)
 	if err = convertJsonFile2ConfigFile(jsonFile, outputFile); err != nil {
-		log.Errorf(log.ParamDump, "dump file failed, err:%v", err)
-		return err
+		log.Errorf(log.ParamDump, "Dump file failed, err:%v", err)
+		return fmt.Errorf("Dump file failed, err:%v", err)
 	}
 
-	log.Infof(log.ParamDump, "Dump file to [%v] successfully", outputFile)
+	log.Infof(log.ParamDump, "[ok] %v dump successfully", outputFile)
 	return nil
 }
 
 func checkDumpParam(path, outputFile string, confirm bool) error {
 	if !file.IsPathExist(path) {
-		return fmt.Errorf("find the tuned file [%v] is not exist, please confirm that the tuning task [%v] exists or is completed. ", path, strings.Split(path, "/")[len(strings.Split(path, "/"))-1])
+		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", path, strings.Split(path, "/")[len(strings.Split(path, "/"))-1])
 	}
 
 	activeFileName := m.GetProfileWorkPath("active.conf")
@@ -62,12 +62,12 @@ func checkDumpParam(path, outputFile string, confirm bool) error {
 func convertJsonFile2ConfigFile(jsonFile, outputFile string) error {
 	paraBytes, err := ioutil.ReadFile(jsonFile)
 	if err != nil {
-		return fmt.Errorf("read file :%v err:%v\n", jsonFile, err)
+		return fmt.Errorf("read file :%v err:%v", jsonFile, err)
 	}
 
 	configInfo := &m.Configuration{}
 	if err = json.Unmarshal(paraBytes, configInfo); err != nil {
-		return fmt.Errorf("Unmarshal err:%v\n", err)
+		return fmt.Errorf("Unmarshal err:%v", err)
 	}
 
 	var proffileInfo string

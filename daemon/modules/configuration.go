@@ -50,9 +50,6 @@ func (configuration Configuration) Dump(fileName, suffix string) {
 	return
 }
 
-// Load configuration from profile file
-func (configuration Configuration) Load() {}
-
 // Apply configuration to Client
 func (configuration Configuration) Apply(timeCost *time.Duration) (Configuration, error) {
 	start := time.Now()
@@ -186,8 +183,10 @@ func GetApplyResult(sucBytes []byte) (map[string]interface{}, error) {
 	var applyResp struct {
 		Success bool                   `json:"suc"`
 		Data    map[string]interface{} `json:"data"`
-		Msg     string                 `json:"msg"`
+		Msg     interface{}            `json:"msg"`
 	}
+
+	config.IsInnerRequests = true
 	
 	select {
 	case body := <-config.ApplyResultChan:

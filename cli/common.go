@@ -13,94 +13,89 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(createSensitizeCmds()))
 	subCmds = append(subCmds, decorateCmd(createParamCmds()))
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
-	subCmds = append(subCmds, decorateCmd(msgCmd()))
+	subCmds = append(subCmds, decorateCmd(benchCmd()))
 
 	return subCmds
 }
+
+var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/Ingress_http_short.json -i 10"
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag
 	cmd := &cobra.Command{
 		Use:   "rollback",
-		Short: "rollback to the system init state",
-		Long:  "\n\trollback the system config to the init state\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		Short: "Restore initial state",
+		Long:  "Restore initial state",
+		Run: func(cmd *cobra.Command, args []string) {
 			flag.Cmd = parentCmd
-			return RunRollbackRemote(cmd.Context(), flag)
+			RunRollbackRemote(cmd.Context(), flag)
+			return
 		},
 	}
-
-	return cmd
-}
-
-func deleteCmd(parentCmd string) *cobra.Command {
-	var flag DeleteFlag
-	cmd := &cobra.Command{
-		Use:   "delete",
-		Short: fmt.Sprintf("delete the specified %s info.", parentCmd),
-		Long:  fmt.Sprintf("\n\tdelete the specified %s info.\n", parentCmd),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("\nrequired arguments: name=[%v]\n", flag.Name)
-			if strings.Trim(flag.Name, " ") == "" {
-				return fmt.Errorf("command flag --name is invalid argument")
-			}
-
-			flag.Cmd = parentCmd
-
-			return RunDeleteRemote(cmd.Context(), flag)
-
-		},
-	}
-
-	flags := cmd.Flags()
-	flags.StringVar(&flag.Name, "name", "", fmt.Sprintf("the name of %s file you want to delete", parentCmd))
 
 	return cmd
 }
 
 func setTuneFlag(cmdName string, cmd *cobra.Command, flag *TuneFlag) {
 	flags := cmd.Flags()
-	flags.StringVar(&flag.Name, "name", "", fmt.Sprintf("the %s name", cmdName))
-	flags.IntVarP(&flag.Round, "iteration", "i", 100, fmt.Sprintf("the %s iterations", cmdName))
-	flags.StringVar(&flag.BenchConf, "bench_conf", "", "the benchmark configure infomation")
-	flags.StringVar(&flag.ParamConf, "param_conf", "parameter/sysctl.json", "the parameters infomation")
-	flags.BoolVar(&flag.Verbose, "debug", false, "display all details, including baseline value, score set, average value, fluctuation range, execution time, tuning effect, etc.; by default, only the average value and tuning effect of target parameters with a weight of not 0 are displayed.")	
-}
-
-func msgCmd() *cobra.Command {
-	var flag string
-	var cmd = &cobra.Command{
-		Use:   "msg",
-		Short: "show the command executing result, enum: \"param tune\", \"sensitize collect\", \"sensitize train\"",
-		Long:  "\n\tshow the command executing result, enum: \"param tune\", \"sensitize collect\", \"sensitize train\"\n\tfor example: keentune msg --name \"param tune\"\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("\nrequired arguments: name=[%v]\n", flag)
-			if strings.Trim(flag, " ") == "" {
-				return fmt.Errorf("command flag --name must be one of  \"param tune\", \"sensitize collect\", \"sensitize train\"")
-			}
-			
-			return MsgRemote(cmd.Context(), flag)
-		},
+	if cmdName == "tune" {
+		flags.StringVarP(&flag.Name, "job", "j", "", "name of the new dynamic parameter tuning job")
+		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of dynamic parameter tuning")
+	} else {
+		flags.StringVarP(&flag.Name, "data", "d", "", "sensitivity identification data name")
+		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of sensitivity identification data collection")
 	}
 
-	flags := cmd.Flags()
-	flags.StringVar(&flag, "name", "", "the command name, enum: \"param tune\", \"sensitize collect\", \"sensitize train\"")
-
-	return cmd
+	flags.StringVar(&flag.BenchConf, "bench", "", "benchmark configuration file, query by command \"keentune param list\"")
+	flags.StringVar(&flag.ParamConf, "param", "", "parameter configuration file, query by command \"keentune param list\"")
+	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
 
 func stopCmd(flag string) *cobra.Command {
+	var description string
+	if flag == "param" {
+		description = "Terminate a parameter tuning job"
+	} else {
+		description = "Terminate a sensitivity identification job"
+	}
 	var cmd = &cobra.Command{
 		Use:   "stop",
-		Short: fmt.Sprintf("stop a %s task in progress", flag),
-		Long:  fmt.Sprintf("\n\tstop a %s task in progress\n", flag),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return StopRemote(cmd.Context(), flag)
+		Short: description,
+		Long:  description,
+		Run: func(cmd *cobra.Command, args []string) {
+			StopRemote(cmd.Context(), flag)
+			return
 		},
 	}
 
 	return cmd
 }
+
+func benchCmd() *cobra.Command {
+	var flag BenchmarkFlag
+	var cmd = &cobra.Command{
+		Use:   "benchmark",
+		Short: "Automatic benchmark pressure test",
+		Long: "Automatic benchmark pressure test",
+		Example: egBenchmark,
+		Run: func(cmd *cobra.Command, args []string) {
+			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
+			}
+					
+			RunBenchRemote(cmd.Context(), flag)
+		},
+		Hidden: true,
+	}
+	flags := cmd.Flags()
+	flags.StringVarP(&flag.Name, "job", "j", "", "benchmark job name")
+	flags.IntVarP(&flag.Round, "iteration", "i", 100, "benchmark execution iterations of pressure test")
+	flags.StringVar(&flag.BenchConf, "bench", "", "benchmark configure infomation")
+	return cmd
+}
+
 
 // showInTable dispaly headers and params in table, params[n] length should be equal to headers'.
 func showInTable(reply string) {
@@ -156,12 +151,12 @@ func confirm() bool {
 	var inputInfo string
 	for {
 		fmt.Scanln(&inputInfo)
-		if inputInfo != "y" && inputInfo != "n" && inputInfo != "yes" && inputInfo != "no" {
-			fmt.Printf("\tplease input y(yes) or n(no)--> ")
+		if inputInfo != "y" && inputInfo != "n" && inputInfo != "yes" && inputInfo != "no" && inputInfo != "Y" && inputInfo != "N" {
+			fmt.Printf("\tplease input y(yes) or n(no)-->")
 			continue
 		}
 
-		if inputInfo == "y" || inputInfo == "yes" {
+		if inputInfo == "y" || inputInfo == "yes" || inputInfo == "Y" {
 			return true
 		}
 
@@ -175,3 +170,18 @@ func decorateCmd(cmd *cobra.Command) *cobra.Command {
 	return cmd
 }
 
+// ColorString print content string by color
+func ColorString(color string, content string) string {
+	// 其中0x1B是标记，[开始定义颜色，1代表高亮，40代表黑色背景，32代表绿色前景，0代表恢复默认颜色
+	// 31 代表红色前景；33 代表黄色前景
+	switch strings.ToUpper(color) {
+	case "RED":
+		return fmt.Sprintf("%c[1;40;31m%s%c[0m", 0x1B, content, 0x1B)
+	case "GREEN":
+		return fmt.Sprintf("%c[1;40;32m%s%c[0m", 0x1B, content, 0x1B)
+	case "YELLOW":
+		return fmt.Sprintf("%c[1;40;33m%s%c[0m", 0x1B, content, 0x1B)
+	default:
+		return content
+	}
+}
