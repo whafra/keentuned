@@ -40,6 +40,4 @@ class TestProfileList(unittest.TestCase):
                      "net_high_throuput.conf", "test1.conf"]
         result = all([file in self.out for file in file_list])
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__(
-            'Find the profile file as follows'))
         self.assertTrue(result)

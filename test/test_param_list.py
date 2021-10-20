@@ -35,8 +35,14 @@ class TestParamList(unittest.TestCase):
         cmd = 'keentune param list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Param list as follows'))
+        self.assertTrue(self.out.__contains__('Parameter List'))
+        self.assertTrue(self.out.__contains__('Benchmark List'))
 
-        file_list = ["nginx_conf.json", "param_all.json", "test1"]
+        file_list = ["sysctl.json", "bench_wrk_nginx_long.json"]
         result = all([file in self.out for file in file_list])
         self.assertTrue(result)
+
+        cmd = 'keentune param jobs'
+        self.status, self.out, _ = sysCommand(cmd)
+        self.assertEqual(self.status, 0)
+        self.assertTrue(self.out.__contains__('test1'))

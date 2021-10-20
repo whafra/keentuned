@@ -32,7 +32,7 @@ class TestParamDump(unittest.TestCase):
         logger.info('the test_param_dump testcase finished')
 
     def test_param_dump(self):
-        cmd = 'echo y | keentune param dump -n test1 -o test1.conf'
+        cmd = 'echo y | keentune param dump -j test1 -o test1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('successfully'))

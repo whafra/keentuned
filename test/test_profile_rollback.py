@@ -46,7 +46,7 @@ class TestProfileRollback(unittest.TestCase):
         cmd = 'keentune profile rollback'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('[profile rollback] success'))
+        self.assertTrue(self.out.__contains__('profile rollback successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)

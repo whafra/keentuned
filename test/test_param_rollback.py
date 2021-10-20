@@ -31,4 +31,4 @@ class TestParamRollback(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
 
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('[param rollback] success'))
+        self.assertTrue(self.out.__contains__('param rollback successfully'))

@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import logging
 import time
@@ -30,20 +31,20 @@ class TestParamTune(unittest.TestCase):
         logger.info('the test_param_tune testcase finished')
 
     def test_param_tune(self):
-        cmd = 'keentune param tune --param_conf parameter/param_100.json -i 1 --bench_conf benchmark/wrk/bench_wrk_nginx_long.json --name test1'
-        status, _, _ = sysCommand(cmd)
-        self.assertEqual(status, 0)
+        cmd = 'keentune param tune --param parameter/sysctl.json -i 1 --bench benchmark/wrk/bench_wrk_nginx_long.json --job test1'
+        self.status, self.out, _  = sysCommand(cmd)
+        self.assertEqual(self.status, 0)
 
+        path = re.search(r'\s+"(.*?)"', self.out).group(1)
+        time.sleep(3)
         while True:
-            cmd = "keentune msg --name 'param tune'"
-            self.status, self.out, _ = sysCommand(cmd)
-            if '[BEST] Tuning improvment' in self.out:
+            with open(path, 'r') as f:
+                res_data = f.read()
+            if '[BEST] Tuning improvment' in res_data:
                 break
             time.sleep(8)
 
         word_list = ["Step1", "Step2", "Step3", "Step4",
                      "Step5", "Step6", "[BEST] Tuning improvment"]
-        result = all([word in self.out for word in word_list])
-
-        self.assertEqual(self.status, 0)
+        result = all([word in res_data for word in word_list])
         self.assertTrue(result)

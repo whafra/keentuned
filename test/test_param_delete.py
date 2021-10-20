@@ -32,7 +32,7 @@ class TestParamDelete(unittest.TestCase):
         logger.info('the test_param_delete testcase finished')
 
     def test_param_delete(self):
-        cmd = "echo y | keentune param delete --name test1"
+        cmd = "echo y | keentune param delete --job test1"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))
@@ -42,7 +42,7 @@ class TestParamDelete(unittest.TestCase):
         self.assertEqual(self.status, 0)
         self.assertFalse(self.out.__contains__('test1'))
 
-        cmd = "echo y | keentune param delete --name param_all.json"
+        cmd = "echo y | keentune param delete --job sysctl.json"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('not supported to delete'))

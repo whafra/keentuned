@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class TestSensitizeDelete(unittest.TestCase):
     def setUp(self) -> None:
-        self.algorithm = "ETPE"
+        self.algorithm = "Random"
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
@@ -30,7 +30,7 @@ class TestSensitizeDelete(unittest.TestCase):
         logger.info('the test_sensitize_delete testcase finished')
 
     def test_sensitize_delete(self):
-        cmd = 'echo y | keentune sensitize delete --name test2'
+        cmd = 'echo y | keentune sensitize delete --data test2'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))

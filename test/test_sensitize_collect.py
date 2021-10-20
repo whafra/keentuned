@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import time
 import unittest
@@ -27,20 +28,21 @@ class TestSensitizeCollect(unittest.TestCase):
         logger.info('the test_sensitize_collect testcase finished')
 
     def test_sensitize_collect(self):
-        cmd = 'keentune sensitize collect -i 1 --param_conf parameter/param_100.json --bench_conf benchmark/wrk/bench_wrk_nginx_long.json --name test2'
-        status, _, _ = sysCommand(cmd)
-        self.assertEqual(status, 0)
+        cmd = 'keentune sensitize collect -i 10 --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data test2'
+        self.status, self.out, _  = sysCommand(cmd)
+        self.assertEqual(self.status, 0)
 
+        path = re.search(r'\s+"(.*?)"', self.out).group(1)
+        time.sleep(3)
         while True:
-            cmd = "keentune msg --name 'sensitize collect'"
-            self.status, self.out, _ = sysCommand(cmd)
-            if 'Sensitization collection finished' in self.out:
+            with open(path, 'r') as f:
+                res_data = f.read()
+            if 'Sensitization collection finished' in res_data:
                 break
             time.sleep(8)
 
         word_list = ["Step1", "Step2", "Step3", "Step4", "Sensitization collection finished"]
-        result = all([word in self.out for word in word_list])
-        self.assertEqual(self.status, 0)
+        result = all([word in res_data for word in word_list])
         self.assertTrue(result)
 
         cmd = 'keentune sensitize list'

@@ -37,31 +37,33 @@ def checkServerStatus(server_list):
 
 
 def deleteDependentData(param_name):
-    cmd = "echo y | keentune param delete --name {}".format(param_name)
+    cmd = "echo y | keentune param delete --job {}".format(param_name)
     sysCommand(cmd)
-    cmd = 'echo y | keentune sensitize delete --name {}'.format(param_name)
+    cmd = 'echo y | keentune sensitize delete --data {}'.format(param_name)
     sysCommand(cmd)
 
 
 def runParamTune():
-    cmd = 'keentune param tune --param_conf parameter/param_100.json -i 1 --bench_conf benchmark/wrk/bench_wrk_nginx_long.json --name test1'
-    sysCommand(cmd)
+    cmd = 'keentune param tune --param parameter/sysctl.json -i 1 --bench benchmark/wrk/bench_wrk_nginx_long.json --job test1'
+    _, output, _ = sysCommand(cmd)
+    path = re.search(r'\s+"(.*?)"', output).group(1)
+    time.sleep(3)
     while True:
-        cmd = "keentune msg --name 'param tune'"
-        _, output, _ = sysCommand(cmd)
-        if '[BEST] Tuning improvment' in output:
+        with open(path, 'r') as f:
+            res_data = f.read()
+        if '[BEST] Tuning improvment' in res_data:
             break
         time.sleep(8)
 
     word_list = ["Step1", "Step2", "Step3", "Step4",
                  "Step5", "Step6", "[BEST] Tuning improvment"]
-    res = all([word in output for word in word_list])
+    res = all([word in res_data for word in word_list])
     result = 0 if res else 1
     return result
 
 
 def runParamDump():
-    cmd = 'echo y | keentune param dump -n test1 -o test1.conf'
+    cmd = 'echo y | keentune param dump -j test1 -o test1.conf'
     sysCommand(cmd)
     path = "/var/keentune/profile/test1.conf"
     res = os.path.exists(path)
@@ -80,18 +82,19 @@ def runProfileSet():
 
 
 def runSensitizeCollect():
-    cmd = 'keentune sensitize collect -i 1 --param_conf parameter/param_100.json --bench_conf benchmark/wrk/bench_wrk_nginx_long.json --name test2'
-    sysCommand(cmd)
-
+    cmd = 'keentune sensitize collect -i 10 --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data test2'
+    _, output, _ = sysCommand(cmd)
+    path = re.search(r'\s+"(.*?)"', output).group(1)
+    time.sleep(3)
     while True:
-        cmd = "keentune msg --name 'sensitize collect'"
-        _, output, _ = sysCommand(cmd)
-        if 'Sensitization collection finished' in output:
+        with open(path, 'r') as f:
+            res_data = f.read()
+        if 'Sensitization collection finished' in res_data:
             break
         time.sleep(8)
 
     word_list = ["Step1", "Step2", "Step3", "Step4",
                  "Sensitization collection finished"]
-    res = all([word in output for word in word_list])
+    res = all([word in res_data for word in word_list])
     result = 0 if res else 1
     return result

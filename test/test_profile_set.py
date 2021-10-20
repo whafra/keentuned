@@ -38,7 +38,7 @@ class TestProfileSet(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__(
-            'update active configure file successfully'))
+            'Set test1.conf successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)

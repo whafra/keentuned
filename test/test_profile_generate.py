@@ -37,13 +37,13 @@ class TestProfileGenerate(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
 
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('successfully'))
+        self.assertTrue(self.out.__contains__('generate successfully'))
 
-        cmd = 'keentune param list'
+        cmd = 'keentune param jobs'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__("test1"))
 
-        path = "/var/keentune/parameter/test1/test1.json"
+        path = "/var/keentune/parameter/generate/test1.json"
         res = os.path.exists(path)
         self.assertTrue(res)

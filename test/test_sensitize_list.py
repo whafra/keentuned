@@ -38,6 +38,6 @@ class TestSensitizeList(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
 
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('identification record successfully'))
+        self.assertTrue(self.out.__contains__('identification results successfully'))
         self.assertTrue(self.out.__contains__('test1'))
         self.assertTrue(self.out.__contains__('test2'))

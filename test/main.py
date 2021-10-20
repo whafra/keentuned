@@ -24,6 +24,7 @@ from test_help import TestHelp
 
 def RunBasicCase():
     param_suite = unittest.TestSuite()
+    param_suite.addTest(TestHelp('test_help'))
     param_suite.addTest(TestParamTune('test_param_tune'))
     param_suite.addTest(TestParamList('test_param_list'))
     param_suite.addTest(TestParamDump('test_param_dump'))

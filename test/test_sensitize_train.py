@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import time
 import unittest
@@ -31,20 +32,21 @@ class TestSensitizeTrain(unittest.TestCase):
         logger.info('the test_sensitize_train testcase finished')
 
     def test_sensitize_train(self):
-        cmd = 'echo y | keentune sensitize train --data_name test2 --output_name test2'
+        cmd = 'echo y | keentune sensitize train --data test2 --output test2'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 
+        path = re.search(r'\s+"(.*?)"', self.out).group(1)
+        time.sleep(3)
         while True:
-            cmd = "keentune msg --name 'sensitize train'"
-            self.status, self.out, _ = sysCommand(cmd)
-            if '[sensitize train] finish' in self.out:
+            with open(path, 'r') as f:
+                res_data = f.read()
+            if '"sensitize train" finish' in res_data:
                 break
             time.sleep(8)
 
-        word_list = ["Step1", "Step2", "Step3", "Step4", "[sensitize train] finish"]
-        result = all([word in self.out for word in word_list])
-        self.assertEqual(self.status, 0)
+        word_list = ["Step1", "Step2", "Step3", "Step4", '"sensitize train" finish']
+        result = all([word in res_data for word in word_list])
         self.assertTrue(result)
 
         self.path = "/var/keentune/sensitize/sensi-test2.json"

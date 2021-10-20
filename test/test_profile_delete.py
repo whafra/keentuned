@@ -44,5 +44,5 @@ class TestProfileDelete(unittest.TestCase):
 
         cmd = 'echo y | keentune profile delete --name cpu_high_load.conf'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('not supported to delete'))
