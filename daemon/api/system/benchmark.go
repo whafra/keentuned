@@ -1,26 +1,26 @@
 package system
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	com "keentune/daemon/api/common"
-	"keentune/daemon/api/param"
+	"keentune/daemon/common/log"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
-	"keentune/daemon/common/log"
+	com "keentune/daemon/api/common"
+	"keentune/daemon/api/param"
 	m "keentune/daemon/modules"
-	"strings"
 	"time"
+	"strings"
+	"io/ioutil"
+	"encoding/json"
+	"fmt"
 )
 
-type Service struct{}
+type Service struct {}
 
 type BenchmarkFlag struct {
 	Round     int
 	BenchConf string
 	Name      string
-}
+} 
 
 func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	if com.SystemRun {
@@ -35,8 +35,8 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 		com.SystemRun = false
 	}()
 
-	inst, err := getBenchmarkInst(flag.BenchConf)
-	if err != nil {
+	inst, err:=getBenchmarkInst(flag.BenchConf)
+	if err!=nil {
 		return err
 	}
 
@@ -74,11 +74,11 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 		log.Infof(log.Benchmark, "[Iteration %v] Benchmark result:%v", i, strings.Replace(benchmarkResult, "average ", "", 1))
 
 		for key, value := range score {
-			scores[key] = append(scores[key], value...)
+			scores[key]= append(scores[key], value...)
 		}
-	}
+	}	
 
-	if err = file.Save2CSV(m.GetDumpCSVPath(), flag.Name+".csv", scores); err != nil {
+	if err = file.Save2CSV(m.GetDumpCSVPath(), flag.Name + ".csv", scores); err!=nil {
 		log.Warnf(log.ParamTune, "Save  Baseline benchmark  to file %v failed, reason:[%v]", flag.Name, err)
 	}
 
@@ -108,11 +108,11 @@ func getBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 
 	tuneIP := strings.Split(config.KeenTune.TargetIP, ",")
 	if len(tuneIP) == 0 {
-		log.Errorf(log.Benchmark, "tune ip from keentuned.conf is empty")
-		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
+		log.Errorf(log.Benchmark, "tune ip from acopsd.conf is empty")
+		return nil, fmt.Errorf("tune ip from acopsd.conf is empty")
 	}
 
-	inst := benchmarks[0]
+	inst:= benchmarks[0]
 	inst.Cmd = strings.Replace(strings.Replace(inst.Cmd, "{remote_script_path}", inst.FilePath, 1), "{target_ip}", tuneIP[0], 1)
 	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.BenchIP, config.KeenTune.BenchPort)
 	return &inst, nil
