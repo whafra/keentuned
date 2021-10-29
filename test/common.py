@@ -1,9 +1,13 @@
 import os
 import re
+import requests
 import subprocess
 import time
 import unittest
 import logging
+
+from keentune_config import keentuned_ip, keentuned_port, brain_ip, \
+    brain_port, bench_ip, bench_port,  target_ip, target_port
 
 logger = logging.getLogger(__name__)
 
@@ -24,15 +28,29 @@ def sysCommand(cmd):
     return status, output, error
 
 
+def getServerStatus(server):
+    data_dict = {
+        "keentuned": [keentuned_ip, keentuned_port],
+        "keentune-brain": [brain_ip, brain_port],
+        "keentune-target": [target_ip, target_port],
+        "keentune-bench": [bench_ip, bench_port]
+    }
+    event = "sensitize_list" if server == "keentune-brain" else "status"
+    url = "http://{}:{}/{}".format(data_dict[server][0], data_dict[server][1], event)
+    res = requests.get(url)
+    if res.status_code != 200:
+        logger.error("Please check {} server is running...".format(server))
+        result = 1
+    else:
+        result = 0
+    return result
+
+
 def checkServerStatus(server_list):
     result = False
     for server in server_list:
-        cmd = "ps aux | grep {} |grep -v grep".format(server)
-        status, _, _ = sysCommand(cmd)
-        if status:
-            logger.error("Please check {} server is running...".format(server))
+        status = getServerStatus(server)
         result = result or status
-
     return result
 
 
