@@ -241,7 +241,7 @@ func (tuner *Tuner) updateFeedbackConfig(configuration *Configuration) {
 	for name, info := range tuner.BaseConfiguration.Score {
 		score, ok := configuration.Score[name]
 		if !ok {
-			log.Warnf(log.ParamTune, "feedback get [%v] from configure passed in  not exist", name)
+			log.Warnf("", "feedback get [%v] from configure passed in  not exist", name)
 			continue
 		}
 		score.Baseline = info.Value
@@ -253,7 +253,7 @@ func (tuner *Tuner) init() (*Configuration, error) {
 	start := time.Now()
 	emptyConf, requireConf := generateInitParams(tuner.ParamConf)
 	if emptyConf == nil || requireConf == nil {
-		return nil, fmt.Errorf("generate init params failed, emptyConf: %v, requireConf: %v", emptyConf, requireConf)
+		return nil, fmt.Errorf("read or assemble parameter failed")
 	}
 
 	requireConf["algorithm"] = tuner.Algorithm
@@ -431,7 +431,7 @@ func (tuner *Tuner) analyseResult(config Configuration) string {
 	for name, info := range config.Score {
 		base, ok := tuner.BaseConfiguration.Score[name]
 		if !ok {
-			log.Debugf(log.ParamTune, "get baseline [%v] info not exist, please check the bench.json and the python file you specified whether matched", name)
+			log.Debugf("", "get baseline [%v] info not exist, please check the bench.json and the python file you specified whether matched", name)
 			continue
 		}
 

@@ -63,7 +63,7 @@ func isInterrupted() bool {
 func rollback() {
 	url := config.KeenTune.TargetIP + ":" + config.KeenTune.TargetPort + "/rollback"
 	if err := http.ResponseSuccess("POST", url, nil); err != nil {
-		log.Errorf(log.ParamTune, "rollback failed err :%v", err)
+		log.Warnf("", "rollback failed err :%v", err)
 	}
 
 	config.IsInnerRequests = false

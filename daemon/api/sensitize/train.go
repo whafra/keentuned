@@ -39,7 +39,6 @@ func runTrain(flags TrainFlag) {
 	com.IsSensitizing = true
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
-		log.ClearCliLog(log.SensitizeTrain)
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.SystemRun = false

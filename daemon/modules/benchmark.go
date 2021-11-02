@@ -52,14 +52,12 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 	for i := 1; i <= num; i++ {
 		resp, err := http.RemoteCall("POST", benchmark.Host+"/benchmark", requestBody)
 		if err != nil {
-			log.Errorf(log.ParamTune, "%vth benchmark remote call return err:%v\n", i, err)
-			return scores, nil, "", err
+			return scores, nil, "", fmt.Errorf("%vth benchmark remote call return err:%v", i, err)
 		}
 
 		score, err := parseScore(resp)
 		if err != nil {
-			log.Errorf(log.ParamTune, "%vth benchmark parse score err:%v\n", i, err)
-			return scores, nil, "", err
+			return scores, nil, "", fmt.Errorf("%vth benchmark parse score err:%v", i, err)
 		}
 
 		for name, value := range score {
@@ -83,14 +81,14 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 	}
 
 	if len(benchmark.Items) != len(scores) {
-		log.Warnf(log.ParamTune, "demand bench.json items length [%v] is not equal to benchmark api response scores length [%v], please check the bench.json and the python file you specified whether matched", len(benchmark.Items), len(scores))
+		log.Warnf("", "demand bench.json items length [%v] is not equal to benchmark api response scores length [%v], please check the bench.json and the python file you specified whether matched", len(benchmark.Items), len(scores))
 	}
 
 	resultString := ""
 	for name, info := range benchmark.Items {
 		scoreSlice, ok := scores[name]
 		if !ok {
-			log.Warnf(log.ParamTune, "benchmark response  [%v] detail info not exist, please check the bench.json and the python file you specified whether matched", name)
+			log.Warnf("", "benchmark response  [%v] detail info not exist, please check the bench.json and the python file you specified whether matched", name)
 			continue
 		}
 		average = sumScores[name] / float32(len(scoreSlice))

@@ -29,7 +29,6 @@ func runCollect(flag param.TuneFlag) {
 	log.SensitizeCollect = "sensitize collect" +":" + flag.Log
 	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
 	defer func() {
-		log.ClearCliLog(log.SensitizeCollect)
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.SystemRun = false
@@ -45,6 +44,7 @@ func runCollect(flag param.TuneFlag) {
 	}
 
 	if err := param.TuningImpl(flag, "collect"); err != nil {
+		log.Errorf(log.SensitizeCollect, "Sensitize Collect failed, msg:[%v]", err)
 		return
 	}
 }

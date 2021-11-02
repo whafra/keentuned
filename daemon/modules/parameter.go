@@ -65,7 +65,7 @@ params[1] : map[string]interface{} for request brain with init api
 func generateInitParams(filePath string) (*Configuration, map[string]interface{}) {
 	userParamMap, err := file.ReadFile2Map(filePath)
 	if err != nil {
-		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", filePath, err)
+		log.Errorf("", "read [%v] file err:%v\n", filePath, err)
 		return nil, nil
 	}
 
@@ -75,7 +75,7 @@ func generateInitParams(filePath string) (*Configuration, map[string]interface{}
 
 	totalParamMap, err := file.ReadFile2Map(fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile))
 	if err != nil {
-		log.Errorf(log.ParamTune, "read [%v] file err:%v\n", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
+		log.Errorf("", "read [%v] file err:%v\n", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
 		return nil, nil
 	}
 
@@ -92,7 +92,7 @@ func AssembleParams(userParam map[string]interface{}, totalParamMap ...map[strin
 	for domainName, domainValue := range userParam {
 		domainMap, ok := domainValue.(map[string]interface{})
 		if !ok {
-			log.Warnf(log.ParamTune, "assert [%+v] type is not ok", domainValue)
+			log.Warnf("", "assert [%+v] type is not ok", domainValue)
 			continue
 		}
 
@@ -100,20 +100,20 @@ func AssembleParams(userParam map[string]interface{}, totalParamMap ...map[strin
 		if len(totalParamMap) > 0 {
 			compareMap = utils.Parse2Map(domainName, totalParamMap[0])
 			if compareMap == nil {
-				log.Warnf(log.ParamTune, "find param domain [%v] does not exist when modify user params by parsing local total param file", domainName)
+				log.Warnf("", "find param domain [%v] does not exist when modify user params by parsing local total param file", domainName)
 			}
 		}
 
 		for name, paramValue := range domainMap {
 			param, ok := paramValue.(map[string]interface{})
 			if !ok {
-				log.Warnf(log.ParamTune, "parse [%+v] type to map failed", paramValue)
+				log.Warnf("", "parse [%+v] type to map failed", paramValue)
 				continue
 			}
 
 			param, initParam, readParam, err := doAssembleParam(param, compareMap, domainName, name)
 			if err != nil {
-				log.Warnf(log.ParamTune, "do assemble parameters err:%v", err)
+				log.Warnf("", "do assemble parameters err:%v", err)
 				continue
 			}
 

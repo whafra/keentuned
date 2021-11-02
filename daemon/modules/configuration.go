@@ -44,7 +44,7 @@ func (configuration Configuration) Dump(fileName, suffix string) {
 
 	err := file.Dump2File(GetTuningWorkPath(fileName), fileName+suffix, configuration)
 	if err != nil {
-		log.Errorf(log.ParamTune, "dump config info to json file [%v] err: %v", fileName, err)
+		log.Warnf("", "dump config info to json file [%v] err: %v", fileName, err)
 		return
 	}
 	return
@@ -61,8 +61,7 @@ func (configuration Configuration) Apply(timeCost *time.Duration) (Configuration
 
 	body, err := http.RemoteCall("POST", host+"/configure", applyReq)
 	if err != nil {
-		log.Errorf(log.ParamTune, "[Apply]RemoteCall err:[%v]\n", err)
-		return Configuration{}, err
+		return Configuration{}, fmt.Errorf("RemoteCall configure err:[%v]", err)
 	}
 
 	retConfig, err := configuration.parseApplyResponse(body)
@@ -84,7 +83,7 @@ func (configuration Configuration) assembleApplyRequestMap() (map[string]interfa
 	for _, param := range configuration.Parameters {
 		paramMap, err := utils.Interface2Map(param)
 		if err != nil {
-			log.Warnf(log.ParamTune, "StructToMap err:[%v]\n", err)
+			log.Warnf("", "StructToMap err:[%v]\n", err)
 			continue
 		}
 		/* delete `domain` field, not used in apply api request body */
@@ -156,7 +155,7 @@ func (configuration Configuration) parseApplyResponse(body []byte) (Configuratio
 	for index := range configuration.Parameters {
 		paramInfo, ok := paramCollection[configuration.Parameters[index].ParaName]
 		if !ok {
-			log.Warnf(log.ParamTune, "find [%v] value from apply configure response failed", configuration.Parameters[index].ParaName)
+			log.Warnf("", "find [%v] value from apply configure response failed", configuration.Parameters[index].ParaName)
 			continue
 		}
 
@@ -190,10 +189,9 @@ func GetApplyResult(sucBytes []byte) (map[string]interface{}, error) {
 	
 	select {
 	case body := <-config.ApplyResultChan:
-		log.Debugf(log.ParamTune, "apply result :[%v]\n", string(body))
+		log.Debugf("", "apply result :[%v]\n", string(body))
 		if err := json.Unmarshal(body, &applyResp); err != nil {
-			log.Errorf(log.ParamTune, "parse apply response Unmarshal err:[%v]\n", err)
-			return nil, err
+			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
 	
 	}

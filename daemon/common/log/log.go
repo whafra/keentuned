@@ -1,13 +1,13 @@
 package log
 
 import (
-	"keentune/daemon/common/config"
 	"fmt"
+	"io"
+	"keentune/daemon/common/config"
 	"os"
 	"runtime"
 	"strings"
 	"time"
-	"io/ioutil"
 
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
@@ -48,7 +48,7 @@ type consoleLogFormater struct {
 
 // command name
 const (
-	ParamDump     = "param dump"	
+	ParamDump     = "param dump"
 	ParamList     = "param list"
 	ParamDel      = "param delete"
 	ParamRollback = "param rollback"
@@ -61,10 +61,9 @@ const (
 	ProfDel      = "profile delete"
 	ProfRollback = "profile rollback"
 
-	SensitizeDel     = "sensitize delete"
-	
-	SensitizeList    = "sensitize list"
-	Benchmark        = "benchmark"
+	SensitizeDel  = "sensitize delete"
+	SensitizeList = "sensitize list"
+	Benchmark     = "benchmark"
 )
 
 var (
@@ -131,20 +130,42 @@ func (s *consoleLogFormater) Format(entry *logrus.Entry) ([]byte, error) {
 }
 
 func updateClientLog(cmd, msg string) {
-	ClientLogMap[cmd] += msg
-	if (strings.Contains(cmd, ParamTune) || strings.Contains(cmd, SensitizeCollect) || strings.Contains(cmd, SensitizeTrain)) && ClientLogMap[cmd] != "" {
-		fullPath := strings.Split(cmd, ":")[1]
-		resultBytes := []byte(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(ClientLogMap[cmd], "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", ""))
-		err := ioutil.WriteFile(fullPath, resultBytes, os.ModePerm)
-		if err != nil {
-			Errorf("", "Write to file [%v] err:[%v] ", fullPath, err)
+	// update tune, collect, train log client log to file
+	if (strings.Contains(cmd, ParamTune) || strings.Contains(cmd, SensitizeCollect) || strings.Contains(cmd, SensitizeTrain)) && msg != "" {
+		cmdParts := strings.Split(cmd, ":")
+		if len(cmdParts) != 2 {
 			return
 		}
+
+		appendMsg := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(msg, "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", "")
+		fullPath := cmdParts[1]
+		f, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Printf("[ERROR] OpenFile %v err: %v", fullPath, err)
+			return
+		}
+
+		defer f.Close()
+		_, err = io.WriteString(f, appendMsg)
+		if err != nil {
+			fmt.Printf("[ERROR] Write %v log err: %v", cmdParts[0], err)
+			return
+		}
+
+		return
+	}
+
+	// update other log to memory
+	if msg != "" {
+		ClientLogMap[cmd] += msg
 	}
 }
 
 func ClearCliLog(cmd string) {
-	ClientLogMap[cmd] = ""
+	// clear other log from memory
+	if !strings.Contains(cmd, ParamTune) && !strings.Contains(cmd, SensitizeCollect) && !strings.Contains(cmd, SensitizeTrain) {
+		ClientLogMap[cmd] = ""
+	}
 }
 
 // setFormatter dynamic set formatter  for log
