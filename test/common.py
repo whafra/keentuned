@@ -37,7 +37,7 @@ def getServerStatus(server):
     }
     event = "sensitize_list" if server == "keentune-brain" else "status"
     url = "http://{}:{}/{}".format(data_dict[server][0], data_dict[server][1], event)
-    res = requests.get(url)
+    res = requests.get(url, proxies={"http": None, "https": None})
     if res.status_code != 200:
         logger.error("Please check {} server is running...".format(server))
         result = 1
