@@ -41,11 +41,13 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p ${RPM_BUILD_ROOT}/usr/bin/
 mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/
 mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/conf/
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
 
 cp -f keentune ${RPM_BUILD_ROOT}/usr/bin/keentune
 cp -f keentuned ${RPM_BUILD_ROOT}/usr/bin/keentuned
 cp -rf daemon/examples/. ${RPM_BUILD_ROOT}/etc/keentune
 cp -f ./keentuned.conf ${RPM_BUILD_ROOT}/etc/keentune/conf/
+cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -59,6 +61,7 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %{_bindir}/keentune
 %{_sysconfdir}/keentune
 %license LICENSE
+/usr/lib/systemd/system/keentuned.service
 
 %changelog
 * Wed Nov 24 2021 runzhe.wrz <15501019889@126.com> - 1.0.0-3

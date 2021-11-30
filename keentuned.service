@@ -1,0 +1,13 @@
+[Unit]
+Description=AI Tuning tool Daemon
+After=systemd-sysctl.service network.target dbus.service
+Requires=dbus.service polkit.service
+Conflicts=cpupower.service
+
+[Service]
+EnvironmentFile=-/etc/keentune/conf/keentuned.conf
+ExecStart=/usr/bin/keentuned
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
