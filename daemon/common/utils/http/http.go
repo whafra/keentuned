@@ -1,11 +1,11 @@
 package http
 
 import (
-	"keentune/daemon/common/log"
 	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"keentune/daemon/common/log"
 	"net/http"
 )
 
@@ -39,7 +39,7 @@ func newRequester(method string, uri string, data interface{}) (*requester, erro
 		return nil, err
 	}
 
-	log.Debugf(log.ParamTune, "[%v] request info [%+v]", url, string(bytesData))
+	log.Debugf("", "[%v] request info [%+v]", url, string(bytesData))
 	return &requester{
 		client: client,
 		url:    url,
@@ -82,7 +82,7 @@ func RemoteCall(method, url string, data interface{}) ([]byte, error) {
 	response, err := requester.execute()
 	if err != nil {
 		return nil, err
-	}	
+	}
 
 	if response.Body == nil {
 		return nil, fmt.Errorf("[%v] response is nil", method+url)
@@ -96,10 +96,10 @@ func RemoteCall(method, url string, data interface{}) ([]byte, error) {
 	}
 
 	if response.StatusCode != StatusOk {
-		return bytesData, fmt.Errorf("request [%v] status is:%v", Protocol+"://"+url, response.StatusCode)
+		return nil, fmt.Errorf("%s", parseMessage(bytesData))
 	}
 
-	log.Debugf(log.ParamTune, "[%v] response info [%+v]", Protocol+"://"+url, string(bytesData))
+	log.Debugf("", "[%v] response info [%+v]", Protocol+"://"+url, string(bytesData))
 	return bytesData, nil
 }
 
@@ -109,19 +109,29 @@ func ResponseSuccess(method, url string, request interface{}) error {
 	if err != nil {
 		return err
 	}
+	
+	message := parseMessage(resp)
+	if message != "" {
+		return fmt.Errorf("response suc is false, msg is %v", message)
+	}
 
+	return nil
+}
+
+func parseMessage(resp []byte) string {
 	var response struct {
 		Success bool        `json:"suc"`
 		Message interface{} `json:"msg"`
 	}
 
 	if err := json.Unmarshal(resp, &response); err != nil {
-		return err
+		return string(resp)
 	}
 
 	if !response.Success {
-		return fmt.Errorf("response suc is false, msg is [%v].", response.Message)
+		return fmt.Sprint(response.Message)
 	}
 
-	return nil
+	return ""
 }
+

@@ -53,7 +53,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	}
 	
 	activeFile := m.GetProfileWorkPath("active.conf")
-	if err := updateActiveFile(activeFile, []byte(flag.Name)); err != nil {
+	if err := updateActiveFile(activeFile, []byte(file.GetPlainName(flag.Name))); err != nil {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return fmt.Errorf("Update active file err:%v", err)
 
@@ -65,14 +65,9 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 }
 
 func checkProfilePath(name string) (string, error) {
-	dumpProfPath :=m.GetProfileWorkPath(name)
-	if file.IsPathExist(dumpProfPath) {
-		return dumpProfPath, nil
-	}
-
-	demoProfPath :=fmt.Sprintf("%s/profile/%s", config.KeenTune.Home, name)
-	if file.IsPathExist(demoProfPath) {
-		return demoProfPath, nil
+	filePath := com.GetProfilePath(name)
+	if filePath != "" {
+		return filePath, nil
 	}
 
 	return "", fmt.Errorf("find the configuration file [%v] neither in[%v] nor in [%v]", name, fmt.Sprintf("%s/profile", config.KeenTune.Home), fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
@@ -201,3 +196,4 @@ func parseSetResponse(sucBytes []byte) (string, error) {
 
 	return setResult, nil
 }
+

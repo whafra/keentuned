@@ -263,3 +263,13 @@ func GetWalkPath(folder, match string) (string, error) {
 
     return result, nil
 }
+
+func GetPlainName(fileName string) string {
+	if !strings.Contains(fileName, "/") || fileName == "" {
+		return fileName
+	}
+
+	parts := strings.Split(fileName, "/")
+	return parts[len(parts)-1]
+}
+

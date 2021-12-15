@@ -158,8 +158,8 @@ func (d *deleter) check(inputName string) error {
 		return fmt.Errorf("%v is not supported to delete", d.fileName)
 	}
 
-	if d.fileName == inputName {
-		return fmt.Errorf("File %v is non-existent", d.fileName)
+	if d.fileName == "" {
+		return fmt.Errorf("File %v is non-existent", inputName)
 	}
 
 	if d.cmd == "param" {
@@ -201,17 +201,21 @@ func RollbackImpl(flag RollbackFlag, reply *string) error {
 
 
 func GetProfilePath(fileName string) string {
+	if file.IsPathExist(fileName) {
+		return fileName
+	}
+
 	workPath := m.GetProfileWorkPath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}
 
-	homePath := m.GetProfileHomePath() + fileName
+	homePath := m.GetProfileHomePath(fileName)
 	if file.IsPathExist(homePath) {
 		return homePath
 	}
 
-	return fileName
+	return ""
 }
 
 func GetParameterPath(fileName string) string {
@@ -308,3 +312,4 @@ func GetRunningTask() string {
 
 	return ""
 }
+
