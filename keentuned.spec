@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 3
+%define anolis_release 5
 
 #
 # spec file for package golang-keentuned
@@ -8,7 +8,7 @@
 Name:           keentuned
 Version:        1.0.0
 Release:        %{?anolis_release}%{?dist}
-Url:            https://codeup.openanolis.cn/codeup/keentune/keentuned
+Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
 License:        MulanPSLv2
 Source:         %{name}-%{version}.tar.gz
@@ -53,6 +53,9 @@ cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
+%post
+systemctl daemon-reload
+
 %files
 %defattr(0444,root,root, 0555)
 %attr(0555, root, root) /usr/bin/keentune
@@ -61,9 +64,19 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %{_bindir}/keentune
 %{_sysconfdir}/keentune
 %license LICENSE
-/usr/lib/systemd/system/keentuned.service
+%{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Wed Dec 15 2021 Runzhe Wang <15501019889@126.com> - 1.0.0-5
+- fix bug: can not running in alinux2 and centos7
+- change modify codeup address to gitee
+
+* Fri Dec 03 2021 wenchao <yuxiongkong159@gmail.com> - 1.0.0-4
+- manage keentuned with systemctl
+- fix: show brain error in the keentuned log
+- fix: profile set supports absolute and relative paths
+- fix: show exact job abort log after the stop command
+
 * Wed Nov 24 2021 runzhe.wrz <15501019889@126.com> - 1.0.0-3
 - add nginx_conf parameter config file
 
