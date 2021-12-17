@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/utils/http"
 	"fmt"
 	"os"
+	"strings"
 )
 
 var StopSig chan os.Signal
@@ -34,8 +35,12 @@ func GetParamHomePath() string {
 	return assembleFilePath(config.KeenTune.Home, "parameter", "") + "/"
 }
 
-func GetProfileHomePath() string {
-	return assembleFilePath(config.KeenTune.Home, "profile", "") + "/"
+func GetProfileHomePath(fileName string) string {
+	if fileName == "" {
+		return fmt.Sprintf("%s/%s", config.KeenTune.Home, "profile") + "/"
+	}
+
+	return assembleFilePath(config.KeenTune.Home, "profile", fileName)
 }
 
 func GetDumpCSVPath() string {
@@ -46,8 +51,20 @@ func assembleFilePath(prefix, partition, fileName string) string {
 	if fileName == "" {
 		return fmt.Sprintf("%s/%s", prefix, partition)
 	}
+	
+	// absolute path
+	if strings.HasPrefix(fileName, "/") && strings.Count(fileName, "/") > 1 {
+		return fileName
+	}
 
-	return fmt.Sprintf("%s/%s/%s", prefix, partition, fileName)
+	// relative path
+	if strings.Contains(fileName, fmt.Sprintf("%v/", partition)) {
+		parts := strings.Split(fileName, fmt.Sprintf("%v/", partition))
+		return fmt.Sprintf("%s/%s/%s", prefix, partition, parts[len(parts)-1])
+	}
+
+	// file
+	return fmt.Sprintf("%s/%s/%s", prefix, partition, strings.TrimPrefix(fileName, "/"))
 }
 
 func isInterrupted() bool {
@@ -68,3 +85,4 @@ func rollback() {
 
 	config.IsInnerRequests = false
 }
+

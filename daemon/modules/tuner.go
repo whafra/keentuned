@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"time"
 	"math"
+	"strings"
 )
 
 // Tuner define a tuning job include Algorithm, Benchmark and Configurations
@@ -62,30 +63,47 @@ func (tuner *Tuner) Tune() {
 	defer func() {
 		if err != nil {
 			tuner.end()
+			parseTuningError(log.ParamTune, err)
 		}
 	}()
 
 	if err = tuner.prepare(); err != nil {
-		log.Errorf(log.ParamTune, "prepare for tuning err:%v", err)
+		err = fmt.Errorf("prepare for tuning :%v", err)
 		return
 	}
 
 	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	if err = tuner.loop(); err != nil {
-		log.Errorf(log.ParamTune, "loop tuning err:%v", err)
+		err = fmt.Errorf("loop tuning err:%v", err)
 		return
 	}
 
 	if err = tuner.getBestConfiguration(); err != nil {
-		log.Errorf(log.ParamTune, "get best configuration err:%v", err)
+		err = fmt.Errorf("get best configuration err:%v", err)
 		return
 	}
 
 	if err = tuner.checkBestConfiguration(); err != nil {
-		log.Errorf(log.ParamTune, "check best configuration err:%v", err)
+		err = fmt.Errorf("check best configuration err:%v", err)		
 		return
 	}
+}
+
+func parseTuningError(logName string, err error) {
+	if err == nil {
+		return
+	}
+
+	if strings.Contains(err.Error(), "apply configuration failed") {
+		rollback()
+	}
+
+	if strings.Contains(err.Error(), "interrupted") {
+		log.Infof(logName, "parameter optimization job abort!")
+		return
+	}
+	log.Infof(logName, "%v", err)
 }
 
 /*acquire configuration from brain*/
@@ -467,10 +485,15 @@ func (tuner *Tuner) analyseResult(config Configuration) string {
 
 // Collect Sensitive parameters
 func (tuner *Tuner) Collect() {
-	defer tuner.end()
+	var err error
 
-	if err := tuner.initCollect(); err != nil {
-		log.Errorf(log.SensitizeCollect, "initCollect failed, err:%v", err)
+	defer func() {
+		tuner.end()
+		parseTuningError(log.SensitizeCollect, err)
+	}()
+
+	if err = tuner.initCollect(); err != nil {
+		err = fmt.Errorf("initCollect failed, err:%v", err)
 		return
 	}
 
@@ -478,8 +501,8 @@ func (tuner *Tuner) Collect() {
 	log.Infof(log.SensitizeCollect, "\nStep%v. Start sensitization collection, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	tuner.isSensitize = true
-	if err := tuner.loop(); err != nil {
-		log.Errorf(log.SensitizeCollect, "collect err:%v\n", err)
+	if err = tuner.loop(); err != nil {
+		err = fmt.Errorf("collect err:%v\n", err)
 		return
 	}
 
@@ -523,3 +546,4 @@ func (tuner *Tuner) initCollect() error {
 func formatRuntimeInfo(processName string, execCount int, totalTime, shareTime float64) string {
 	return fmt.Sprintf("\n\t| %v  \t|  %v\t\t  |   %v \t|     %v  \t\t  |", processName, fmt.Sprintf("%v", execCount), fmt.Sprintf("%.3fs", totalTime), fmt.Sprintf("%.2f%%", shareTime))
 }
+
