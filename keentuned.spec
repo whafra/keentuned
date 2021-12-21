@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 5
+%define anolis_release 6
 
 #
 # spec file for package golang-keentuned
@@ -67,6 +67,9 @@ systemctl daemon-reload
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
+- add tpce tpch benchmark files
+
 * Wed Dec 15 2021 Runzhe Wang <15501019889@126.com> - 1.0.0-5
 - fix bug: can not running in alinux2 and centos7
 - change modify codeup address to gitee

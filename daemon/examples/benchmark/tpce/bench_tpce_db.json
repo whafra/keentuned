@@ -1,0 +1,25 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path}",
+      "local_script_path": "benchmark/tpce/ack_tpce_test_db.py",
+      "items": {
+        "Tpse": {
+          "negative": false,
+          "weight": 100,
+          "strict": false
+        },
+	"Measurement": {
+          "negative": true,
+          "weight": 0,
+          "strict": true
+        },
+        "Trans_total": {
+          "negative": true,
+          "weight": 0,
+          "strict": true
+        }
+      }
+    }
+  ]
+}
