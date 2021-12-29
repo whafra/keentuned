@@ -1,0 +1,7 @@
+keentune  usr/bin/
+keentuned usr/bin/
+keentuned.conf etc/keentune/conf/
+keentuned.service lib/systemd/system/
+daemon/examples/benchmark etc/keentune/
+daemon/examples/parameter etc/keentune/
+daemon/examples/profile etc/keentune/
