@@ -1,0 +1,20 @@
+Source: keentuned
+Section: contrib/admin
+Priority: optional
+Maintainer: mawei <mawei@uniontech.com>
+Build-Depends: 
+    debhelper (>= 11),
+    golang-1.15
+Standards-Version: 4.1.3
+Homepage: https://openanolis.cn/sig/KeenTune
+
+
+Package: keentuned
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, python3
+Description: KeenTune is a full-stack intelligent
+ optimization product of operating system driven 
+ by AI algorithm and expert knowledge base. 
+ It provides the capability of full-stack dynamic 
+ and static coordinated tuning from hardware to software, 
+ enabling business to run in the optimal environment.
