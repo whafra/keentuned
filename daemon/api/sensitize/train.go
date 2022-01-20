@@ -1,6 +1,9 @@
 package sensitize
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
@@ -8,10 +11,7 @@ import (
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
 	m "keentune/daemon/modules"
-	"encoding/json"
-	"fmt"
 	"os"
-	"io/ioutil"
 )
 
 type TrainFlag struct {
@@ -24,9 +24,13 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	if com.SystemRun {
-		log.Errorf("", "An instance is running. You can wait the process finish or run \"keentune %v stop\" for trying a new job again if you want give up the old job.", com.GetRunningTask())
-		return fmt.Errorf("Train failed, an instance is running. You can wait the process finish or run \"keentune %v stop\" and try a new job again, if you want give up the old job.", com.GetRunningTask())
+	if com.GetRunningTask() != "" {
+		log.Errorf("", "Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
+		return fmt.Errorf("Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
+	}
+
+	if err := com.HeartbeatCheck(); err != nil {
+		return fmt.Errorf("check %v", err)
 	}
 
 	go runTrain(flags)
@@ -35,18 +39,15 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 
 func runTrain(flags TrainFlag) {
 	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
-	com.SystemRun = true
-	com.IsSensitizing = true
+	com.SetRunningTask(com.JobTraining, flags.Data)
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
-		com.SystemRun = false
-		com.IsSensitizing = false
+		com.ClearTask()
 	}()
 
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
-	go com.HeartbeatCheck()
 
 	if !isTrainFlagsRightful(flags) {
 		log.Errorf(log.SensitizeTrain, "check train options failed")
@@ -66,13 +67,12 @@ func runTrain(flags TrainFlag) {
 	}
 
 	log.Infof(log.SensitizeTrain, "Step3. Get sensitive parameter identification results successfully, and the details are as follows.%v", resultString)
-	
 
 	if err = dumpSensitivityResult(resultMap, flags.Output); err != nil {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))	
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))
 }
 
 func initiateSensitization(flags *TrainFlag) error {
@@ -107,10 +107,10 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 		Msg     interface{}   `json:"msg"`
 	}
 
-	config.IsInnerRequests = true
+	config.IsInnerSensitizeRequests[1] = true
 
 	select {
-	case resultBytes := <-config.SensitizeReusltChan :
+	case resultBytes := <-config.SensitizeResultChan:
 		log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
 		if len(resultBytes) == 0 {
 			return "", nil, fmt.Errorf("get sensitivity result is nil")
@@ -127,9 +127,9 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 
 	domainMap := make(map[string][]map[string]interface{})
 	resultMap := make(map[string]interface{})
-	var resultString string
-	if len(sensitizeParams.Result) >0 {
-		resultString += fmt.Sprintf("\n\t| %v | %v |", "parameter name", "sensitivity ratio")
+	var resultSlice [][]string
+	if len(sensitizeParams.Result) > 0 {
+		resultSlice = append(resultSlice, []string{"parameter name", "sensitivity ratio"})
 	}
 
 	for _, param := range sensitizeParams.Result {
@@ -137,7 +137,7 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 			param.ParaName: map[string]interface{}{"weight": param.Weight},
 		}
 
-		resultString += fmt.Sprintf("\n\t| %v \t|  %v \t|", param.ParaName, param.Weight)
+		resultSlice = append(resultSlice, []string{param.ParaName, fmt.Sprint(param.Weight)})
 		domainMap[param.DomainName] = append(domainMap[param.DomainName], paramInfo)
 	}
 
@@ -151,7 +151,7 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 		resultMap[domain] = paramMap
 	}
 
-	return resultString, resultMap, nil
+	return utils.FormatInTable(resultSlice), resultMap, nil
 }
 
 func isTrainFlagsRightful(flag TrainFlag) bool {
@@ -161,7 +161,7 @@ func isTrainFlagsRightful(flag TrainFlag) bool {
 	}
 
 	fileName := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flag.Output)
-	if file.IsPathExist(fileName)&&!flag.Force {
+	if file.IsPathExist(fileName) && !flag.Force {
 		log.Errorf(log.SensitizeTrain, "output file [%v] exist and you have given up to overwrite it", flag.Output)
 		return false
 	}
@@ -177,3 +177,4 @@ func dumpSensitivityResult(resultMap map[string]interface{}, recordName string) 
 
 	return nil
 }
+

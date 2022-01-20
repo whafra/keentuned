@@ -21,9 +21,9 @@ class TestProfileRollback(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune()
+        status = runParamTune("test1")
         self.assertEqual(status, 0)
-        status = runParamDump()
+        status = runParamDump("test1")
         self.assertEqual(status, 0)
         status = runProfileSet()
         self.assertEqual(status, 0)

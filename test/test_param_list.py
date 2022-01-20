@@ -19,7 +19,7 @@ class TestParamList(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune()
+        status = runParamTune("test1")
         self.assertEqual(status, 0)
         logger.info('start to run test_param_list testcase')
 

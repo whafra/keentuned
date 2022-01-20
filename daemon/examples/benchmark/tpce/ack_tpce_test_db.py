@@ -1,19 +1,15 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
-
 import re
 import sys
 import subprocess
 import logging
 logger = logging.getLogger(__name__)
-
 """
 TPCE Pressure test DataBase
 e.g.
 'tpce-run-workload-pg -a pg -n pg -c 5000 -t 5000 -d 120 -u 30 -f 500 -w 300 -e 30000 -g 30010 -z 1 -p 0 -v 30 -i /opt/tpc-ebenchmark/egen -o /opt/tpc-ebenchmark/tmp/results'
 """
-
-
 class Benchmark():
     def __transfMeasurement(self,value,measurement):
         if measurement == '':
@@ -66,7 +62,6 @@ class Benchmark():
                 return False, []
             
             tpse = float(re.search(pattern_tpse,self.out).group(1))
-
             _ramp_up = float(re.search(pattern_ramp_up,self.out).group(1))
             ramp_up_measurement = re.search(pattern_ramp_up,self.out).group(2)
             ramp_up = self.__transfMeasurement(_ramp_up, ramp_up_measurement)
@@ -76,7 +71,6 @@ class Benchmark():
            # measurement = self.__transfMeasurement(_measurement, measurement_measurement)
             
             trans_total = float(re.search(pattern_trans_total,self.out).group(1))
-
             result = {
                 "Tpse": tpse,
                 "Ramp_up": ramp_up,
@@ -87,11 +81,9 @@ class Benchmark():
             result_str = ", ".join(["{} = {}".format(k,v) for k,v in result.items()])
             print(result_str)
             return True, result_str
-
         else:
             logger.error(self.error)
             return False, []
-
 if __name__ == "__main__":
     bench = Benchmark()
     suc, result = bench.run()

@@ -40,11 +40,11 @@ class TestParamTune(unittest.TestCase):
         while True:
             with open(path, 'r') as f:
                 res_data = f.read()
-            if '[BEST] Tuning improvment' in res_data:
+            if '[BEST] Tuning improvement' in res_data:
                 break
             time.sleep(8)
 
         word_list = ["Step1", "Step2", "Step3", "Step4",
-                     "Step5", "Step6", "[BEST] Tuning improvment"]
+                     "Step5", "Step6", "[BEST] Tuning improvement"]
         result = all([word in res_data for word in word_list])
         self.assertTrue(result)

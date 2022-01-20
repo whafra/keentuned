@@ -1,6 +1,8 @@
 package profile
 
 import (
+	"fmt"
+	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
@@ -8,33 +10,43 @@ import (
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
 	m "keentune/daemon/modules"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"reflect"
+	"strings"
+	"sync"
 )
 
 type SetFlag struct {
-	Name  string
+	Name string
+}
+type Result struct {
+	Info    string
+	Success bool
 }
 
 // Set run profile set service
 func (s *Service) Set(flag SetFlag, reply *string) error {
+	if com.IsApplying() {
+		return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
+	}
+
 	defer func() {
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
-		*reply = log.ClientLogMap[log.ProfSet]	
+		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
 	}()
 
-	go com.HeartbeatCheck()
+	if err := com.HeartbeatCheck(); err != nil {
+		log.Errorf(log.ProfSet, "Check %v", err)
+		return fmt.Errorf("Check %v", err)
+	}
 
 	configFile, err := checkProfilePath(flag.Name)
-	if err != nil{
+	if err != nil {
 		log.Errorf(log.ProfSet, "Check file [%v] err:%v", flag.Name, err)
-		return nil
+		return fmt.Errorf("Check file [%v] err:%v", flag.Name, err)
 	}
-	
+
 	requestInfo, err := getConfigParamInfo(configFile)
 	if err != nil {
 		log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", flag.Name, err)
@@ -42,24 +54,31 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	}
 
 	if err := prepareBeforeSet(requestInfo); err != nil {
-		log.Errorf(log.ProfSet, "Prepare before Set err:%v", err)
-		return fmt.Errorf("Prepare before Set err:%v", err)
+		log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
+		return fmt.Errorf("Prepare for Set err:%v", err)
 	}
 
-	setResult, err := setConfiguration(requestInfo)
+	sucInfos, failedInfo, err := setConfiguration(requestInfo)
 	if err != nil {
-		log.Errorf(log.ProfSet, "Set failed:%v", err)
-		return fmt.Errorf("Set failed:%v", err)
+		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
+		return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
 	}
-	
+
 	activeFile := m.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(activeFile, []byte(file.GetPlainName(flag.Name))); err != nil {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return fmt.Errorf("Update active file err:%v", err)
 
 	}
+	if len(config.KeenTune.TargetIP) == 1 {
+		log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), flag.Name, strings.TrimPrefix(sucInfos[0], "target 1 apply result: "))
+		return nil
+	}
 
-	log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), flag.Name, setResult)
+	log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), flag.Name)
+	for _, detail := range sucInfos {
+		log.Infof(log.ProfSet, "\n\t%v", detail)
+	}
 
 	return nil
 }
@@ -73,11 +92,11 @@ func checkProfilePath(name string) (string, error) {
 	return "", fmt.Errorf("find the configuration file [%v] neither in[%v] nor in [%v]", name, fmt.Sprintf("%s/profile", config.KeenTune.Home), fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
 }
 
-func prepareBeforeSet(configInfo map[string]interface{}) error {	
-	host := fmt.Sprintf("%s:%s", config.KeenTune.TargetIP, config.KeenTune.TargetPort)
+func prepareBeforeSet(configInfo map[string]interface{}) error {
 	// step1. rollback the target machine
-	if err := http.ResponseSuccess("POST", host + "/rollback", nil); err != nil {
-		return fmt.Errorf("exec rollback failed, err:%v", err)
+	detailInfo, allSuccess := m.Rollback(log.ProfSet)
+	if !allSuccess {
+		return fmt.Errorf("rollback details:\n%v", detailInfo)
 	}
 
 	// step2. clear the active file
@@ -87,10 +106,10 @@ func prepareBeforeSet(configInfo map[string]interface{}) error {
 	}
 
 	// step3. backup the target machine
-	if err := backup(host+"/backup", utils.Parse2Map("data", configInfo)); err != nil {
-		return fmt.Errorf("exec backup failed, err:%v", err)
+	detailInfo, allSuccess = m.Backup(log.ProfSet, utils.Parse2Map("data", configInfo))
+	if !allSuccess {
+		return fmt.Errorf("backup details:\n%v", detailInfo)
 	}
-
 	return nil
 }
 
@@ -105,28 +124,80 @@ func getConfigParamInfo(configFile string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
 	}
 
-	retRequst := map[string]interface{}{}	
-	retRequst["data"] = resultMap
-	retRequst["resp_ip"] = respIP
-	retRequst["resp_port"] = config.KeenTune.Port
+	retRequest := map[string]interface{}{}
+	retRequest["data"] = resultMap
+	retRequest["resp_ip"] = respIP
+	retRequest["resp_port"] = config.KeenTune.Port
 
-	return retRequst, nil
+	return retRequest, nil
 }
 
-func setConfiguration(request interface{}) (string, error) {
-	uri := fmt.Sprintf("%s:%s/configure", config.KeenTune.TargetIP, config.KeenTune.TargetPort)
-
-	resp, err := http.RemoteCall("POST", uri, request)
-	if err != nil {
-		return "", err
+func setConfiguration(request map[string]interface{}) ([]string, string, error) {
+	wg := sync.WaitGroup{}
+	var applyResult = make(map[int]Result)
+	for index, ip := range config.KeenTune.TargetIP {
+		wg.Add(1)
+		go set(request, &wg, applyResult, index+1, ip)
 	}
 
-	setResult, err := parseSetResponse(resp)
-	if err != nil {
-		return "", err
+	wg.Wait()
+
+	return analysisApplyResults(applyResult)
+}
+
+func analysisApplyResults(applyResult map[int]Result) ([]string, string, error) {
+	var failedInfo string
+	var successInfo []string
+	// add detail info in order
+	for index, _ := range config.KeenTune.TargetIP {
+		id := index + 1
+		if !applyResult[id].Success {
+			failedInfo += applyResult[id].Info
+			continue
+		}
+		successInfo = append(successInfo, applyResult[id].Info)
 	}
 
-	return setResult, nil
+	failedInfo = strings.TrimSuffix(failedInfo, ";")
+
+	if len(successInfo) == 0 {
+		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
+	}
+
+	if len(successInfo) != len(config.KeenTune.TargetIP) {
+		return successInfo, failedInfo, fmt.Errorf("partial failed")
+	}
+	return successInfo, "", nil
+}
+
+func set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int]Result, index int, ip string) {
+	defer func() {
+		wg.Done()
+		config.IsInnerApplyRequests[index] = false
+	}()
+	uri := fmt.Sprintf("%s:%s/configure", ip, config.KeenTune.TargetPort)
+	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id"}, []interface{}{index}))
+	if err != nil {
+		applyResult[index] = Result{
+			Info:    fmt.Sprintf("target %v apply remote call: %v;", index, err),
+			Success: false,
+		}
+		return
+	}
+
+	setResult, _, err := m.GetApplyResult(resp, index)
+	if err != nil {
+		applyResult[index] = Result{
+			Info:    fmt.Sprintf("target %v get apply result: %v;", index, err),
+			Success: false,
+		}
+		return
+	}
+
+	applyResult[index] = Result{
+		Info:    fmt.Sprintf("target %v apply result: %v", index, setResult),
+		Success: true,
+	}
 }
 
 func updateActiveFile(fileName string, info []byte) error {
@@ -135,65 +206,5 @@ func updateActiveFile(fileName string, info []byte) error {
 	}
 
 	return nil
-}
-
-func backup(uri string, request interface{}) error {
-	return http.ResponseSuccess("POST", uri, request)
-}
-
-func parseSetResponse(sucBytes []byte) (string, error) {
-	applyMap, err := m.GetApplyResult(sucBytes)
-	if err != nil {
-		return "", err
-	}
-
-	var appliedInfo struct {
-		Dtype   string      `json:"dtype"`
-		Value   interface{} `json:"value"`
-		Msg     string      `json:"msg"`
-		Success bool        `json:"suc"`
-	}
-
-	var sucCount, failedCount int
-	failedInfo := fmt.Sprintf("%s,%s;", "param name", "failed reason")
-
-	for _, paramMaps := range applyMap {
-		paramMap, ok := paramMaps.(map[string]interface{})
-		if !ok {
-			return "", fmt.Errorf("[parseSetResponse] assert param type [%v] to map failed", reflect.TypeOf(paramMaps))
-		}
-
-		for name, orgValue := range paramMap {
-			orgParamMap, ok := orgValue.(map[string]interface{})
-			if !ok {
-				return "", fmt.Errorf("[parseSetResponse] assert param orgin value type[%v] to map failed", reflect.TypeOf(orgValue))
-			}
-
-			if err = utils.Map2Struct(orgParamMap, &appliedInfo); err != nil {
-				return "", fmt.Errorf("[parseSetResponse] MapToStruct err:[%v]", err)
-			}
-
-			if appliedInfo.Success {
-				sucCount++
-				continue
-			}
-
-			failedCount++
-			failedInfo += fmt.Sprintf("%s,%s;", name, appliedInfo.Msg)
-		}
-
-	}
-
-	var setResult string
-
-	if failedCount == 0 {
-		setResult = fmt.Sprintf("total param %v, successed %v, failed %v.", sucCount, sucCount, failedCount)
-
-		return setResult, nil
-	}
-
-	setResult = fmt.Sprintf("total param %v, successed %v, failed %v; the failed details displayed in the terminal.%s show table end.", sucCount+failedCount, sucCount, failedCount, failedInfo)
-
-	return setResult, nil
 }
 

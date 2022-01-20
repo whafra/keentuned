@@ -2,25 +2,25 @@ import os
 import sys
 import unittest
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
-
-from test_sensitize_delete import TestSensitizeDelete
-from test_sensitize_list import TestSensitizeList
-from test_sensitize_train import TestSensitizeTrain
-from test_sensitize_collect import TestSensitizeCollect
-from test_profile_set import TestProfileSet
-from test_profile_rollback import TestProfileRollback
-from test_profile_list import TestProfileList
-from test_profile_info import TestProfileInfo
-from test_profile_generate import TestProfileGenerate
-from test_profile_delete import TestProfileDelete
-from test_param_delete import TestParamDelete
-from test_param_rollback import TestParamRollback
-from test_param_dump import TestParamDump
-from test_param_list import TestParamList
-from test_param_tune import TestParamTune
 from test_help import TestHelp
+from test_param_tune import TestParamTune
+from test_param_list import TestParamList
+from test_param_dump import TestParamDump
+from test_param_rollback import TestParamRollback
+from test_param_delete import TestParamDelete
+from test_profile_delete import TestProfileDelete
+from test_profile_generate import TestProfileGenerate
+from test_profile_info import TestProfileInfo
+from test_profile_list import TestProfileList
+from test_profile_rollback import TestProfileRollback
+from test_profile_set import TestProfileSet
+from test_sensitize_collect import TestSensitizeCollect
+from test_sensitize_train import TestSensitizeTrain
+from test_sensitize_list import TestSensitizeList
+from test_sensitize_delete import TestSensitizeDelete
+from common import deleteDependentData
 
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 def RunBasicCase():
     param_suite = unittest.TestSuite()
@@ -50,5 +50,7 @@ def RunBasicCase():
 
 
 if __name__ == '__main__':
+    deleteDependentData("test1")
+    deleteDependentData("test01")
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(RunBasicCase())

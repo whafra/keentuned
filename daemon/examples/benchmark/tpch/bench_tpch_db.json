@@ -1,20 +1,20 @@
 {
-  "benchmark": [
-    {
-      "benchmark_cmd": "python3 {remote_script_path}",
-      "local_script_path": "benchmark/tpch/ack_tpch_test_db.py",
-      "items": {
-        "TPCH_Time": {
-          "negative": false,
-          "weight": 100,
-          "strict": false
-        },
-        "Total_Time": {
-          "negative": false,
-          "weight": 0,
-          "strict": false
+    "benchmark": [
+      {
+        "benchmark_cmd": "python3 {remote_script_path}",
+        "local_script_path": "benchmark/tpch/ack_tpch_test_db.py",
+        "items": {
+          "TPCH_Time": {
+            "negative": false,
+            "weight": 100,
+            "strict": false
+          },
+          "Total_Time": {
+            "negative": false,
+            "weight": 0,
+            "strict": false
+          }
         }
       }
-    }
-  ]
-}
+    ]
+  }

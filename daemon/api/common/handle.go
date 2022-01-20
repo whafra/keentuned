@@ -1,11 +1,12 @@
 package common
 
 import (
-	"keentune/daemon/common/config"
-	"keentune/daemon/common/log"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/log"
 	"net/http"
 	"strings"
 )
@@ -44,24 +45,36 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func report(url string, value []byte, err error) {
 	if err != nil {
 		msg := fmt.Sprintf("read request info err:%v", err)
-		log.Error("","report value to chan err:%v",msg)
+		log.Error("", "report value to chan err:%v", msg)
 	}
 
-	if strings.Contains(url, "benchmark_result") && config.IsInnerRequests {
-		config.IsInnerRequests = false
+	if strings.Contains(url, "benchmark_result") && config.IsInnerBenchRequests[1] {
+		config.IsInnerBenchRequests[1] = false
 		config.BenchmarkResultChan <- value
 		return
 	}
 
-	if strings.Contains(url, "apply_result") && config.IsInnerRequests {
-		config.IsInnerRequests = false
-		config.ApplyResultChan <- value
+	if strings.Contains(url, "apply_result") {
+		var applyResult struct {
+			ID int `json:"target_id"`
+		}
+		err := json.Unmarshal(value, &applyResult)
+		if err != nil {
+			fmt.Printf("unmarshal apply target id err: %v", err)
+			return
+		}
+
+		if config.IsInnerApplyRequests[applyResult.ID] && applyResult.ID > 0 {
+			config.IsInnerApplyRequests[applyResult.ID] = false
+			config.ApplyResultChan[applyResult.ID] <- value
+		}
+
 		return
 	}
 
-	if strings.Contains(url, "sensitize_result") && config.IsInnerRequests {
-		config.IsInnerRequests = false
-		config.SensitizeReusltChan <- value
+	if strings.Contains(url, "sensitize_result") && config.IsInnerSensitizeRequests[1] {
+		config.IsInnerSensitizeRequests[1] = false
+		config.SensitizeResultChan <- value
 		return
 	}
 }
@@ -76,7 +89,7 @@ func status(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(msg))
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "alive"}`))
 	return
