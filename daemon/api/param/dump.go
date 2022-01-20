@@ -1,13 +1,13 @@
 package param
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"strings"
@@ -15,6 +15,10 @@ import (
 
 // Dump run param dump service
 func (s *Service) Dump(dump com.DumpFlag, reply *string) error {
+	if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
+		return fmt.Errorf("tuning job %v is running, wait for it finishing", dump.Name)
+	}
+
 	defer func() {
 		*reply = log.ClientLogMap[log.ParamDump]
 		log.ClearCliLog(log.ParamDump)
@@ -54,9 +58,9 @@ func checkDumpParam(path, outputFile string, confirm bool) error {
 
 	if file.IsPathExist(outputFile) && !confirm {
 		return fmt.Errorf("outputFile exist and you have given up to overwrite it")
-	}	
-	
-	return nil	
+	}
+
+	return nil
 }
 
 func convertJsonFile2ConfigFile(jsonFile, outputFile string) error {

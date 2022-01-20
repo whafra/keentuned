@@ -13,16 +13,16 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "keentune [command]",
-	Short: "KeenTune is an AI tuning tool for Linux system and cloud applications",
-	Long: "KeenTune is an AI tuning tool for Linux system and cloud applications",
+	Use:     "keentune [command]",
+	Short:   "KeenTune is an AI tuning tool for Linux system and cloud applications",
+	Long:    "KeenTune is an AI tuning tool for Linux system and cloud applications",
 	Example: "\tkeentune param -h\n\tkeentune profile -h\n\tkeentune sensitize -h",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()
 	},
 }
 
-const template=`{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}{{end}}
+const template = `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}{{end}}
 
 Usage:{{if .Runnable}}
   {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}{{end}} {{if gt (len .Aliases) 0}}
@@ -51,7 +51,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 func main() {
 	decorateCmd(rootCmd)
 	rootCmd.SetHelpTemplate(template)
-	rootCmd.AddCommand(subCommands()...)	
+	rootCmd.AddCommand(subCommands()...)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

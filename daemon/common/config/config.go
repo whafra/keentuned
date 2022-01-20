@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"keentune/daemon/common/file"
-	"os"
-
 	"github.com/go-ini/ini"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/utils"
+	"os"
+	"strings"
 )
 
 // KeentunedConf
@@ -17,7 +18,7 @@ type KeentunedConf struct {
 	BaseRound     int
 	ExecRound     int
 	AfterRound    int
-	TargetIP      string
+	TargetIP      []string
 	TargetPort    string
 	BrainIP       string
 	BrainPort     string
@@ -25,7 +26,6 @@ type KeentunedConf struct {
 	HeartbeatTime int
 	DumpConf
 	Sensitize
-	Profile
 	LogConf
 }
 
@@ -42,10 +42,6 @@ type Sensitize struct {
 	ResultDir  string
 }
 
-type Profile struct {
-	DumpDir string
-}
-
 type LogConf struct {
 	ConsoLvl    string
 	LogFileLvl  string
@@ -59,11 +55,13 @@ const (
 )
 
 var (
-	ProgramNeedExit     = make(chan bool, 1)
-	ApplyResultChan     = make(chan []byte, 1)
+	ProgramNeedExit = make(chan bool, 1)
+
+	//  ApplyResultChan receive apply result
+	ApplyResultChan     []chan []byte
 	ServeFinish         = make(chan bool, 1)
 	BenchmarkResultChan = make(chan []byte, 1)
-	SensitizeReusltChan = make(chan []byte, 1)
+	SensitizeResultChan = make(chan []byte, 1)
 )
 
 var (
@@ -73,8 +71,9 @@ var (
 	// ParamAllFile ...
 	ParamAllFile = "parameter/sysctl.json"
 
-	// IsInnerRequests is inner requests
-	IsInnerRequests bool
+	IsInnerBenchRequests     []bool
+	IsInnerApplyRequests     []bool
+	IsInnerSensitizeRequests []bool
 )
 
 func init() {
@@ -82,6 +81,19 @@ func init() {
 	if err := conf.Save(); err != nil {
 		fmt.Printf("init Keentuned conf err:%v\n", err)
 		os.Exit(1)
+	}
+
+	initChanAndIPMap()
+}
+
+func initChanAndIPMap() {
+	IsInnerBenchRequests = make([]bool, len(KeenTune.TargetIP)+2)
+	IsInnerApplyRequests = make([]bool, len(KeenTune.TargetIP)+2)
+	IsInnerSensitizeRequests = make([]bool, len(KeenTune.TargetIP)+2)
+	ApplyResultChan = make([]chan []byte, len(KeenTune.TargetIP)+2)
+
+	for index, _ := range KeenTune.TargetIP {
+		ApplyResultChan[index+1] = make(chan []byte, 1)
 	}
 }
 
@@ -104,7 +116,11 @@ func (c *KeentunedConf) Save() error {
 	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
 
 	target := cfg.Section("target")
-	c.TargetIP = target.Key("TARGET_IP").MustString("")
+	c.TargetIP, err = changeStringToSlice(target.Key("TARGET_IP").MustString(""))
+	if err != nil {
+		fmt.Printf("%v keentune check target ip %v", utils.ColorString("red", "[ERROR]"), err)
+	}
+
 	c.TargetPort = target.Key("TARGET_PORT").MustString("9873")
 
 	brain := cfg.Section("brain")
@@ -125,7 +141,6 @@ func (c *KeentunedConf) Save() error {
 	c.GetLogConf(cfg)
 
 	KeenTune = *c
-	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", c.Home, c.DumpConf.DumpHome)
 	return nil
 }
 
@@ -137,3 +152,17 @@ func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
 	c.LogConf.Interval = logInst.Key("LOGFILE_INTERVAL").MustInt(2)
 	c.LogConf.BackupCount = logInst.Key("LOGFILE_BACKUP_COUNT").MustInt(14)
 }
+
+func changeStringToSlice(ipString string) ([]string, error) {
+	validIPs, invalidIPs := utils.CheckIPValidity(strings.Split(ipString, ","))
+	if len(invalidIPs) != 0 {
+		return validIPs, fmt.Errorf("find invalid or repeated ip %v, please check and restart", invalidIPs)
+	}
+
+	if len(validIPs) == 0 {
+		return nil, fmt.Errorf("find valid ip is null, invalid ip is %v, please check and restart", invalidIPs)
+	}
+
+	return validIPs, nil
+}
+

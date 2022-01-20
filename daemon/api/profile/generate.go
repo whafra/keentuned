@@ -1,12 +1,12 @@
 package profile
 
 import (
-	"keentune/daemon/common/config"
+	"fmt"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"fmt"
 )
 
 // Generate run profile generate service
@@ -29,7 +29,7 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 		return fmt.Errorf("Convert file: %v, err:%v", flag.Name, err)
 	}
 
-	totalParamMap, err := file.ReadFile2Map(fmt.Sprintf("%s/%s", config.KeenTune.Home , config.ParamAllFile))
+	totalParamMap, err := file.ReadFile2Map(fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile))
 	if err != nil {
 		log.Errorf(log.ProfGenerate, "Read file: %v, err:%v\n", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
 		return fmt.Errorf("Read file: %v, err:%v", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)

@@ -1,10 +1,11 @@
 package common
 
 import (
+	"encoding/json"
+	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
-	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
@@ -20,28 +21,30 @@ const (
 	MaxReconnectionTime = 3
 )
 
-func HeartbeatCheck() {
+func HeartbeatCheck() error {
+	var clientName = new(string)
+	if IsClientOffline(clientName) {
+		return fmt.Errorf("%v is offline, please retry after check it is ready", *clientName)
+	}
+	log.Info("", "\tKeenTuned heartbeat check : keentuned and client connection success")
+
+	go monitorClientStatus(clientName)
+	return nil
+}
+
+func monitorClientStatus(clientName *string) {
 	signalChan := make(chan os.Signal, 1)
 
 	// notify sysem signal, such as ctrl + C
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	var faultCount int
-	uri := config.KeenTune.TargetIP + ":" + config.KeenTune.TargetPort + "/status"
 	ticker := time.NewTicker(time.Duration(config.KeenTune.HeartbeatTime) * time.Second)
-
-	if IsClientOffline(uri) {
-		log.Error("", "target machine client is offline, please retry after check it is ready")
-		config.ServeFinish <- true
-		return
-	} else {
-		log.Info("", "\tKeenTuned heartbeat check : keentuned and target connection success")
-	}
 
 	for {
 		select {
 		case <-ticker.C:
-			if IsClientOffline(uri) {
+			if IsClientOffline(clientName) {
 				faultCount++
 				log.Infof("", "keentuned detected that the client was offline for the %vth time", faultCount)
 			}
@@ -59,14 +62,34 @@ func HeartbeatCheck() {
 
 		case <-signalChan:
 			log.Debug("", "Heartbeat Check program is interrupt")
-			http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+
+			if GetRunningTask() != "" {
+				http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+			}
 			config.ServeFinish <- true
 			return
 		}
 	}
 }
 
-func IsClientOffline(uri string) bool {
+func IsClientOffline(clientName *string) bool {
+	for index, ip := range config.KeenTune.TargetIP {
+		targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.TargetPort)
+		if checkOffline(targetURI) {
+			*clientName = fmt.Sprintf("target %v", index+1)
+			return true
+		}
+	}
+
+	benchURI := config.KeenTune.BenchIP + ":" + config.KeenTune.BenchPort + "/status"
+	if checkOffline(benchURI) {
+		*clientName = fmt.Sprintf("bench")
+		return true
+	}
+	return false
+}
+
+func checkOffline(uri string) bool {
 	bytes, err := http.RemoteCall("GET", uri, nil)
 	if err != nil {
 		log.Errorf("", "remotcall return err: %v", err)
@@ -81,4 +104,3 @@ func IsClientOffline(uri string) bool {
 
 	return clientState.Status != "alive"
 }
-

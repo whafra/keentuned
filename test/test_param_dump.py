@@ -19,7 +19,7 @@ class TestParamDump(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune()
+        status = runParamTune("test1")
         self.assertEqual(status, 0)
         logger.info('start to run test_param_dump testcase')
 
@@ -35,7 +35,7 @@ class TestParamDump(unittest.TestCase):
         cmd = 'echo y | keentune param dump -j test1 -o test1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('successfully'))
+        self.assertTrue(self.out.__contains__('dump successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)

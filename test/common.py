@@ -1,13 +1,21 @@
 import os
 import re
+import json
 import requests
 import subprocess
 import time
 import unittest
 import logging
 
-from keentune_config import keentuned_ip, keentuned_port, brain_ip, \
-    brain_port, bench_ip, bench_port,  target_ip, target_port
+target_ip="localhost"
+bench_ip="localhost"
+brain_ip="localhost"
+keentuned_ip="localhost"
+
+target_port="9873"
+bench_port="9874"
+brain_port="9872"
+keentuned_port="9871"
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +45,7 @@ def getServerStatus(server):
     }
     event = "sensitize_list" if server == "keentune-brain" else "status"
     url = "http://{}:{}/{}".format(data_dict[server][0], data_dict[server][1], event)
-    res = requests.get(url, proxies={"http": None, "https": None})
+    res = requests.get(url, proxies={"http": None,"https": None})
     if res.status_code != 200:
         logger.error("Please check {} server is running...".format(server))
         result = 1
@@ -61,27 +69,27 @@ def deleteDependentData(param_name):
     sysCommand(cmd)
 
 
-def runParamTune():
-    cmd = 'keentune param tune --param parameter/sysctl.json -i 1 --bench benchmark/wrk/bench_wrk_nginx_long.json --job test1'
+def runParamTune(name, iteration=1):
+    cmd = 'keentune param tune --param parameter/sysctl.json -i {} --bench benchmark/wrk/bench_wrk_nginx_long.json --job {}'.format(iteration, name)
     _, output, _ = sysCommand(cmd)
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if '[BEST] Tuning improvment' in res_data:
+        if '[BEST] Tuning improvement' in res_data:
             break
         time.sleep(8)
 
     word_list = ["Step1", "Step2", "Step3", "Step4",
-                 "Step5", "Step6", "[BEST] Tuning improvment"]
+                 "Step5", "Step6", "[BEST] Tuning improvement"]
     res = all([word in res_data for word in word_list])
     result = 0 if res else 1
     return result
 
 
-def runParamDump():
-    cmd = 'echo y | keentune param dump -j test1 -o test1.conf'
+def runParamDump(name):
+    cmd = 'echo y | keentune param dump -j {} -o {}'.format(name, name)
     sysCommand(cmd)
     path = "/var/keentune/profile/test1.conf"
     res = os.path.exists(path)
@@ -99,8 +107,8 @@ def runProfileSet():
     return result
 
 
-def runSensitizeCollect():
-    cmd = 'keentune sensitize collect -i 10 --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data test2'
+def runSensitizeCollect(name, iteration=10):
+    cmd = 'keentune sensitize collect -i {} --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data {}'.format(iteration, name)
     _, output, _ = sysCommand(cmd)
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
@@ -116,3 +124,105 @@ def runSensitizeCollect():
     res = all([word in res_data for word in word_list])
     result = 0 if res else 1
     return result
+
+def getSysBackupData():
+    path ="/var/keentune/backup/sysctl_backup.json"
+    if os.path.exists(path):
+        status, output, _ = sysCommand('keentune param rollback')
+        assert status == 0
+        assert 'param rollback successfully' in output
+
+    path = "conf/sysctl_backup.json"
+    with open(path, "r", encoding='UTF-8') as f:
+        backup_data = json.load(f)
+
+    for param_name, param_info in backup_data.items():
+        cmd = "sysctl -n {}".format(param_name)
+        param_info["value"] = sysCommand(cmd)[1].strip('\n')
+        backup_data[param_name] = param_info
+
+    with open(path, "w", encoding='UTF-8') as f:
+        json.dump(backup_data, f, indent=4)
+
+def checkBackupData():
+    path = "conf/sysctl_backup.json"
+    with open(path, "r", encoding='UTF-8') as f:
+        backup_data = json.load(f)
+
+    for param_name, param_info in backup_data.items():
+        cmd = "sysctl -n {}".format(param_name)
+        value = sysCommand(cmd)[1].strip('\n')
+        if param_info["value"] != value:
+            status = 1
+            break
+    else:
+        status = 0
+    return status
+
+def checkProfileData(name, flag=False):
+    path = "/var/keentune/profile/{}.conf".format(name) if flag else "conf/{}.conf".format(name)
+    with open(path, "r", encoding='UTF-8') as f:
+        for line in f.readlines()[1:]:
+            key = line.strip().split(": ")[0]
+            value = line.strip().split(": ")[1]
+            cmd = "sysctl -n {}".format(key)
+            sys_val = sysCommand(cmd)[1].strip('\n')
+            if value != sys_val:
+                status = 1
+                break
+        else:
+            status = 0
+    return status
+
+def getTaskLogPath(cmd, status=0):
+    res, output, _  = sysCommand(cmd)
+    assert res == status
+    path = re.search(r'\s+"(.*?)"', output).group(1)
+    time.sleep(2)
+    return path
+
+def getTuneTaskResult(path):
+    while True:
+        with open(path, 'r') as f:
+            res_data = f.read()
+        if '[BEST] Tuning improvement' in res_data:
+            break
+        time.sleep(8)
+
+    word_list = ["Step1", "Step2", "Step3", "Step4",
+                    "Step5", "Step6", "[BEST] Tuning improvement"]
+    result = all([word in res_data for word in word_list])
+    return result
+
+def getCollectTaskResult(path):
+    while True:
+        with open(path, 'r') as f:
+            res_data = f.read()
+        if 'Sensitization collection finished' in res_data:
+            break
+        time.sleep(8)
+    word_list = ["Step1", "Step2", "Step3", "Step4", "Sensitization collection finished"]
+    result = all([word in res_data for word in word_list])
+    return result
+
+def getTrainTaskResult(path):
+    while True:
+        with open(path, 'r') as f:
+            res_data = f.read()
+        if '"sensitize train" finish' in res_data:
+            break
+        time.sleep(8)
+    word_list = ["Step1", "Step2", "Step3", "Step4", '"sensitize train" finish']
+    result = all([word in res_data for word in word_list])
+    return result
+
+def deleteTmpFiles(file_list):
+    for file in file_list:
+        path = "/var/keentune/profile/{}.conf".format(file)
+        if os.path.exists(path):
+            os.remove(path)
+
+def copyTmpFile(path1, path2):
+    cmd = "cp {} {}".format(path1, path2)
+    status, _, _  = sysCommand(cmd)
+    assert status == 0

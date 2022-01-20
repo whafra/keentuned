@@ -1,20 +1,21 @@
 package main
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/api/param"
 	"keentune/daemon/api/profile"
 	"keentune/daemon/api/sensitize"
 	"keentune/daemon/api/system"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"keentune/daemon/common/file"
 	"net"
 	"net/rpc"
+	"os"
 	"os/signal"
 	"syscall"
-	"fmt"
-	"os"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func main() {
 
 	go mkWorkDir()
 
-	fmt.Println("KeenTune daemon running...")
+	showStart()
 
 	for {
 		conn, err := listener.Accept()
@@ -60,3 +61,15 @@ func mkWorkDir() {
 		os.MkdirAll(m.GetSensitizePath(), os.ModePerm)
 	}
 }
+
+func showStart() {
+	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
+
+	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
+	for index, ip := range config.KeenTune.TargetIP {
+		fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, index+1)
+	}
+
+	fmt.Println("KeenTune daemon running...")
+}
+

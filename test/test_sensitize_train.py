@@ -20,7 +20,7 @@ class TestSensitizeTrain(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runSensitizeCollect()
+        status = runSensitizeCollect("test01")
         self.assertEqual(status, 0)
         logger.info('start to run test_sensitize_train testcase')
 
@@ -28,11 +28,11 @@ class TestSensitizeTrain(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test2")
+        deleteDependentData("test01")
         logger.info('the test_sensitize_train testcase finished')
 
     def test_sensitize_train(self):
-        cmd = 'echo y | keentune sensitize train --data test2 --output test2'
+        cmd = 'echo y | keentune sensitize train --data test01 --output test01'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 
@@ -49,6 +49,6 @@ class TestSensitizeTrain(unittest.TestCase):
         result = all([word in res_data for word in word_list])
         self.assertTrue(result)
 
-        self.path = "/var/keentune/sensitize/sensi-test2.json"
+        self.path = "/var/keentune/sensitize/sensi-test01.json"
         res = os.path.exists(self.path)
         self.assertTrue(res)

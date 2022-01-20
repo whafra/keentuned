@@ -1,25 +1,26 @@
 package modules
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"time"
 )
 
 // Benchmark define benchmark cmd and host to run
 type Benchmark struct {
-	Cmd        string                `json:"benchmark_cmd"`
-	Host       string                `json:"host"`
-	FilePath   string                `json:"local_script_path"`
-	HostWeight int                   `json:"host_weight"`
-	Items      map[string]ItemDetail `json:"items"`
-	round      int
-	verbose    bool
+	Cmd         string                `json:"benchmark_cmd"`
+	Host        string                `json:"host"`
+	FilePath    string                `json:"local_script_path"`
+	Items       map[string]ItemDetail `json:"items"`
+	round       int
+	verbose     bool
+	LogName     string   `json:"-"`
+	SortedItems []string `json:"-"`
 }
 
 // BenchResult benchmark request result
@@ -38,7 +39,8 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 	start := time.Now()
 	var scores = map[string][]float32{}
 	var sumScore = map[string]float32{}
-	
+
+	defer func() { config.IsInnerBenchRequests[1] = false }()
 	respIP, err := utils.GetExternalIP()
 	if err != nil {
 		return scores, nil, "", fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
@@ -47,7 +49,7 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 	var requestBody = map[string]interface{}{}
 	requestBody["benchmark_cmd"] = benchmark.Cmd
 	requestBody["resp_ip"] = respIP
-	requestBody["resp_port"] = config.KeenTune.Port	
+	requestBody["resp_port"] = config.KeenTune.Port
 
 	for i := 1; i <= num; i++ {
 		resp, err := http.RemoteCall("POST", benchmark.Host+"/benchmark", requestBody)
@@ -55,7 +57,7 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 			return scores, nil, "", fmt.Errorf("%vth benchmark remote call return err:%v", i, err)
 		}
 
-		score, err := parseScore(resp)
+		score, err := parseScore(resp, benchmark.LogName)
 		if err != nil {
 			return scores, nil, "", fmt.Errorf("%vth benchmark parse score err:%v", i, err)
 		}
@@ -85,7 +87,12 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 	}
 
 	resultString := ""
-	for name, info := range benchmark.Items {
+	for _, name := range benchmark.SortedItems {
+		info, ok := benchmark.Items[name]
+		if !ok {
+			return nil, "", fmt.Errorf("assert item %v not found", name)
+		}
+
 		scoreSlice, ok := scores[name]
 		if !ok {
 			log.Warnf("", "benchmark response  [%v] detail info not exist, please check the bench.json and the python file you specified whether matched", name)
@@ -138,14 +145,14 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 	if err != nil {
 		return false, "", fmt.Errorf("SendScript remote call err:%v", err)
 	}
-	
+
 	timeCost := utils.Runtime(start)
 	*sendTime += timeCost.Count
 
 	return true, timeCost.Desc, nil
 }
 
-func parseScore(body []byte) (map[string]float32, error) {
+func parseScore(body []byte, logName string) (map[string]float32, error) {
 	var benchResult BenchResult
 	err := json.Unmarshal(body, &benchResult)
 	if err != nil {
@@ -156,11 +163,10 @@ func parseScore(body []byte) (map[string]float32, error) {
 		return nil, fmt.Errorf("parse score failed, benchmark result return :%v", benchResult.Success)
 	}
 
-	var resultMap =map[string]float32{}
-
-	config.IsInnerRequests = true
+	var resultMap = map[string]float32{}
+	config.IsInnerBenchRequests[1] = true
 	select {
-	case bytes := <-config.BenchmarkResultChan:	
+	case bytes := <-config.BenchmarkResultChan:
 		log.Debugf("", "get benchmark result:%s", bytes)
 		if err = json.Unmarshal(bytes, &benchResult); err != nil {
 			return nil, fmt.Errorf("unmarshal request info err:%v", err)
@@ -176,11 +182,10 @@ func parseScore(body []byte) (map[string]float32, error) {
 
 		break
 	case <-StopSig:
-		rollback()
+		Rollback(logName)
 		return nil, fmt.Errorf("get benchmark is interrupted")
 	}
 
-	
 	if len(resultMap) == 0 {
 		return nil, fmt.Errorf("get benchmark result is nil")
 	}

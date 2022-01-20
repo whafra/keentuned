@@ -1,14 +1,15 @@
 package common
 
 import (
-	"keentune/daemon/common/config"
-	"keentune/daemon/common/file"
-	"keentune/daemon/common/log"
-	utilhttp "keentune/daemon/common/utils/http"
-	m "keentune/daemon/modules"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
+	utilhttp "keentune/daemon/common/utils/http"
+	m "keentune/daemon/modules"
 	"net/http"
 	"os"
 	"strings"
@@ -32,7 +33,7 @@ type DeleteFlag struct {
 }
 
 type RollbackFlag struct {
-	Cmd  string
+	Cmd string
 }
 
 // DumpFlag ...
@@ -42,10 +43,13 @@ type DumpFlag struct {
 	Force  bool
 }
 
+var activeJob = ""
+
 var (
-	SystemRun     bool
-	IsTuning      bool
-	IsSensitizing bool
+	JobTuning     = "tuning"
+	JobCollection = "collect"
+	JobTraining   = "train"
+	JobBenchmark  = "benchmark"
 )
 
 func IsDataNameUsed(name string) bool {
@@ -82,19 +86,23 @@ func GetDataList() ([]string, string, string, error) {
 		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
 	}
 
-	var paramString string
+	var dataDetailSlice [][]string
 	var dataList []string
 	var collectList string
 
+	if len(sensiList.Data) > 0 {
+		dataDetailSlice = append(dataDetailSlice, []string{"data name", "application scenario", "algorithm"})
+	}
+
 	for _, value := range sensiList.Data {
-		paramString += fmt.Sprintf("%s,%s,%s;", value.Name, value.Scenario, value.Algorithm)
+		dataDetailSlice = append(dataDetailSlice, []string{value.Name, value.Scenario, value.Algorithm})
 		dataList = append(dataList, value.Name)
 		if value.Scenario == "collect" {
 			collectList += fmt.Sprintf("\n\t%v", value.Name)
 		}
 	}
 
-	return dataList, collectList, paramString, nil
+	return dataList, collectList, utils.FormatInTable(dataDetailSlice), nil
 }
 
 func KeenTunedService(quit chan os.Signal) {
@@ -105,7 +113,9 @@ func KeenTunedService(quit chan os.Signal) {
 		select {
 		case <-quit:
 			log.Info("", "keentune is interrupted")
-			utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+			if GetRunningTask() != "" {
+				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+			}
 			os.Exit(1)
 		}
 	}()
@@ -131,7 +141,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 	case "profile":
 		fullName = GetProfilePath(flag.Name)
 	default:
-		log.Errorf("","%v is not supported", flag.Cmd)
+		log.Errorf("", "%v is not supported", flag.Cmd)
 		return nil
 	}
 
@@ -143,7 +153,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
 		return fmt.Errorf("Check name failed: %v", err.Error())
 	}
-	
+
 	if err := inst.delete(); err != nil {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
 		return fmt.Errorf("Delete failed: %v", err.Error())
@@ -187,19 +197,6 @@ func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
 
-func RollbackImpl(flag RollbackFlag, reply *string) error {
-	url := config.KeenTune.TargetIP + ":" + config.KeenTune.TargetPort + "/rollback"
-	err := utilhttp.ResponseSuccess("POST", url, nil)
-	if err != nil {
-		log.Errorf(fmt.Sprintf("%s rollback", flag.Cmd), "Rollback failed: %v", err)
-		*reply = log.ClientLogMap[fmt.Sprintf("%s rollback", flag.Cmd)]
-		return fmt.Errorf("Rollback failed: %v", err)
-	}
-
-	return nil
-}
-
-
 func GetProfilePath(fileName string) string {
 	if file.IsPathExist(fileName) {
 		return fileName
@@ -237,12 +234,12 @@ func GetParameterPath(fileName string) string {
 	return fileName
 }
 
-/* GetAbsolutePath  fileName support absolute path, relative path, file. 
-	e.g.
-		file: param.json
-		relative path: parameter/param.json
-		absolute path: /etc/keentune/parameter/param.json
- */
+/* GetAbsolutePath  fileName support absolute path, relative path, file.
+e.g.
+	file: param.json
+	relative path: parameter/param.json
+	absolute path: /etc/keentune/parameter/param.json
+*/
 func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 	if fileName == "" {
 		return fileName
@@ -302,14 +299,27 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 }
 
 func GetRunningTask() string {
-	if IsTuning {
-		return "param"
-	}
-	
-	if IsSensitizing {
-		return "sensitize"
+	return activeJob
+}
+
+func SetRunningTask(class, name string) {
+	activeJob = fmt.Sprintf("%s %s", class, name)
+}
+
+func ClearTask() {
+	activeJob = ""
+}
+
+func IsJobRunning(name string) bool {
+	return GetRunningTask() == name
+}
+
+func IsApplying() bool {
+	job := GetRunningTask()
+	if job == "" || len(strings.Split(job, " ")) < 2 {
+		return false
 	}
 
-	return ""
+	return (strings.Split(job, " ")[0] == JobCollection) || (strings.Split(job, " ")[0] == JobTuning)
 }
 

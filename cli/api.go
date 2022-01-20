@@ -5,13 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
-	"strings"
 	"os"
 )
 
 // TuneFlag tune options
 type TuneFlag struct {
-	Name      string // job specific name 
+	Name      string // job specific name
 	Round     int
 	BenchConf string
 	ParamConf string
@@ -71,33 +70,18 @@ func remoteImpl(callName string, flag interface{}) {
 		fmt.Printf("%v %v failed, msg: %v\n", ColorString("red", "[ERROR]"), callName, err)
 		os.Exit(1)
 	}
-	
-	showReply(reply)
+
+	fmt.Printf("%v", reply)
 	return
 }
 
-func showReply(reply string) {
-	if strings.Contains(reply, "displayed in the terminal.") {
-		start := strings.Index(reply, "displayed in the terminal.")
-		end := strings.Index(reply, "show table end.")
-
-		fmt.Printf("%v\n",reply[:start+len("displayed in the terminal.")])
-		showInTable(reply[start+len("displayed in the terminal.") : end])
-		fmt.Printf("\n%v",strings.TrimLeft(reply[end+len("show table end."):],"\n"))
-		return
-	}
-	
-	fmt.Printf("%v",reply)
-	return
-}
-
-func RunTuneRemote(ctx context.Context, flag TuneFlag) {	
+func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("param.Tune", flag)
-	
+
 	fmt.Printf("%v Running Param Tune Success.\n", ColorString("green", "[ok]"))
 	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
 	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
-	return	
+	return
 }
 
 func RunDumpRemote(ctx context.Context, flag DumpFlag) {
@@ -119,7 +103,7 @@ func RunDeleteRemote(ctx context.Context, flag DeleteFlag) {
 	if !confirm() {
 		fmt.Println("[-] Give Up Delete")
 		return
-	}	
+	}
 
 	remoteImpl(fmt.Sprintf("%s.Delete", flag.Cmd), flag)
 }
@@ -140,7 +124,7 @@ func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
 
 func RunCollectRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("sensitize.Collect", flag)
-	
+
 	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
 	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
 	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
@@ -151,16 +135,16 @@ func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
 	flag.Force = confirm()
 	remoteImpl("sensitize.Train", flag)
-	
+
 	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\toutput: %v\n",flag.Trials, flag.Data, flag.Output)
+	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\toutput: %v\n", flag.Trials, flag.Data, flag.Output)
 	fmt.Printf("\n\tsee more detailsby log file:  \"%v\"\n", flag.Log)
 	return
 }
 
 func StopRemote(ctx context.Context, flag string) {
 	var job string
-	if flag== "param" {
+	if flag == "param" {
 		job = "parameter optimization"
 	}
 
@@ -168,7 +152,7 @@ func StopRemote(ctx context.Context, flag string) {
 		job = "sensibility identification"
 	}
 
-	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job) 
+	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
 }
 
@@ -179,3 +163,4 @@ func RunJobsRemote(ctx context.Context) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
+

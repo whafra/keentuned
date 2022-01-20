@@ -1,11 +1,11 @@
 package profile
 
 import (
-	"keentune/daemon/common/log"
+	"fmt"
+	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/file"
-	"io/ioutil"
-	"fmt"
+	"keentune/daemon/common/log"
 )
 
 // Info run profile info service

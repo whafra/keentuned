@@ -31,7 +31,7 @@ func Parse2Map(key string, body interface{}) map[string]interface{} {
 	return retMap
 }
 
-// ParseValue parse value from body by key 
+// ParseValue parse value from body by key
 func ParseValue(key string, body []byte) (interface{}, error) {
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
@@ -47,8 +47,8 @@ func ParseValue(key string, body []byte) (interface{}, error) {
 	return value, nil
 }
 
-//  Map2Struct  convert map to dest struct 
-func Map2Struct(m map[string]interface{}, dest interface{}) error {
+//  Map2Struct  convert map to dest struct
+func Map2Struct(m interface{}, dest interface{}) error {
 	byte, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshal [%+v] err:[%v]", m, err)
@@ -79,7 +79,7 @@ func Interface2Map(source interface{}) (map[string]interface{}, error) {
 	return retMap, nil
 }
 
-//  Struct2Map  convert source struct to map 
+//  Struct2Map  convert source struct to map
 func Struct2Map(source interface{}) (map[string]interface{}, error) {
 	bytes, err := json.Marshal(source)
 	if err != nil {
