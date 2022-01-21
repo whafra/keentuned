@@ -20,9 +20,9 @@ class TestProfileSet(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune()
+        status = runParamTune("test1")
         self.assertEqual(status, 0)
-        status = runParamDump()
+        status = runParamDump("test1")
         self.assertEqual(status, 0)
         logger.info('start to run test_profile_set testcase')
 
@@ -37,8 +37,7 @@ class TestProfileSet(unittest.TestCase):
         cmd = 'keentune profile set --name test1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__(
-            'Set test1.conf successfully'))
+        self.assertTrue(self.out.__contains__('Set test1.conf successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)

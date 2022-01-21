@@ -1,11 +1,11 @@
 package modules
 
 import (
+	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
-	"fmt"
 	"strings"
 )
 
@@ -18,13 +18,14 @@ type Parameter struct {
 	Continuity bool          `json:"-"`
 	Scope      []interface{} `json:"range,omitempty"`
 	Options    []string      `json:"options,omitempty"`
+	Sequence   []interface{} `json:"sequence,omitempty"`
 	Dtype      string        `json:"dtype"`
 	Value      interface{}   `json:"value,omitempty"`
 	Msg        string        `json:"msg,omitempty"`
 	Step       int           `json:"step,omitempty"`
 	Weight     float32       `json:"weight,omitempty"`
+	Success    bool          `json:"suc,omitempty"`
 }
-
 
 // updateParameter update the partial param by the total param
 func updateParameter(partial, total *Parameter) {

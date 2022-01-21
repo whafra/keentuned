@@ -102,3 +102,102 @@ func GetExternalIP() (string, error) {
 
 	return "", fmt.Errorf("ip not found")
 }
+
+// CheckIPValidity argv 0: origin slice; return 0: valid slice; 1: invalid slice
+func CheckIPValidity(origin []string) ([]string, []string) {
+	var valid, invalid []string
+	var orgMap = make(map[string]bool, len(origin))
+	for _, v := range origin {
+		pureValue := strings.Trim(v, " ")
+		if pureValue == "localhost" || pureValue == "127.0.0.1" || pureValue == "::1" {
+			realIP, _ := GetExternalIP()
+			if realIP != "" && !orgMap[realIP] {
+				valid = append(valid, pureValue)
+				orgMap[realIP] = true
+				continue
+			}
+			invalid = append(invalid, pureValue)
+			continue
+		}
+
+		if !orgMap[pureValue] && isIP(pureValue) {
+			orgMap[pureValue] = true
+			valid = append(valid, pureValue)
+			continue
+		}
+		invalid = append(invalid, v)
+	}
+
+	return valid, invalid
+}
+
+func isIP(ip string) bool {
+	address := net.ParseIP(ip)
+	return address != nil
+}
+
+func ConcurrentSecurityMap(origin map[string]interface{}, keys []string, values []interface{}) map[string]interface{} {
+	var newMap = make(map[string]interface{})
+	for key, value := range origin {
+		newMap[key] = value
+	}
+
+	if len(keys) != len(values) {
+		return newMap
+	}
+
+	for i, value := range values {
+		newMap[keys[i]] = value
+	}
+
+	return newMap
+}
+
+func FormatInTable(data [][]string) string {
+	if len(data) == 0 || len(data[0]) == 0 {
+		return ""
+	}
+
+	var maxes = make([]int, len(data[0]))
+	for _, row := range data {
+		for j, column := range row {
+			if maxes[j] < len(strings.Trim(column, " \t")) {
+				maxes[j] = len(strings.Trim(column, " \t"))
+			}
+		}
+	}
+
+	var fmtInfo string
+	for index, row := range data {
+		if index == 0 {
+			fmtInfo += decorateString(maxes)
+		}
+
+		if len(row) != len(maxes) {
+			continue
+		}
+
+		fmtInfo += "|"
+		for j, len := range maxes {
+			fmtInfo += fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s|", strings.Trim(row[j], " \t"))
+		}
+
+		fmtInfo += fmt.Sprintln()
+
+		if index == 0 || index == len(data)-1 {
+			fmtInfo += decorateString(maxes)
+		}
+	}
+
+	return fmt.Sprintln() + strings.TrimSuffix(fmtInfo, "\n")
+}
+
+func decorateString(maxes []int) string {
+	var decorateStr = "+"
+	for _, len := range maxes {
+		decorateStr += strings.ReplaceAll(fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s+", ""), " ", "-")
+	}
+
+	return decorateStr + fmt.Sprintln()
+}
+

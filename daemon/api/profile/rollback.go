@@ -1,22 +1,26 @@
 package profile
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"fmt"
 )
 
 // Rollback run profile rollback service
 func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
+	if com.IsApplying() {
+		return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
+	}
+
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfRollback]
 		log.ClearCliLog(log.ProfRollback)
 	}()
 
-	err := com.RollbackImpl(flag, reply)
-	if err != nil {
-		return err
+	result, allSuccess := m.Rollback(log.ProfRollback)
+	if !allSuccess {
+		return fmt.Errorf("Rollback details:\n%v", result)
 	}
 
 	fileName := m.GetProfileWorkPath("active.conf")

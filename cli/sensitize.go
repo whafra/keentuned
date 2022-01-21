@@ -4,29 +4,29 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"os"
 	"github.com/spf13/cobra"
 )
 
 const (
-	egCollect = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --data collect_test --iteration 10"
-	egTrain = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
-	egDelete = "\tkeentune sensitize delete --data collect_test"
+	egCollect       = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --data collect_test --iteration 10"
+	egTrain         = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
+	egDelete        = "\tkeentune sensitize delete --data collect_test"
 	egSensitiveList = "\tkeentune sensitize list"
 	egSensitiveStop = "\tkeentune sensitize stop"
 )
 
 func createSensitizeCmds() *cobra.Command {
 	sensitizeCmd := &cobra.Command{
-		Use:   "sensitize [command]",
-		Short: "Sensitive parameter identification and explanation with AI algorithms",
-		Long: "Sensitive parameter identification and explanation with AI algorithms",
+		Use:     "sensitize [command]",
+		Short:   "Sensitive parameter identification and explanation with AI algorithms",
+		Long:    "Sensitive parameter identification and explanation with AI algorithms",
 		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveList, egSensitiveStop, egTrain),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "list" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
 					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				}
-				
 			}
 
 			if len(args) == 0 {
@@ -53,10 +53,16 @@ func createSensitizeCmds() *cobra.Command {
 func collectCmd() *cobra.Command {
 	var flag TuneFlag
 	cmd := &cobra.Command{
-		Use:   "collect",
-		Short: "Collecting parameter and benchmark score as sensitivity identification data randomly",
-		Long:  "Collecting parameter and benchmark score as sensitivity identification data randomly",
+		Use:     "collect",
+		Short:   "Collecting parameter and benchmark score as sensitivity identification data randomly",
+		Long:    "Collecting parameter and benchmark score as sensitivity identification data randomly",
 		Example: egCollect,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := checkTuningFlags("sensitize", &flag); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" || strings.Trim(flag.ParamConf, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
@@ -77,9 +83,9 @@ func collectCmd() *cobra.Command {
 func trainCmd() *cobra.Command {
 	var trainflags TrainFlag
 	cmd := &cobra.Command{
-		Use:   "train",
-		Short: "Deploy and start a sensitivity identification job",
-		Long:  "Deploy and start a sensitivity identification job",
+		Use:     "train",
+		Short:   "Deploy and start a sensitivity identification job",
+		Long:    "Deploy and start a sensitivity identification job",
 		Example: egTrain,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(trainflags.Data, " ") == "" {
@@ -93,7 +99,7 @@ func trainCmd() *cobra.Command {
 			}
 
 			if trainflags.Trials > 10 || trainflags.Trials < 1 {
-				fmt.Println("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
+				fmt.Printf("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
 				return
 			}
 
@@ -113,9 +119,9 @@ func trainCmd() *cobra.Command {
 
 func listSensitivityCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list",
-		Short: "List available sensitivity identification data",
-		Long:  "List available sensitivity identification data",
+		Use:     "list",
+		Short:   "List available sensitivity identification data",
+		Long:    "List available sensitivity identification data",
 		Example: egSensitiveList,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunListRemote(cmd.Context(), "sensitize")
@@ -129,9 +135,9 @@ func listSensitivityCmd() *cobra.Command {
 func deleteSensitivityCmd() *cobra.Command {
 	var flag DeleteFlag
 	cmd := &cobra.Command{
-		Use:   "delete",
-		Short: "Delete the sensitivity identification data",
-		Long:  "Delete the sensitivity identification data",
+		Use:     "delete",
+		Short:   "Delete the sensitivity identification data",
+		Long:    "Delete the sensitivity identification data",
 		Example: egDelete,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {

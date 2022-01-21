@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/liushuochen/gotable"
 	"github.com/spf13/cobra"
 )
 
@@ -18,14 +17,14 @@ func subCommands() []*cobra.Command {
 	return subCmds
 }
 
-var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/Ingress_http_short.json -i 10"
+var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag
 	cmd := &cobra.Command{
-		Use:   "rollback",
-		Short: "Restore initial state",
-		Long:  "Restore initial state",
+		Use:     "rollback",
+		Short:   "Restore initial state",
+		Long:    "Restore initial state",
 		Example: fmt.Sprintf("\tkeentune %v rollback", parentCmd),
 		Run: func(cmd *cobra.Command, args []string) {
 			flag.Cmd = parentCmd
@@ -60,9 +59,9 @@ func stopCmd(flag string) *cobra.Command {
 		description = "Terminate a sensitivity identification job"
 	}
 	var cmd = &cobra.Command{
-		Use:   "stop",
-		Short: description,
-		Long:  description,
+		Use:     "stop",
+		Short:   description,
+		Long:    description,
 		Example: fmt.Sprintf("\tkeentune %v stop", flag),
 		Run: func(cmd *cobra.Command, args []string) {
 			StopRemote(cmd.Context(), flag)
@@ -76,9 +75,9 @@ func stopCmd(flag string) *cobra.Command {
 func benchCmd() *cobra.Command {
 	var flag BenchmarkFlag
 	var cmd = &cobra.Command{
-		Use:   "benchmark",
-		Short: "Automatic benchmark pressure test",
-		Long: "Automatic benchmark pressure test",
+		Use:     "benchmark",
+		Short:   "Automatic benchmark pressure test",
+		Long:    "Automatic benchmark pressure test",
 		Example: egBenchmark,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" {
@@ -86,7 +85,7 @@ func benchCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-					
+
 			RunBenchRemote(cmd.Context(), flag)
 		},
 		Hidden: true,
@@ -96,56 +95,6 @@ func benchCmd() *cobra.Command {
 	flags.IntVarP(&flag.Round, "iteration", "i", 100, "benchmark execution iterations of pressure test")
 	flags.StringVar(&flag.BenchConf, "bench", "", "benchmark configure infomation")
 	return cmd
-}
-
-
-// showInTable dispaly headers and params in table, params[n] length should be equal to headers'.
-func showInTable(reply string) {
-	headers, params := getHeaderAndParam(strings.Trim(reply, "\n"))
-	tb, err := gotable.Create(headers...)
-	if err != nil {
-		fmt.Printf("create table failed: %v", err.Error())
-		return
-	}
-
-	for _, rows := range params {
-		if len(headers) != len(rows) {
-			continue
-		}
-
-		tabeValue := make(map[string]string)
-		for index, row := range rows {
-			tabeValue[headers[index]] = row
-		}
-
-		err = tb.AddRow(tabeValue)
-		if err != nil {
-			fmt.Printf("add value to table failed: %v", err.Error())
-			continue
-		}
-	}
-
-	// align left
-	for _, header := range headers {
-		tb.Align(header, gotable.Left)
-	}
-
-	tb.PrintTable()
-}
-
-func getHeaderAndParam(reply string) ([]string, [][]string) {
-	var headers []string
-	var params [][]string
-	complex := strings.Split(reply, ";")
-	for index, info := range complex {
-		if index == 0 {
-			headers = append(headers, strings.Split(info, ",")...)
-		} else {
-			params = append(params, strings.Split(info, ","))
-		}
-	}
-
-	return headers, params
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
@@ -168,7 +117,7 @@ func confirm() bool {
 
 func decorateCmd(cmd *cobra.Command) *cobra.Command {
 	var help bool
-	cmd.Flags().BoolVarP(&help, "help", "h", false, "help message")	
+	cmd.Flags().BoolVarP(&help, "help", "h", false, "help message")
 	return cmd
 }
 
@@ -187,3 +136,4 @@ func ColorString(color string, content string) string {
 		return content
 	}
 }
+

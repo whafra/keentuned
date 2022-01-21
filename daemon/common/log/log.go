@@ -323,3 +323,4 @@ func Debugf(cmd string, format string, args ...interface{}) {
 	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "debug").Debugf(format, args...)
 }
+

@@ -57,7 +57,6 @@
         "kernel.core_uses_pid":{
             "desc":"Whether to add the application pid to the core file name as an extension. 0: no 1: add",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -66,7 +65,6 @@
         "kernel.dmesg_restrict":{
             "desc":"Which users are restricted from viewing syslogs? 0: no restriction 1: Only privileged users can view the information.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -111,7 +109,6 @@
         "kernel.nmi_watchdog":{
             "desc":"Enabling nmi_watchdog 0: disabled 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -120,7 +117,6 @@
         "kernel.numa_balancing":{
             "desc":"Specifies whether to enable NUMA automatic balancing.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -147,7 +143,6 @@
         "kernel.sched_autogroup_enabled":{
             "desc":"When enabled, the kernel creates task groups to optimize desktop program scheduling. 0: disabled 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -174,7 +169,6 @@
         "kernel.sem":{
             "desc":"The file contains four values: 1. Maximum number of signals of the same type (semmsl) 2. Maximum number of signals in the system, =semmni*semmsl (semmns) 3. Maximum number of operations (maximum number of semaphores that can be invoked) contained in each system invoking (semopm) 4. Maximum number of signal types in the system. A signal identifier represents a type (semmni).",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "16000 512000000 256 16000",
                 "32000 1024000000 500 32000",
@@ -211,7 +205,6 @@
         "kernel.sysrq":{
             "desc":"The file specifies a non-zero value, which activates the sysrq key on the keyboard.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -229,7 +222,6 @@
         "kernel.timer_migration":{
             "desc":"Disable Clock Migration",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -346,7 +338,6 @@
         "net.ipv4.conf.all.accept_redirects":{
             "desc":"Receives and sends ICMP redirection messages. The default value is True for hosts and False for routers. 0: disabled 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -355,7 +346,6 @@
         "net.ipv4.conf.all.promote_secondaries":{
             "desc":"0: When the primary IP address of an interface is removed, all secondary IP addresses are deleted. 1: When the primary IP address of an interface is removed, the secondary IP address becomes the primary IP address.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -364,7 +354,6 @@
         "net.ipv4.conf.all.secure_redirects":{
             "desc":"Receives only ICMP redirect messages sent to gateways in the default gateway list. 0: disabled 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -373,7 +362,6 @@
         "net.ipv4.conf.default.accept_redirects":{
             "desc":"Receives and sends ICMP redirection messages. The default value is True for hosts and False for routers. 0: disabled 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -382,7 +370,6 @@
         "net.ipv4.conf.default.forwarding":{
             "desc":"Enable the forwarding function on the interface. 0: disabled 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -391,7 +378,6 @@
         "net.ipv4.conf.default.promote_secondaries":{
             "desc":"0: When the primary IP address of an interface is removed, all secondary IP addresses are deleted. 1: When the primary IP address of an interface is removed, the secondary IP address becomes the primary IP address.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -400,7 +386,6 @@
         "net.ipv4.conf.default.rp_filter":{
             "desc":"The kernel sets the policy for responding to ARP queries.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -409,7 +394,6 @@
         "net.ipv4.conf.default.secure_redirects":{
             "desc":"Receives only ICMP redirect messages sent to gateways in the default gateway list. 0: disabled 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -418,7 +402,6 @@
         "net.ipv4.icmp_echo_ignore_broadcasts":{
             "desc":"Ignore all received ICMP Echo request broadcasts. 0: not ignore 1: ignore",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -436,7 +419,6 @@
         "net.ipv4.ip_local_port_range":{
             "desc":"The range of available ports has been increased to prevent performance deterioration caused by continuous search of available ports for new connections when a large number of connections occupy ports.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "32768 60999",
                 "1024 65535",
@@ -446,7 +428,6 @@
         "net.ipv4.ip_no_pmtu_disc":{
             "desc":"Setting the MTU for Automatic Socket Detection",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -473,7 +454,6 @@
         "net.ipv4.tcp_congestion_control":{
             "desc":"TCP congestion scheduling algorithm",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "cubic",
                 "reno",
@@ -483,7 +463,6 @@
         "net.ipv4.tcp_dsack":{
             "desc":"Indicates whether to allow TCP to send two identical SACKs. 0: disabled 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -492,7 +471,6 @@
         "net.ipv4.tcp_ecn":{
             "desc":"Indicates whether to enable the direct TCP congestion notification function. 0: disabled; 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1",
@@ -502,7 +480,6 @@
         "net.ipv4.tcp_fack":{
             "desc":"Enables the forwarding acknowledgment. The selective acknowledgment (SACK) can be performed to reduce the occurrence of congestion. This option should also be enabled.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -511,7 +488,6 @@
         "net.ipv4.tcp_fastopen":{
             "desc":"Whether to enable the TCP quick open mode is to avoid the three-way handshake of hot requests. This greatly improves the performance in the scenario where small objects are moved.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "1",
                 "2",
@@ -557,7 +533,6 @@
         "net.ipv4.tcp_low_latency":{
             "desc":"Allows the TCP/IP stack to adapt to low latency in high throughput scenarios. This option is generally disabled. (But when building a Beowulf cluster, it helps to open it.) 0: disabled 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -593,7 +568,6 @@
         "net.ipv4.tcp_mem":{
             "desc":"TCP overall cache setting, which controls all TCP memory usage (in pages). The parameter indicates the no-pressure value of the TCP overall memory, the threshold for enabling the pressure mode, and the maximum usage value in sequence. This parameter is used to control whether the new cache is successfully allocated.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "6168306 8224411 12336612",
                 "12336612 16448822 24673224"
@@ -602,7 +576,6 @@
         "net.ipv4.tcp_min_tso_segs":{
             "desc":"Minimal number of segments per TSO frame.",
             "dtype":"int",
-            "needrestart":"false",
             "range":[
                 1,
                 16
@@ -611,7 +584,6 @@
         "net.ipv4.tcp_moderate_rcvbuf":{
             "desc":"Whether to adjust the receive buffer when receiving data 0: no adjustment 1: yes",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -620,7 +592,6 @@
         "net.ipv4.tcp_no_metrics_save":{
             "desc":"After a TCP connection is closed, the saved parameters can be used to initialize the connection when the same connection is created next time as long as dst_entry is valid.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -647,7 +618,6 @@
         "net.ipv4.tcp_retrans_collapse":{
             "desc":"Provides compatibility for bugs on some printers. (Generally, this support is not required. You can disable it.)",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -665,7 +635,6 @@
         "net.ipv4.tcp_rmem":{
             "desc":"Size of the read buffer. The first value is the minimum value of the read buffer, the third value is the maximum value, and the middle value is the default value. The default value is 4096 87380 6291456. You are advised to change the value to 4096 87380 16777216.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "4096 16384 4194304",
                 "4096 32768 8388608",
@@ -675,7 +644,6 @@
         "net.ipv4.tcp_sack":{
             "desc":"Indicates whether to enable the selective acknowledgment function. This function improves the performance by selectively responding to out-of-order received packets. In this way, the sender can send only lost packet segments. This function should be enabled for WAN communication, however, this increases the CPU usage. 0: no 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -702,7 +670,6 @@
         "net.ipv4.tcp_syncookies":{
             "desc":"Indicates whether to enable the TCP synchronization label (syncookie).",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -711,7 +678,6 @@
         "net.ipv4.tcp_thin_linear_timeouts":{
             "desc":"Check whether the TCP stream is thin after the retransmission times out.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -720,7 +686,6 @@
         "net.ipv4.tcp_timestamps":{
             "desc":"Indicates whether to enable the calculation of the RTT in a more accurate way than timeout retransmission (see RFC 1323). This option should be enabled for better performance. 0: no 1: enabled",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -729,7 +694,6 @@
         "net.ipv4.tcp_tw_reuse":{
             "desc":"The value 1 indicates that TIME-WAIT sockets can be used for new TCP connections, and the value 0 indicates that TIME-WAIT sockets are disabled.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1",
@@ -739,7 +703,6 @@
         "net.ipv4.tcp_window_scaling":{
             "desc":"The window scaling defined in RFC 1323 is enabled. To support a TCP window larger than 64 KB, this parameter must be set to 1. The maximum size of a TCP window is 1 GB. This parameter takes effect only when both parties of a TCP connection are enabled.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -748,7 +711,6 @@
         "net.ipv4.tcp_wmem":{
             "desc":"Size of the write buffer. The first value is the minimum value of the read buffer, the third value is the maximum value, and the middle value is the default value. The default value is 4096 16384 4194304. You are advised to change the value to 4096 65536 16777216.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "4096 16384 4194304",
                 "4096 32768 8388608",
@@ -758,7 +720,6 @@
         "net.ipv4.udp_mem":{
             "desc":"The file saves three values: low: When the number of memory pages used by UDP is less than the value of this parameter, UDP does not release memory. assure: When the number of memory pages used by UDP exceeds the value of this parameter, UDP attempts to stabilize the memory usage and enters the pressure mode. When the memory usage is less than the value of low, UDP exits the pressure mode. high: indicates the number of pages that can be used by all UDP sockets to queue and buffer datagrams.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "12582912 16777216 25165824",
                 "25165824 33554432 50331648",
@@ -831,7 +792,6 @@
         "vm.overcommit_memory":{
             "desc":"Indicates whether to allow excessive memory allocation. The process can allocate more memory than it actually uses.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1"
@@ -894,7 +854,6 @@
         "vm.zone_reclaim_mode":{
             "desc":"This parameter is valid only when CONFIG_NUMA is enabled. zone_reclaim_mode is used to control how to reclaim memory when the memory domain OOM is enabled.",
             "dtype":"string",
-            "needrestart":"false",
             "options":[
                 "0",
                 "1",

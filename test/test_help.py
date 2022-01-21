@@ -3,10 +3,11 @@ import sys
 import logging
 import unittest
 
+from common import sysCommand
+from common import checkServerStatus
+
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
-from common import checkServerStatus
-from common import sysCommand
 
 logger = logging.getLogger(__name__)
 

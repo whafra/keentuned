@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
-
 import re
 import sys
 import subprocess
@@ -68,11 +67,9 @@ class Benchmark():
             result_str = ", ".join(["{} = {}".format(k,v) for k,v in result.items()])
             print(result_str)
             return True, result_str
-
         else:
             logger.error(self.error)
             return False, []
-
 if __name__ == "__main__":
     bench = Benchmark()
     suc, result = bench.run()

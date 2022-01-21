@@ -1,9 +1,9 @@
 package sensitize
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/log"
-	"fmt"
 )
 
 // List run sensitize list service
@@ -24,8 +24,8 @@ func (s *Service) List(flag string, reply *string) error {
 		return nil
 	}
 
-	log.Infof(log.SensitizeList, "Get sensitive parameter identification results successfully, and the details displayed in the terminal.")
-	
-	log.Infof(log.SensitizeList, "%s show table end.", fmt.Sprintf("%s;%s", "data name,application scenario,algorithm", sensiList))
+	log.Infof(log.SensitizeList, "Get sensitive parameter identification results successfully, and the details displayed in the terminal.%v", sensiList)
+
 	return nil
 }
+
