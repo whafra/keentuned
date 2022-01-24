@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
@@ -24,8 +25,8 @@ func (s *Service) Dump(dump com.DumpFlag, reply *string) error {
 		log.ClearCliLog(log.ParamDump)
 	}()
 
-	tunedTaskPath := m.GetTuningWorkPath(dump.Name)
-	outputFile := m.GetProfileWorkPath(dump.Output)
+	tunedTaskPath := config.GetTuningWorkPath(dump.Name)
+	outputFile := config.GetProfileWorkPath(dump.Output)
 	err := checkDumpParam(tunedTaskPath, outputFile, dump.Force)
 	if err != nil {
 		log.Errorf(log.ParamDump, "Check dump param failed, err:%v", err)
@@ -47,7 +48,7 @@ func checkDumpParam(path, outputFile string, confirm bool) error {
 		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", path, strings.Split(path, "/")[len(strings.Split(path, "/"))-1])
 	}
 
-	activeFileName := m.GetProfileWorkPath("active.conf")
+	activeFileName := config.GetProfileWorkPath("active.conf")
 	if !file.IsPathExist(activeFileName) {
 		fp, err := os.Create(activeFileName)
 		if err != nil {

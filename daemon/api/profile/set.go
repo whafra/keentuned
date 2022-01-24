@@ -64,7 +64,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
 	}
 
-	activeFile := m.GetProfileWorkPath("active.conf")
+	activeFile := config.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(activeFile, []byte(file.GetPlainName(flag.Name))); err != nil {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return fmt.Errorf("Update active file err:%v", err)
@@ -100,13 +100,17 @@ func prepareBeforeSet(configInfo map[string]interface{}) error {
 	}
 
 	// step2. clear the active file
-	fileName := m.GetProfileWorkPath("active.conf")
+	fileName := config.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(fileName, []byte{}); err != nil {
 		return fmt.Errorf("update active file failed, err:%v", err)
 	}
 
+	backupReq := utils.Parse2Map("data", configInfo)
+	if backupReq == nil || len(backupReq) == 0 {
+		return fmt.Errorf("backup info is null")
+	}
 	// step3. backup the target machine
-	detailInfo, allSuccess = m.Backup(log.ProfSet, utils.Parse2Map("data", configInfo))
+	detailInfo, allSuccess = m.Backup(log.ProfSet, backupReq)
 	if !allSuccess {
 		return fmt.Errorf("backup details:\n%v", detailInfo)
 	}

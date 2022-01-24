@@ -40,16 +40,14 @@ func DecoratePath(path string) string {
 	return path
 }
 
-
-
 // ReadFile2Map ...
-func ReadFile2Map(path string) (map[string]interface{}, error) {
+func ReadFile2Map(path string) (map[string]map[string]interface{}, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read [%v] file err:%v\n", path, err)
+		return nil, fmt.Errorf("read [%v] file:%v\n", path, err)
 	}
 
-	var retMap map[string]interface{}
+	var retMap map[string]map[string]interface{}
 	err = json.Unmarshal(bytes, &retMap)
 	if err != nil {
 		return nil, fmt.Errorf("Unmarshal err:%v\n", err)
@@ -122,13 +120,13 @@ func WalkFilePath(folder , match string, onlyDir bool, separators ...string) ([]
 }
 
 // ConvertConfFileToJson convert conf file to json
-func ConvertConfFileToJson(fileName string) (map[string]interface{}, error){
+func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, error){
 	paramBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("read file :%v err:%v\n", fileName, err)
 	}
 
-	var resultMap = make(map[string]interface{})
+	var resultMap = make(map[string]map[string]interface{})
 	var domainMap = make(map[string][]map[string]interface{})
 
 	commonDomain := ""

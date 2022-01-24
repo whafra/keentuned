@@ -24,27 +24,54 @@ func Parse2Map(key string, body interface{}) map[string]interface{} {
 	}
 
 	retMap, ok := info.(map[string]interface{})
-	if !ok {
+	if ok {
+		return retMap
+	}
+
+	doubleMap, ok := info.(map[string]map[string]interface{})
+	if ok {
+		return change2Map(doubleMap)
+	}
+
+	return nil
+}
+
+func change2Map(doubleMap map[string]map[string]interface{}) map[string]interface{} {
+	if len(doubleMap) == 0 {
 		return nil
+	}
+
+	var retMap = make(map[string]interface{})
+	for name, value := range doubleMap {
+		retMap[name] = value
 	}
 
 	return retMap
 }
 
-// ParseValue parse value from body by key
-func ParseValue(key string, body []byte) (interface{}, error) {
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, err
+// ParseKey parse value from body by key
+func ParseKey(key string, body interface{}) (interface{}, error) {
+	var originMap map[string]interface{}
+	switch t := body.(type) {
+	case []byte:
+		if err := json.Unmarshal(t, &originMap); err != nil {
+			return nil, err
+		}
+	case map[string]interface{}:
+		originMap = t
+	default:
 	}
 
-	value, ok := result[key]
+	ret, ok := originMap[key]
 	if !ok {
-		fmt.Printf("response assert %v is not ok\n", key)
-		return value, fmt.Errorf("response assert %v is not ok", key)
+		return nil, fmt.Errorf("find %v field '%v' does not exist", originMap,key)
 	}
 
-	return value, nil
+	if ret == nil {
+		return nil, fmt.Errorf("assert %v value is null", key)
+	}
+
+	return ret, nil
 }
 
 //  Map2Struct  convert map to dest struct
@@ -52,6 +79,10 @@ func Map2Struct(m interface{}, dest interface{}) error {
 	byte, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshal [%+v] err:[%v]", m, err)
+	}
+
+	if len(byte) == 0 {
+		return fmt.Errorf("map is null")
 	}
 
 	if err = json.Unmarshal(byte, dest); err != nil {

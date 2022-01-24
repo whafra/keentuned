@@ -8,7 +8,6 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -44,7 +43,7 @@ func (configuration Configuration) Dump(fileName, suffix string) {
 	// acquire API return round is 1 less than the actual round value
 	configuration.Round += 1
 
-	err := file.Dump2File(GetTuningWorkPath(fileName), fileName+suffix, configuration)
+	err := file.Dump2File(config.GetTuningWorkPath(fileName), fileName+suffix, configuration)
 	if err != nil {
 		log.Warnf("", "dump config info to json file [%v] err: %v", fileName, err)
 		return
@@ -54,7 +53,6 @@ func (configuration Configuration) Dump(fileName, suffix string) {
 
 // Apply configuration to Client
 func (configuration Configuration) Apply(timeCost *time.Duration) (string, []Configuration, error) {
-	start := time.Now()
 	configuration.targetIP = config.KeenTune.TargetIP
 	applyReq, err := configuration.assembleApplyRequestMap()
 	if err != nil {
@@ -68,23 +66,24 @@ func (configuration Configuration) Apply(timeCost *time.Duration) (string, []Con
 		wg.Add(1)
 
 		go func(id int, ip string) () {
+			start := time.Now()
 			defer func() {
 				wg.Done()
 				if errMsg != nil {
-					targetFinishStatus[id] = fmt.Sprintf("apply failed, details：%v", errMsg)
+					targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
 				}
 			}()
 
 			host := ip + ":" + config.KeenTune.TargetPort
 			body, err := http.RemoteCall("POST", host+"/configure", utils.ConcurrentSecurityMap(applyReq, []string{"target_id"}, []interface{}{id}))
 			if err != nil {
-				errMsg = fmt.Errorf("target [%v] remote call configure: %v", id, err)
+				errMsg = fmt.Errorf("remote call: %v", err)
 				return
 			}
 
 			tempResult, err := configuration.parseApplyResponse(body, id)
 			if err != nil {
-				errMsg = fmt.Errorf("target [%v] parse response err: %v", id, err)
+				errMsg = fmt.Errorf("parse response: %v", err)
 				return
 			}
 
@@ -159,14 +158,9 @@ func (configuration Configuration) assembleApplyRequestMap() (map[string]interfa
 		reqApplyMap[domain] = tempDomainMap
 	}
 
-	respIP, err := utils.GetExternalIP()
-	if err != nil {
-		return nil, fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
-	}
-
 	retRequest := map[string]interface{}{}
 	retRequest["data"] = reqApplyMap
-	retRequest["resp_ip"] = respIP
+	retRequest["resp_ip"] = config.RealLocalIP
 	retRequest["resp_port"] = config.KeenTune.Port
 
 	return retRequest, nil
@@ -181,8 +175,7 @@ func (configuration Configuration) parseApplyResponse(body []byte, id int) (Conf
 	for index := range configuration.Parameters {
 		paramInfo, ok := paramCollection[configuration.Parameters[index].ParaName]
 		if !ok {
-			log.Warnf("", "find [%v] value from apply configure response failed", configuration.Parameters[index].ParaName)
-			continue
+			return configuration, fmt.Errorf("find [%v] value missing from target response", configuration.Parameters[index].ParaName)
 		}
 
 		configuration.Parameters[index].Value = paramInfo.Value
@@ -192,20 +185,20 @@ func (configuration Configuration) parseApplyResponse(body []byte, id int) (Conf
 }
 
 // collectParam collect param change map to struct map and state param success information
-func collectParam(applyResp map[string]interface{}) (string, map[string]Parameter, error) {
+func collectParam(applyResp map[string]map[string]interface{}) (string, map[string]Parameter, error) {
 	var paramCollection = make(map[string]Parameter)
 	var sucCount, failedCount int
 	var failedInfoSlice [][]string
 
-	if len(applyResp) > 0 {
-		failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
+	if len(applyResp) == 0 {
+		return "", nil, fmt.Errorf("apply response is null")
 	}
 
-	for domain, param := range applyResp {
-		paramMap, ok := param.(map[string]interface{})
+	for domain, paramMap := range applyResp {
+		/*paramMap, ok := param.(map[string]interface{})
 		if !ok {
 			return "", paramCollection, fmt.Errorf("collect Param assert type [%v] to map failed", reflect.TypeOf(param))
-		}
+		}*/
 
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
@@ -215,9 +208,9 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			}
 
 			appliedInfo.DomainName = domain
-
-			if appliedInfo.Dtype == "string" && strings.Contains(appliedInfo.Value.(string), "\t") {
-				appliedInfo.Value = strings.ReplaceAll(appliedInfo.Value.(string), "\t", " ")
+			value, ok := appliedInfo.Value.(string)
+			if ok && strings.Contains(value, "\t") {
+				appliedInfo.Value = strings.ReplaceAll(value, "\t", " ")
 			}
 
 			paramCollection[name] = appliedInfo
@@ -228,6 +221,9 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			}
 
 			failedCount++
+			if failedCount == 1 {
+				failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
+			}
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
 	}
@@ -243,7 +239,7 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 	return setResult, paramCollection, nil
 }
 
-func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
+func getApplyResult(sucBytes []byte, id int) (map[string]map[string]interface{}, error) {
 	var applyShortRet struct {
 		Success bool `json:"suc"`
 	}
@@ -258,9 +254,9 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	}
 
 	var applyResp struct {
-		Success bool                   `json:"suc"`
-		Data    map[string]interface{} `json:"data"`
-		Msg     interface{}            `json:"msg"`
+		Success bool                              `json:"suc"`
+		Data    map[string]map[string]interface{} `json:"data"`
+		Msg     interface{}                       `json:"msg"`
 	}
 
 	config.IsInnerApplyRequests[id] = true
@@ -270,7 +266,6 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 		if err := json.Unmarshal(body, &applyResp); err != nil {
 			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
-
 	}
 
 	if !applyResp.Success {

@@ -2,11 +2,8 @@ package modules
 
 import (
 	"fmt"
-	"keentune/daemon/common/config"
-	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
-	"strings"
 )
 
 // Parameter define a os parameter value scope, operating command and value
@@ -21,6 +18,7 @@ type Parameter struct {
 	Sequence   []interface{} `json:"sequence,omitempty"`
 	Dtype      string        `json:"dtype"`
 	Value      interface{}   `json:"value,omitempty"`
+	Base       interface{}   `json:"base,omitempty"`
 	Msg        string        `json:"msg,omitempty"`
 	Step       int           `json:"step,omitempty"`
 	Weight     float32       `json:"weight,omitempty"`
@@ -58,45 +56,14 @@ func updateParameter(partial, total *Parameter) {
 	}
 }
 
-/* generateInitParams ...
-return params list
-params[0] : *Configuration for request client with apply api;
-params[1] : map[string]interface{} for request brain with init api
-*/
-func generateInitParams(filePath string) (*Configuration, map[string]interface{}) {
-	userParamMap, err := file.ReadFile2Map(filePath)
-	if err != nil {
-		log.Errorf("", "read [%v] file err:%v\n", filePath, err)
-		return nil, nil
-	}
-
-	if strings.Contains(filePath, strings.TrimPrefix(config.ParamAllFile, "parameter/")) {
-		return AssembleParams(userParamMap)
-	}
-
-	totalParamMap, err := file.ReadFile2Map(fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile))
-	if err != nil {
-		log.Errorf("", "read [%v] file err:%v\n", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
-		return nil, nil
-	}
-
-	return AssembleParams(userParamMap, totalParamMap)
-}
-
 // AssembleParams assemble params for tune init, include init  and apply  API request params
-func AssembleParams(userParam map[string]interface{}, totalParamMap ...map[string]interface{}) (*Configuration, map[string]interface{}) {
+func AssembleParams(userParam map[string]map[string]interface{}, totalParamMap ...map[string]map[string]interface{}) (*Configuration, map[string]interface{}) {
 	var readParams []Parameter
 	var applyInitConfig = new(Configuration)
-	var initRequsetParam = make(map[string]interface{})
+	var initRequestParam = make(map[string]interface{})
 	var initParamSlice = make([]map[string]interface{}, 0)
 
-	for domainName, domainValue := range userParam {
-		domainMap, ok := domainValue.(map[string]interface{})
-		if !ok {
-			log.Warnf("", "assert [%+v] type is not ok", domainValue)
-			continue
-		}
-
+	for domainName, domainMap := range userParam {
 		var compareMap map[string]interface{}
 		if len(totalParamMap) > 0 {
 			compareMap = utils.Parse2Map(domainName, totalParamMap[0])
@@ -127,9 +94,9 @@ func AssembleParams(userParam map[string]interface{}, totalParamMap ...map[strin
 	}
 
 	applyInitConfig.Parameters = readParams
-	initRequsetParam["parameters"] = initParamSlice
+	initRequestParam["parameters"] = initParamSlice
 
-	return applyInitConfig, initRequsetParam
+	return applyInitConfig, initRequestParam
 }
 
 func doAssembleParam(originMap, compareMap map[string]interface{}, domainName, paramName string) (map[string]interface{}, map[string]interface{}, Parameter, error) {

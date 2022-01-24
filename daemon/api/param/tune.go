@@ -17,10 +17,10 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
+	ParamMap  string
 	Name      string
 	Round     int
 	BenchConf string
-	ParamConf string
 	Verbose   bool
 	Log       string
 }
@@ -60,11 +60,6 @@ func runTuning(flag TuneFlag) {
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
-	paramConf := com.GetAbsolutePath(flag.ParamConf, "parameter", ".json", "_best.json")
-	if !file.IsPathExist(paramConf) {
-		return fmt.Errorf("Read ParamConf file [%v] err: file absolute path [%v] does not exist", flag.ParamConf, paramConf)
-	}
-
 	benchInfo, err := GetBenchmarkInst(flag.BenchConf)
 	if err != nil {
 		return err
@@ -75,7 +70,6 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 		TargetHost:   config.KeenTune.TargetIP,
 		Name:         flag.Name,
 		StartTime:    time.Now(),
-		ParamConf:    paramConf,
 		Verbose:      flag.Verbose,
 		Step:         1,
 		Flag:         cmd,
@@ -98,7 +92,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 }
 
 func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
-	benchConf := GetBenchJsonPath(benchFile)
+	benchConf := config.GetBenchJsonPath(benchFile)
 	if !file.IsPathExist(benchConf) {
 		return nil, fmt.Errorf("Read BenchConf file [%v] err, file absolute path [%v] does not exist", benchFile, benchConf)
 	}
@@ -128,24 +122,6 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.BenchIP, config.KeenTune.BenchPort)
 	inst.SortedItems = sortBenchItemNames(inst.Items)
 	return &inst, nil
-}
-
-func GetBenchJsonPath(fileName string) string {
-	if string(fileName[0]) == "/" || fileName == "" {
-		return fileName
-	}
-
-	parts := strings.Split(fileName, "/")
-	if len(parts) == 1 {
-		benchPath, err := file.GetWalkPath(m.GetBenchHomePath(), fileName)
-		if err != nil {
-			return fileName
-		}
-
-		return benchPath
-	}
-
-	return fmt.Sprintf("%v/%v", m.GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
 
 func sortBenchItemNames(items map[string]m.ItemDetail) []string {
