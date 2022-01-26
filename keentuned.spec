@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 6
+%define anolis_release 7
 
 #
 # spec file for package golang-keentuned
@@ -56,6 +56,12 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %post
 systemctl daemon-reload
 
+%postun
+CONF_DIR=%{_sysconfdir}/keentune/conf
+if [ "$(ls -A $CONF_DIR)"="" ]; then
+        rm -rf $CONF_DIR
+fi
+
 %files
 %defattr(0444,root,root, 0555)
 %attr(0555, root, root) /usr/bin/keentune
@@ -67,6 +73,10 @@ systemctl daemon-reload
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Wed Jan 26 2022 lilinjie <lilinjie@uniontech.com> - 1.0.0-7
+- add fio benchmark files
+- remove empty conf dir when uninstall keentuned
+
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
 - add tpce tpch benchmark files
 
