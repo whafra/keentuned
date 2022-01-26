@@ -1,0 +1,20 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path}",
+      "local_script_path": "benchmark/tpce/ack_tpce_test_db.py",
+      "item": {
+        "IOPS": {
+          "negative": false,
+          "weight": 100,
+          "strict": false
+        },
+        "BW": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        }
+      }
+    }
+  ]
+}  
