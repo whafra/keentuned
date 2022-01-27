@@ -700,15 +700,6 @@
                 "4096 65536 16777216"
             ]
         },
-        "net.ipv4.udp_mem":{
-            "desc":"The file saves three values: low: When the number of memory pages used by UDP is less than the value of this parameter, UDP does not release memory. assure: When the number of memory pages used by UDP exceeds the value of this parameter, UDP attempts to stabilize the memory usage and enters the pressure mode. When the memory usage is less than the value of low, UDP exits the pressure mode. high: indicates the number of pages that can be used by all UDP sockets to queue and buffer datagrams.",
-            "dtype":"string",
-            "options":[
-                "12582912 16777216 25165824",
-                "25165824 33554432 50331648",
-                "50331648 100663296"
-            ]
-        },
         "net.unix.max_dgram_qlen":{
             "desc":"Maximum number of datagrams in a UDP queue",
             "dtype":"int",
