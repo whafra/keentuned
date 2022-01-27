@@ -26,17 +26,17 @@ type Configuration struct {
 
 type ReceivedConfigure struct {
 	Candidate []Parameter           `json:"candidate"`
-	Score     map[string]ItemDetail `json:"score,omitempty"`
+	Score     map[string]ItemDetail `json:"bench_score,omitempty"`
 	Iteration int                   `json:"iteration"`
 	Budget    float32               `json:"budget"`
 }
 
 type ItemDetail struct {
-	Value    float32 `json:"value"`
-	Negative bool    `json:"negative"`
-	Weight   float32 `json:"weight"`
-	Strict   bool    `json:"strict"`
-	Baseline float32 `json:"baseline"`
+	Value    float32   `json:"value,omitempty"`
+	Negative bool      `json:"negative"`
+	Weight   float32   `json:"weight"`
+	Strict   bool      `json:"strict"`
+	Baseline []float32 `json:"base,omitempty"`
 }
 
 // Dump configuration to profile file
@@ -53,8 +53,7 @@ func (configuration Configuration) Dump(fileName, suffix string) {
 }
 
 // Apply configuration to Client
-func (configuration Configuration) Apply(timeCost *time.Duration) (string, []Configuration, error) {
-	start := time.Now()
+func (configuration Configuration) Apply(timeCost *time.Duration, readOnly bool) (string, []Configuration, error) {
 	configuration.targetIP = config.KeenTune.TargetIP
 	applyReq, err := configuration.assembleApplyRequestMap()
 	if err != nil {
@@ -68,23 +67,24 @@ func (configuration Configuration) Apply(timeCost *time.Duration) (string, []Con
 		wg.Add(1)
 
 		go func(id int, ip string) () {
+			start := time.Now()
 			defer func() {
 				wg.Done()
 				if errMsg != nil {
-					targetFinishStatus[id] = fmt.Sprintf("apply failed, details：%v", errMsg)
+					targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
 				}
 			}()
 
 			host := ip + ":" + config.KeenTune.TargetPort
-			body, err := http.RemoteCall("POST", host+"/configure", utils.ConcurrentSecurityMap(applyReq, []string{"target_id"}, []interface{}{id}))
+			body, err := http.RemoteCall("POST", host+"/configure", utils.ConcurrentSecurityMap(applyReq, []string{"target_id", "readonly"}, []interface{}{id, readOnly}))
 			if err != nil {
-				errMsg = fmt.Errorf("target [%v] remote call configure: %v", id, err)
+				errMsg = fmt.Errorf("remote call: %v", err)
 				return
 			}
 
 			tempResult, err := configuration.parseApplyResponse(body, id)
 			if err != nil {
-				errMsg = fmt.Errorf("target [%v] parse response err: %v", id, err)
+				errMsg = fmt.Errorf("parse response: %v", err)
 				return
 			}
 
@@ -139,6 +139,10 @@ func (configuration Configuration) assembleApplyRequestMap() (map[string]interfa
 		/* delete `domain` field, not used in apply api request body */
 		delete(paramMap, "domain")
 		delete(paramMap, "step")
+		delete(paramMap, "base")
+		delete(paramMap, "range")
+		delete(paramMap, "options")
+
 		domainMap[param.DomainName] = append(domainMap[param.DomainName], paramMap)
 	}
 
@@ -181,8 +185,7 @@ func (configuration Configuration) parseApplyResponse(body []byte, id int) (Conf
 	for index := range configuration.Parameters {
 		paramInfo, ok := paramCollection[configuration.Parameters[index].ParaName]
 		if !ok {
-			log.Warnf("", "find [%v] value from apply configure response failed", configuration.Parameters[index].ParaName)
-			continue
+			return configuration, fmt.Errorf("find [%v] value missing from target response", configuration.Parameters[index].ParaName)
 		}
 
 		configuration.Parameters[index].Value = paramInfo.Value
@@ -196,10 +199,6 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 	var paramCollection = make(map[string]Parameter)
 	var sucCount, failedCount int
 	var failedInfoSlice [][]string
-
-	if len(applyResp) > 0 {
-		failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
-	}
 
 	for domain, param := range applyResp {
 		paramMap, ok := param.(map[string]interface{})
@@ -228,6 +227,10 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			}
 
 			failedCount++
+			if failedCount == 1 {
+				failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
+			}
+
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
 	}
@@ -239,7 +242,13 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 		return setResult, paramCollection, nil
 	}
 
-	setResult = fmt.Sprintf("total param %v, successed %v, failed %v; the failed details:%s", sucCount+failedCount, sucCount, failedCount, utils.FormatInTable(failedInfoSlice))
+	failedDetail := utils.FormatInTable(failedInfoSlice)
+	setResult = fmt.Sprintf("total param %v, successed %v, failed %v; the failed details:%s", sucCount+failedCount, sucCount, failedCount, failedDetail)
+
+	if failedCount == len(paramCollection) {
+		return setResult, paramCollection, fmt.Errorf("return all failed: %v", failedDetail)
+	}
+
 	return setResult, paramCollection, nil
 }
 
@@ -289,3 +298,8 @@ func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 	return collectParam(applyResp)
 }
 
+func (configuration Configuration) UpdateBase(origin *Configuration) {
+	for i := range origin.Parameters {
+		origin.Parameters[i].Base = configuration.Parameters[i].Value
+	}
+}

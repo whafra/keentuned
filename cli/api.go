@@ -10,10 +10,11 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
+	ParamMap  string
 	Name      string // job specific name
 	Round     int
 	BenchConf string
-	ParamConf string
+	ParamConf []string
 	Verbose   bool
 	Log       string // log file
 }

@@ -28,7 +28,7 @@ func checkTuningFlags(cmdName string, flag *TuneFlag) error {
 		return fmt.Errorf("--iteration must be positive integer, input: %v", flag.Round)
 	}
 
-	if err = checkParamConf(&flag.ParamConf); err != nil {
+	if flag.ParamMap, err = checkParamConf(flag.ParamConf); err != nil {
 		return fmt.Errorf("--param %v", err)
 	}
 
@@ -187,32 +187,82 @@ func parse2Float(origin map[string]interface{}, key string) (float32, error) {
 	return float32(val), nil
 }
 
-func checkParamConf(conf *string) error {
-	if !strings.HasSuffix(*conf, ".json") {
-		return fmt.Errorf("param file suffix is not json")
+func checkParamConf(confs []string) (string, error) {
+	var mergedParam = make(map[string]map[string]interface{})
+	if len(confs) == 0 {
+		return "", fmt.Errorf("param file suffix is not json, param name is needed")
 	}
 
-	paramConf := com.GetAbsolutePath(*conf, "parameter", ".json", "_best.json")
-	if !file.IsPathExist(paramConf) {
-		return fmt.Errorf("param file [%v] does not exist", *conf)
+	for _, conf := range confs {
+		fileName := strings.Trim(conf, " ")
+		if !strings.HasSuffix(fileName, ".json") {
+			return "", fmt.Errorf("param file suffix is not json")
+		}
+
+		paramConf := com.GetAbsolutePath(fileName, "parameter", ".json", "_best.json")
+		if !file.IsPathExist(paramConf) {
+			return "", fmt.Errorf("param file [%v] does not exist", fileName)
+		}
+
+		userParamMap, err := readFile(paramConf)
+		if err != nil {
+			return "", err
+		}
+
+		err = readParams(userParamMap, mergedParam)
+		if err != nil {
+			return "", fmt.Errorf("check %v file: %v", fileName, err)
+		}
 	}
 
-	*conf = paramConf
-
-	userParamMap, err := file.ReadFile2Map(*conf)
+	paramBytes, err := json.Marshal(mergedParam)
 	if err != nil {
-		return fmt.Errorf("read [%v] file err:%v\n", *conf, err)
+		return "", err
 	}
 
-	return readParams(userParamMap)
+	return string(paramBytes), nil
 }
 
-func readParams(userParamMap map[string]interface{}) error {
+func readFile(fileName string) (map[string]map[string]interface{}, error) {
+	bytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("read [%v] file:%v\n", fileName, err)
+	}
+
+	if len(bytes) == 0 {
+		return nil, fmt.Errorf("file is empty")
+	}
+
+	var retMap map[string]map[string]interface{}
+	err = json.Unmarshal(bytes, &retMap)
+	if err == nil && len(retMap) != 0 {
+		return retMap, nil
+	}
+
+	var paramMap map[string]interface{}
+	err = json.Unmarshal(bytes, &paramMap)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal err:%v\n", err)
+	}
+
+	var domains []string
+	for domain, _ := range paramMap {
+		domains = append(domains, domain)
+	}
+
+	if len(domains) == 0 {
+		return nil, fmt.Errorf("assert domain does not exist")
+	}
+
+	return nil, fmt.Errorf("assert domain %v value is not matched, such as: {\"domain\":{\"param1\":{\"dtype\":\"string\",\"options\":[\"0\",\"1\"]}}}", domains[0])
+}
+
+func readParams(userParamMap, mergedParam map[string]map[string]interface{}) error {
 	var err error
-	for domainName, domainValue := range userParamMap {
-		domainMap, ok := domainValue.(map[string]interface{})
+	for domainName, domainMap := range userParamMap {
+		_, ok := mergedParam[domainName]
 		if !ok {
-			return fmt.Errorf("assert domain %v value [%+v] type is not ok", domainName, domainValue)
+			mergedParam[domainName] = make(map[string]interface{})
 		}
 
 		for name, paramValue := range domainMap {
@@ -232,6 +282,10 @@ func readParams(userParamMap map[string]interface{}) error {
 
 			if err = checkParam(name, paramMap); err != nil {
 				return err
+			}
+
+			if _, ok = mergedParam[domainName][name]; !ok {
+				mergedParam[domainName][name] = paramMap
 			}
 		}
 	}
@@ -280,6 +334,10 @@ func checkUniqueField(param m.Parameter) error {
 
 	if len(param.Sequence) > 0 && len(param.Options) > 0 {
 		fmt.Printf("%v param %vsequence and options, only one of them can exist\n", ColorString("yellow", "[Warning]"), param.ParaName)
+	}
+
+	if (param.Dtype == "string" || param.Dtype == "str") && param.Step > 0.0 {
+		return fmt.Errorf("param %v 'step' field is not supported for data type %v", param.ParaName, param.Dtype)
 	}
 
 	return nil
