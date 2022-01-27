@@ -18,7 +18,6 @@ from test_sensitize_collect import TestSensitizeCollect
 from test_sensitize_train import TestSensitizeTrain
 from test_sensitize_list import TestSensitizeList
 from test_sensitize_delete import TestSensitizeDelete
-from test_multi_target import TestMultiTarget
 from common import deleteDependentData
 
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
@@ -46,10 +45,7 @@ def RunBasicCase():
     sensitize_suite.addTest(TestSensitizeList('test_sensitize_list'))
     sensitize_suite.addTest(TestSensitizeDelete('test_sensitize_delete'))
 
-    target_suite = unittest.TestSuite()
-    target_suite.addTest(TestMultiTarget('test_multi_target'))
-
-    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, target_suite])
+    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite])
     return suite
 
 

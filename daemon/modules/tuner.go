@@ -31,12 +31,14 @@ type Tuner struct {
 	nextConfiguration   Configuration
 	TargetConfiguration []Configuration
 	timeSpend           TimeSpend
-	ParamConf           string
+	ParamConf           map[string]map[string]interface{}
 	Verbose             bool
 	Step                int         // tuning process steps
 	isSensitize         bool        // sensitive parameter identification mark
 	Flag                string      // command flag, enum: "collect", "tuning"
 	bestItemsScore      []itemScore // current optimal score
+	logName             string
+	benchScore          map[string][]float32
 }
 
 type TimeSpend struct {
@@ -68,25 +70,26 @@ func (tuner *Tuner) Tune() {
 		}
 	}()
 
-	if err = tuner.prepare(); err != nil {
-		err = fmt.Errorf("prepare for tuning :%v", err)
+	tuner.logName = log.ParamTune
+	if err = tuner.init(); err != nil {
+		err = fmt.Errorf("[%v] prepare for tuning: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
 	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("loop tuning err:%v", err)
+		err = fmt.Errorf("[%v] loop tuning: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
 	if err = tuner.getBestConfiguration(); err != nil {
-		err = fmt.Errorf("get best configuration err:%v", err)
+		err = fmt.Errorf("[%v] get best configuration: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
 	if err = tuner.checkBestConfiguration(); err != nil {
-		err = fmt.Errorf("check best configuration err:%v", err)
+		err = fmt.Errorf("[%v] check best configuration: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 }
@@ -96,9 +99,7 @@ func parseTuningError(logName string, err error) {
 		return
 	}
 
-	if strings.Contains(err.Error(), "apply configuration failed") {
-		Rollback(logName)
-	}
+	Rollback(logName)
 
 	if strings.Contains(err.Error(), "interrupted") {
 		log.Infof(logName, "parameter optimization job abort!")
@@ -108,31 +109,31 @@ func parseTuningError(logName string, err error) {
 }
 
 /*acquire configuration from brain*/
-func (tuner *Tuner) acquire(logName string) (bool, error) {
+func (tuner *Tuner) acquire() (bool, error) {
 	// remote call and parse info
 	start := time.Now()
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/acquire"
 	resp, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
-		log.Errorf(logName, "[%vth] remote call acquire configuration err:%v", tuner.Iteration, err)
+		log.Errorf(tuner.logName, "[%vth] remote call acquire configuration err:%v", tuner.Iteration, err)
 		return false, err
 	}
 
 	var acquiredInfo ReceivedConfigure
 	if err = json.Unmarshal(resp, &acquiredInfo); err != nil {
-		log.Errorf(logName, "[%vth] parse acquire unmarshal err:%v\n", tuner.Iteration, err)
+		log.Errorf(tuner.logName, "[%vth] parse acquire unmarshal err:%v\n", tuner.Iteration, err)
 		return false, err
 	}
 
 	// check interrupted
-	if isInterrupted(logName) {
-		log.Infof(logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
+	if isInterrupted(tuner.logName) {
+		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
 		return false, fmt.Errorf("tuning is interrupted")
 	}
 
 	// check end loop ahead of time
 	if acquiredInfo.Iteration < 0 {
-		log.Warnf(logName, "%vth Tuning acquired round is less than zero, the tuning job will end ahead of time", tuner.Iteration)
+		log.Warnf(tuner.logName, "%vth Tuning acquired round is less than zero, the tuning job will end ahead of time", tuner.Iteration)
 		return true, nil
 	}
 
@@ -140,7 +141,7 @@ func (tuner *Tuner) acquire(logName string) (bool, error) {
 	timeCost := utils.Runtime(start)
 	tuner.timeSpend.acquire += timeCost.Count
 	if tuner.Verbose {
-		log.Infof(logName, "[Iteration %v] Acquire success, %v", tuner.Iteration, timeCost.Desc)
+		log.Infof(tuner.logName, "[Iteration %v] Acquire success, %v", tuner.Iteration, timeCost.Desc)
 	}
 
 	// assign to nextConfiguration
@@ -153,28 +154,28 @@ func (tuner *Tuner) acquire(logName string) (bool, error) {
 	return false, nil
 }
 
-func (tuner *Tuner) apply(logName string) error {
+func (tuner *Tuner) apply() error {
 	var err error
 	var implyApplyResults string
-	implyApplyResults, tuner.TargetConfiguration, err = tuner.nextConfiguration.Apply(&tuner.timeSpend.apply)
+	implyApplyResults, tuner.TargetConfiguration, err = tuner.nextConfiguration.Apply(&tuner.timeSpend.apply, false)
 	if err != nil {
 		return fmt.Errorf("%vth apply configuration failed:%v, details: %v", tuner.Iteration, err, implyApplyResults)
 	}
 
-	log.Debugf(logName, "step%v, [apply] round %v details: %v", tuner.Step, tuner.Iteration, implyApplyResults)
+	log.Debugf(tuner.logName, "step%v, [apply] round %v details: %v", tuner.Step, tuner.Iteration, implyApplyResults)
 
 	if tuner.Verbose {
 		var applyRuntimeInfo string
 		for index, configuration := range tuner.TargetConfiguration {
 			applyRuntimeInfo += fmt.Sprintf("\n\ttarget [%v] use time: %.3f s", index+1, configuration.timeSpend.Count.Seconds())
 		}
-		log.Infof(logName, "[Iteration %v] Apply success, details: %v", tuner.Iteration, applyRuntimeInfo)
+		log.Infof(tuner.logName, "[Iteration %v] Apply success, details: %v", tuner.Iteration, applyRuntimeInfo)
 	}
 
 	return err
 }
 
-func (tuner *Tuner) benchmark(logName string) error {
+func (tuner *Tuner) benchmark() error {
 	// get round of execution benchmark
 	var round int
 	if int(tuner.nextConfiguration.budget) != 0 {
@@ -190,17 +191,17 @@ func (tuner *Tuner) benchmark(logName string) error {
 	// execution benchmark
 	var implyBenchResult string
 	var err error
-	tuner.Benchmark.LogName = logName
-	_, tuner.nextConfiguration.Score, implyBenchResult, err = tuner.Benchmark.RunBenchmark(round, &tuner.timeSpend.benchmark, tuner.Verbose)
+	tuner.Benchmark.LogName = tuner.logName
+	tuner.benchScore, tuner.nextConfiguration.Score, implyBenchResult, err = tuner.Benchmark.RunBenchmark(round, &tuner.timeSpend.benchmark, tuner.Verbose)
 	if err != nil {
 		if err.Error() == "get benchmark is interrupted" {
-			log.Infof(logName, "Tuning interrupted after step%v, [run benchmark] round %v stopped.", tuner.Step, tuner.Iteration)
+			log.Infof(tuner.logName, "Tuning interrupted after step%v, [run benchmark] round %v stopped.", tuner.Step, tuner.Iteration)
 			return fmt.Errorf("run benchmark interrupted")
 		}
 		return fmt.Errorf("tuning execute %vth benchmark err:%v", tuner.Iteration, err)
 	}
 
-	log.Infof(logName, "[Iteration %v] Benchmark result: %v", tuner.Iteration, implyBenchResult)
+	log.Infof(tuner.logName, "[Iteration %v] Benchmark result: %v", tuner.Iteration, implyBenchResult)
 	tuner.TargetConfiguration[0].Score = tuner.nextConfiguration.Score
 	// dump benchmark result of current tuning Iteration
 	if config.KeenTune.DumpConf.ExecDump && !tuner.isSensitize {
@@ -217,6 +218,20 @@ func (tuner *Tuner) benchmark(logName string) error {
 }
 
 func (tuner *Tuner) getBestConfiguration() error {
+	err := tuner.requestBest()
+	if err != nil {
+		return err
+	}
+
+	// dump best configuration
+	if config.KeenTune.DumpConf.BestDump {
+		tuner.BestConfiguration.Dump(tuner.Name, "_best.json")
+		log.Infof(log.ParamTune, "Step%v. Best configuration dump to [%v/parameter/%v/%v] successfully.\n", tuner.IncreaseStep(), config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name+"_best.json")
+	}
+	return nil
+}
+
+func (tuner *Tuner) requestBest() error {
 	// get best configuration
 	start := time.Now()
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/best"
@@ -238,22 +253,15 @@ func (tuner *Tuner) getBestConfiguration() error {
 	// time cost
 	timeCost := utils.Runtime(start)
 	tuner.timeSpend.best += timeCost.Count
-
-	// dump best configuration
-	if config.KeenTune.DumpConf.BestDump {
-		tuner.BestConfiguration.Dump(tuner.Name, "_best.json")
-		log.Infof(log.ParamTune, "Step%v. Best configuration dump to [%v/parameter/%v/%v] successfully.\n", tuner.IncreaseStep(), config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name+"_best.json")
-	}
 	return nil
 }
 
 /*Feedback configuration with score to brain*/
-func (tuner *Tuner) feedback(configuration Configuration) error {
+func (tuner *Tuner) feedback() error {
 	start := time.Now()
-	tuner.updateFeedbackScore(&configuration.Score)
 	feedbackMap := map[string]interface{}{
-		"iteration": configuration.Round,
-		"score":     configuration.Score,
+		"iteration":   tuner.Iteration - 1,
+		"bench_score": tuner.benchScore,
 	}
 	err := http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/feedback", feedbackMap)
 	if err != nil {
@@ -265,38 +273,87 @@ func (tuner *Tuner) feedback(configuration Configuration) error {
 	return nil
 }
 
-func (tuner *Tuner) updateFeedbackScore(scores *map[string]ItemDetail) {
-	for name, info := range tuner.BaseConfiguration[0].Score {
-		score, ok := (*scores)[name]
-		if !ok {
-			log.Warnf("", "feedback get [%v] from configure passed in  not exist", name)
-			continue
-		}
-		score.Baseline = info.Value
-		(*scores)[name] = score
+func (tuner *Tuner) init() error {
+	result, allSuccess := Rollback(tuner.logName)
+	if !allSuccess {
+		return fmt.Errorf("Rollback before %v:\n%v", tuner.Flag, result)
 	}
-}
 
-func (tuner *Tuner) init() (*Configuration, error) {
-	start := time.Now()
-	emptyConf, requireConf := generateInitParams(tuner.ParamConf)
-	if emptyConf == nil || requireConf == nil {
-		return nil, fmt.Errorf("read or assemble parameter failed")
+	emptyConf := AssembleParams(tuner.ParamConf)
+	if emptyConf == nil {
+		return fmt.Errorf("read or assemble parameter failed")
 	}
+
+	var implyApplyResults string
+	var err error
+	implyApplyResults, tuner.BaseConfiguration, err = emptyConf.Apply(&tuner.timeSpend.apply, true)
+	if err != nil {
+		return fmt.Errorf("baseline apply configuration failed: %v, details: %v", err, implyApplyResults)
+	}
+
+	if err = backup(tuner.logName, emptyConf); err != nil {
+		return err
+	}
+
+	log.Debugf(tuner.logName, "Step%v. apply baseline configuration details: %v", tuner.Step+1, implyApplyResults)
+
+	success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send)
+	if err != nil || !success {
+		return fmt.Errorf("send script file  result: %v, details:%v", success, err)
+	}
+
+	_, scoreResult, implyBenchResult, err := tuner.Benchmark.RunBenchmark(config.KeenTune.BaseRound, &tuner.timeSpend.benchmark, tuner.Verbose)
+	if err != nil {
+		if err.Error() == "get benchmark is interrupted" {
+			log.Infof(log.ParamTune, "Tuning interrupted after step%v, [baseline benchmark] stopped.", tuner.Step)
+			return fmt.Errorf("run benchmark interrupted")
+		}
+		return fmt.Errorf("tuning execute baseline benchmark:%v", err)
+	}
+
+	tuner.BaseConfiguration[0].Score = scoreResult
+	tuner.BaseConfiguration[0].UpdateBase(emptyConf)
+	if tuner.logName == log.ParamTune {
+		log.Infof(tuner.logName, "Step%v. AI Engine is ready.\n", tuner.IncreaseStep())
+
+		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:%v", tuner.IncreaseStep(), implyBenchResult)
+
+		if config.KeenTune.DumpConf.BaseDump {
+			for index := range tuner.BaseConfiguration {
+				targetID := index + 1
+				tuner.BaseConfiguration[index].Round = 0
+				tuner.BaseConfiguration[index].Score = scoreResult
+				tuner.BaseConfiguration[index].Dump(tuner.Name, fmt.Sprintf("target_%v_base.json", targetID))
+			}
+		}
+	}
+
+	var requireConf = make(map[string]interface{})
 
 	requireConf["algorithm"] = tuner.Algorithm
 	requireConf["iteration"] = tuner.MAXIteration
 	requireConf["name"] = tuner.Name
 	requireConf["type"] = tuner.Flag
 
-	err := http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/init", requireConf)
+	requireConf["parameters"] = emptyConf.Parameters
+	requireConf["baseline_score"] = scoreResult
+
+	start := time.Now()
+
+	err = http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/init", requireConf)
 	if err != nil {
-		return nil, fmt.Errorf("remote call [init] failed: %v", err)
+		return fmt.Errorf("remote call [init] failed: %v", err)
 	}
 
 	timeCost := utils.Runtime(start)
 	tuner.timeSpend.init += timeCost.Count
-	return emptyConf, nil
+
+	if isInterrupted(tuner.logName) {
+		log.Infof(tuner.logName, "Tuning interrupted after step%v, [init] finish.", tuner.Step)
+		return fmt.Errorf("tuning is interrupted")
+	}
+
+	return nil
 }
 
 func (tuner *Tuner) end() {
@@ -346,73 +403,7 @@ func (tuner *Tuner) setTimeCostToTableString(totalTime float64) {
 	tuner.timeSpend.detailInfo = utils.FormatInTable(detailSlice)
 }
 
-// prepare imply baseline operation, include init、apply baseline config、send file、base benchmark etc.
-func (tuner *Tuner) prepare() error {
-	emptyConfiguration, err := tuner.init()
-	if err != nil {
-		return fmt.Errorf("Step%v. tuning init failed, reason: %v", tuner.IncreaseStep(), err)
-	}
-
-	if isInterrupted(log.ParamTune) {
-		log.Infof(log.ParamTune, "Tuning interrupted after step%v, [init] finish.", tuner.Step)
-		return fmt.Errorf("tuning is interrupted")
-	}
-
-	log.Infof(log.ParamTune, "Step%v. AI Engine is ready.\n", tuner.IncreaseStep())
-	var implyApplyResults string
-	implyApplyResults, tuner.BaseConfiguration, err = emptyConfiguration.Apply(&tuner.timeSpend.apply)
-	if err != nil {
-		return fmt.Errorf("baseline apply configuration failed: %v, details: %v", err, implyApplyResults)
-	}
-
-	if err = backup(log.ParamTune, emptyConfiguration); err != nil {
-		return err
-	}
-
-	log.Debugf(log.ParamTune, "Step%v. apply baseline configuration details: %v", tuner.Step+1, implyApplyResults)
-
-	success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send)
-	if err != nil || !success {
-		return fmt.Errorf("send script file  result: %v, details:%v", success, err)
-	}
-
-	log.Infof(log.ParamTune, "Step%v. Run benchmark as baseline:", tuner.IncreaseStep())
-
-	_, scoreResult, implyBenchResult, err := tuner.Benchmark.RunBenchmark(config.KeenTune.BaseRound, &tuner.timeSpend.benchmark, tuner.Verbose)
-	if err != nil {
-		if err.Error() == "get benchmark is interrupted" {
-			log.Infof(log.ParamTune, "Tuning interrupted after step%v, [baseline benchmark] stopped.", tuner.Step)
-			return fmt.Errorf("run benchmark interrupted")
-		}
-		return fmt.Errorf("tuning execute baseline benchmark:%v", err)
-	}
-
-	tuner.BaseConfiguration[0].Score = scoreResult
-
-	log.Infof(log.ParamTune, "%v", implyBenchResult)
-	if config.KeenTune.DumpConf.BaseDump {
-		for index := range tuner.BaseConfiguration {
-			targetID := index + 1
-			tuner.BaseConfiguration[index].Round = 0
-			tuner.BaseConfiguration[index].Score = scoreResult
-			tuner.BaseConfiguration[index].Dump(tuner.Name, fmt.Sprintf("target_%v_base.json", targetID))
-		}
-	}
-
-	if isInterrupted(log.ParamTune) {
-		log.Infof(log.ParamTune, "Tuning interrupted after step%v, [baseline benchmark] finish.", tuner.Step)
-		return fmt.Errorf("tuning is interrupted")
-	}
-
-	return nil
-}
-
 func (tuner *Tuner) loop() error {
-	logName := log.ParamTune
-	if tuner.Flag == "collect" {
-		logName = log.SensitizeCollect
-	}
-
 	var err error
 	var aheadStop bool
 	tuner.bestItemsScore = make([]itemScore, len(tuner.Benchmark.SortedItems))
@@ -420,7 +411,7 @@ func (tuner *Tuner) loop() error {
 	for i := 1; i <= tuner.MAXIteration; i++ {
 		tuner.Iteration = i
 		// 1. acquire
-		if aheadStop, err = tuner.acquire(logName); err != nil {
+		if aheadStop, err = tuner.acquire(); err != nil {
 			return err
 		}
 
@@ -429,28 +420,28 @@ func (tuner *Tuner) loop() error {
 		}
 
 		// 2. apply
-		if err = tuner.apply(logName); err != nil {
+		if err = tuner.apply(); err != nil {
 			return err
 		}
 
 		// 3. benchmark
-		if err = tuner.benchmark(logName); err != nil {
+		if err = tuner.benchmark(); err != nil {
 			return err
 		}
 
 		// 4. feedback
-		if err = tuner.feedback(tuner.TargetConfiguration[0]); err != nil {
+		if err = tuner.feedback(); err != nil {
 			return fmt.Errorf("feedback %vth configuration:%v", i, err)
 		}
 
 		// 5. analyse
-		optimalRatioInfo, _ := tuner.analyseResult(tuner.TargetConfiguration[0])
+		optimalRatioInfo := tuner.analyseResult()
 		if optimalRatioInfo != "" {
-			log.Infof(logName, "\tCurrent optimal iteration: %v\n", optimalRatioInfo)
+			log.Infof(tuner.logName, "\tCurrent optimal iteration: %v\n", optimalRatioInfo)
 		}
 
-		if isInterrupted(logName) {
-			log.Infof(logName, "Tuning interrupted after step%v, [loop tuning] round %v finish.", tuner.Step, i)
+		if isInterrupted(tuner.logName) {
+			log.Infof(tuner.logName, "Tuning interrupted after step%v, [loop tuning] round %v finish.", tuner.Step, i)
 			return fmt.Errorf("tuning is interrupted")
 		}
 	}
@@ -460,7 +451,7 @@ func (tuner *Tuner) loop() error {
 
 func (tuner *Tuner) checkBestConfiguration() error {
 	var implyBenchResult string
-	implyApplyResults, bestConfiguration, err := tuner.BestConfiguration.Apply(&tuner.timeSpend.apply)
+	implyApplyResults, bestConfiguration, err := tuner.BestConfiguration.Apply(&tuner.timeSpend.apply, false)
 	if err != nil {
 		log.Errorf(log.ParamTune, "best apply configuration failed:%v, details: %v", implyApplyResults)
 		return err
@@ -471,7 +462,7 @@ func (tuner *Tuner) checkBestConfiguration() error {
 
 	log.Infof(log.ParamTune, "Step%v. Tuning is finished, checking benchmark score of best configuration.\n", tuner.IncreaseStep())
 
-	if _, tuner.BestConfiguration.Score, implyBenchResult, err = tuner.Benchmark.RunBenchmark(config.KeenTune.AfterRound, &tuner.timeSpend.benchmark, tuner.Verbose); err != nil {
+	if tuner.benchScore, _, implyBenchResult, err = tuner.Benchmark.RunBenchmark(config.KeenTune.AfterRound, &tuner.timeSpend.benchmark, tuner.Verbose); err != nil {
 		if err.Error() == "get benchmark is interrupted" {
 			log.Infof(log.ParamTune, "Tuning interrupted after step%v, [check best configuration benchmark] stopped.", tuner.Step)
 			return fmt.Errorf("run benchmark interrupted")
@@ -482,7 +473,7 @@ func (tuner *Tuner) checkBestConfiguration() error {
 
 	log.Infof(log.ParamTune, "[BEST] Benchmark result: %v\n", implyBenchResult)
 
-	_, currentRatioInfo := tuner.analyseResult(tuner.BestConfiguration)
+	currentRatioInfo := tuner.analyseBestResult()
 	if currentRatioInfo != "" {
 		log.Infof(log.ParamTune, "[BEST] Tuning improvement: %v\n", currentRatioInfo)
 	}
@@ -497,75 +488,93 @@ func (tuner *Tuner) checkBestConfiguration() error {
 }
 
 // analyseResult analyse benchmark score Result
-func (tuner *Tuner) analyseResult(config Configuration) (string, string) {
+func (tuner *Tuner) analyseResult() string {
 	if tuner.isSensitize {
-		return "", ""
+		return ""
+	}
+
+	if err := tuner.requestBest(); err != nil {
+		return ""
 	}
 
 	var currentRatioInfo string
-	for index, name := range tuner.Benchmark.SortedItems {
-		info, ok := config.Score[name]
+	for _, name := range tuner.Benchmark.SortedItems {
+		info, ok := tuner.BestConfiguration.Score[name]
 		if !ok {
 			log.Warnf("", "%vth config [%v] info not exist", tuner.Iteration, name)
 			continue
 		}
 
-		base, ok := tuner.BaseConfiguration[0].Score[name]
-		if !ok {
-			log.Warnf("", "get baseline [%v] info not exist, please check the bench.json and the python file you specified whether matched", name)
-			continue
-		}
-
-		score, oneRatioInfo := getRatio(info, base, tuner.Verbose, name)
+		oneRatioInfo := getRatio(info, tuner.Verbose, name)
 		if oneRatioInfo == "" {
 			continue
 		}
 
 		currentRatioInfo += fmt.Sprintf("\n\t%v", oneRatioInfo)
-		if tuner.Iteration == 1 {
-			tuner.bestItemsScore[index].Info = fmt.Sprintf("\n\t[Iteration 1]\t%v", oneRatioInfo)
-			tuner.bestItemsScore[index].Score = score
-			continue
-		}
-
-		if (info.Negative && score < tuner.bestItemsScore[index].Score) || (!info.Negative && score > tuner.bestItemsScore[index].Score) {
-			tuner.bestItemsScore[index].Info = fmt.Sprintf("\n\t[Iteration %v]\t%v", tuner.Iteration, oneRatioInfo)
-			tuner.bestItemsScore[index].Score = score
-		}
 	}
 
-	var bestRatioInfo string
-	for _, item := range tuner.bestItemsScore {
-		if item.Info != "" {
-			bestRatioInfo += item.Info
-		}
+	if currentRatioInfo != "" {
+		return fmt.Sprintf("[Iteration %v]:%v", tuner.BestConfiguration.Round+1, currentRatioInfo)
 	}
 
-	return bestRatioInfo, currentRatioInfo
+	return currentRatioInfo
 }
 
-func getRatio(info ItemDetail, base ItemDetail, verbose bool, name string) (float32, string) {
-	score := utils.IncreaseRatio(info.Value, base.Value)
+func getRatio(info ItemDetail, verbose bool, name string) string {
+	if len(info.Baseline) == 0 {
+		return ""
+	}
+
+	var sum float32
+	for _, base := range info.Baseline {
+		sum += base
+	}
+	average := sum / float32(len(info.Baseline))
+	score := utils.IncreaseRatio(info.Value, average)
+	return sprintRatio(info, verbose, name, score, average)
+}
+
+func analyseBestRatio(info ItemDetail, currentScore []float32, verbose bool, name string) string {
+	if len(info.Baseline) == 0 || len(currentScore) == 0 {
+		return ""
+	}
+
+	var baseSum, currentSum float32
+	for _, base := range info.Baseline {
+		baseSum += base
+	}
+
+	for _, score := range currentScore {
+		currentSum += score
+	}
+	baseAverage := baseSum / float32(len(info.Baseline))
+	currentAverage := currentSum / float32(len(currentScore))
+	score := utils.IncreaseRatio(currentAverage, baseAverage)
+	return sprintRatio(info, verbose, name, score, baseAverage)
+}
+
+func sprintRatio(info ItemDetail, verbose bool, name string, score float32, average float32) string {
 	if verbose {
 		if (score < 0.0 && info.Negative) || (score > 0.0 && !info.Negative) {
 			info := utils.ColorString("Green", fmt.Sprintf("%.3f%%", math.Abs(float64(score))))
-			return score, fmt.Sprintf("[%v]\tImproved by %s;\t(baseline = %.3f)", name, info, base.Value)
+			return fmt.Sprintf("[%v]\tImproved by %s;\t(baseline = %.3f)", name, info, average)
 		} else {
 			info := utils.ColorString("Red", fmt.Sprintf("%.3f%%", math.Abs(float64(score))))
-			return score, fmt.Sprintf("[%v]\tDeclined by %s;\t(baseline = %.3f)", name, info, base.Value)
+			return fmt.Sprintf("[%v]\tDeclined by %s;\t(baseline = %.3f)", name, info, average)
 		}
 	}
 
 	if !verbose && info.Weight > 0.0 {
 		if (score < 0.0 && info.Negative) || (score > 0.0 && !info.Negative) {
 			info := utils.ColorString("Green", fmt.Sprintf("%.3f%%", math.Abs(float64(score))))
-			return score, fmt.Sprintf("[%v]\tImproved by %s", name, info)
+			return fmt.Sprintf("[%v]\tImproved by %s", name, info)
 		} else {
 			info := utils.ColorString("Red", fmt.Sprintf("%.3f%%", math.Abs(float64(score))))
-			return score, fmt.Sprintf("[%v]\tDeclined by %s", name, info)
+			return fmt.Sprintf("[%v]\tDeclined by %s", name, info)
 		}
 	}
-	return score, ""
+
+	return ""
 }
 
 // Collect Sensitive parameters
@@ -577,8 +586,9 @@ func (tuner *Tuner) Collect() {
 		parseTuningError(log.SensitizeCollect, err)
 	}()
 
-	if err = tuner.initCollect(); err != nil {
-		err = fmt.Errorf("initCollect failed, err:%v", err)
+	tuner.logName = log.SensitizeCollect
+	if err = tuner.init(); err != nil {
+		err = fmt.Errorf("[%v] init Collect: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
@@ -587,7 +597,7 @@ func (tuner *Tuner) Collect() {
 
 	tuner.isSensitize = true
 	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("collect err:%v\n", err)
+		err = fmt.Errorf("[%v] loop collect: %v\n", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
@@ -604,31 +614,34 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	return tuner.Step
 }
 
-func (tuner *Tuner) initCollect() error {
-	emptyConfiguration, err := tuner.init()
-	if err != nil {
-		return fmt.Errorf("%v", err)
+func (tuner *Tuner) analyseBestResult() string {
+	if tuner.isSensitize {
+		return ""
 	}
 
-	if isInterrupted(log.SensitizeCollect) {
-		log.Infof(log.SensitizeCollect, "Collect interrupted after step%v, [init] finish.", tuner.Step)
-		return fmt.Errorf("Collect is interrupted")
+	var currentRatioInfo string
+	for _, name := range tuner.Benchmark.SortedItems {
+		info, ok := tuner.BestConfiguration.Score[name]
+		if !ok {
+			log.Warnf("", "%vth best config [%v] info not exist", tuner.Iteration, name)
+			continue
+		}
+
+		currentInfo, ok := tuner.benchScore[name]
+		if !ok {
+			log.Warnf("", "%vth bench config [%v] info not exist", tuner.Iteration, name)
+			continue
+		}
+
+		oneRatioInfo := analyseBestRatio(info, currentInfo, tuner.Verbose, name)
+		if oneRatioInfo == "" {
+			continue
+		}
+
+		currentRatioInfo += fmt.Sprintf("\n\t%v", oneRatioInfo)
 	}
 
-	var implyApplyResults string
-	implyApplyResults, tuner.BaseConfiguration, err = emptyConfiguration.Apply(&tuner.timeSpend.apply)
-	if err != nil {
-		return fmt.Errorf("init apply configuration failed, details:%v", implyApplyResults)
-	}
-
-	log.Debugf(log.SensitizeCollect, "Step%v. apply configuration details: %v", tuner.Step+1, implyApplyResults)
-
-	success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send)
-	if err != nil || !success {
-		return fmt.Errorf("send script file  result: %v err:%v", success, err)
-	}
-
-	return nil
+	return currentRatioInfo
 }
 
 func backup(logName string, conf *Configuration) error {

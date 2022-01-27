@@ -17,10 +17,10 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
+	ParamMap  string
 	Name      string
 	Round     int
 	BenchConf string
-	ParamConf string
 	Verbose   bool
 	Log       string
 }
@@ -60,11 +60,10 @@ func runTuning(flag TuneFlag) {
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
-	paramConf := com.GetAbsolutePath(flag.ParamConf, "parameter", ".json", "_best.json")
-	if !file.IsPathExist(paramConf) {
-		return fmt.Errorf("Read ParamConf file [%v] err: file absolute path [%v] does not exist", flag.ParamConf, paramConf)
+	var paramMap  map[string]map[string]interface{}
+	if err := json.Unmarshal([]byte(flag.ParamMap), &paramMap); err != nil {
+		return err
 	}
-
 	benchInfo, err := GetBenchmarkInst(flag.BenchConf)
 	if err != nil {
 		return err
@@ -75,7 +74,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 		TargetHost:   config.KeenTune.TargetIP,
 		Name:         flag.Name,
 		StartTime:    time.Now(),
-		ParamConf:    paramConf,
+		ParamConf:    paramMap,
 		Verbose:      flag.Verbose,
 		Step:         1,
 		Flag:         cmd,

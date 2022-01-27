@@ -47,7 +47,7 @@ func setTuneFlag(cmdName string, cmd *cobra.Command, flag *TuneFlag) {
 	}
 
 	flags.StringVar(&flag.BenchConf, "bench", "", "benchmark configuration file, query by command \"keentune param list\"")
-	flags.StringVar(&flag.ParamConf, "param", "", "parameter configuration file, query by command \"keentune param list\"")
+	flags.StringSliceVar(&flag.ParamConf, "param", []string{}, "parameter configuration file, query by command \"keentune param list\"")
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
 

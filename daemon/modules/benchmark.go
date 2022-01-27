@@ -112,7 +112,7 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 			Negative: info.Negative,
 			Weight:   info.Weight,
 			Strict:   info.Strict,
-			Value:    average,
+			Baseline:   scoreSlice,
 		}
 
 	}

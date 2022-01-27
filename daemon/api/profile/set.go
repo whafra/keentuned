@@ -176,7 +176,7 @@ func set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int
 		config.IsInnerApplyRequests[index] = false
 	}()
 	uri := fmt.Sprintf("%s:%s/configure", ip, config.KeenTune.TargetPort)
-	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id"}, []interface{}{index}))
+	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
 	if err != nil {
 		applyResult[index] = Result{
 			Info:    fmt.Sprintf("target %v apply remote call: %v;", index, err),

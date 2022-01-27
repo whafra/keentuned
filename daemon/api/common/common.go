@@ -231,7 +231,7 @@ func GetParameterPath(fileName string) string {
 		return generatePath
 	}
 
-	return fileName
+	return ""
 }
 
 /* GetAbsolutePath  fileName support absolute path, relative path, file.

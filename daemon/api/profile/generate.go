@@ -35,7 +35,7 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 		return fmt.Errorf("Read file: %v, err:%v", fmt.Sprintf("%s/%s", config.KeenTune.Home, config.ParamAllFile), err)
 	}
 
-	_, _ = m.AssembleParams(readMap, totalParamMap)
+	m.AssembleParams(readMap, totalParamMap)
 
 	if err := file.Dump2File(m.GetGenerateWorkPath(""), flag.Output, readMap); err != nil {
 		log.Errorf(log.ProfGenerate, "Dump config info to json file [%v] err: %v", flag.Output, err)
