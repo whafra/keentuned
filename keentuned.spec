@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 7
+%define anolis_release 
 
 #
 # spec file for package golang-keentuned
