@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 
+%define anolis_release 6
 
 #
 # spec file for package golang-keentuned
@@ -73,10 +73,6 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
-* Wed Jan 26 2022 lilinjie <lilinjie@uniontech.com> - 1.0.0-7
-- add fio benchmark files
-- remove empty conf dir when uninstall keentuned
-
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
 - add tpce tpch benchmark files
 
