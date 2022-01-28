@@ -105,8 +105,13 @@ func prepareBeforeSet(configInfo map[string]interface{}) error {
 		return fmt.Errorf("update active file failed, err:%v", err)
 	}
 
+	backupReq := utils.Parse2Map("data", configInfo)
+	if backupReq == nil || len(backupReq) == 0 {
+		return fmt.Errorf("backup info is null")
+	}
+
 	// step3. backup the target machine
-	detailInfo, allSuccess = m.Backup(log.ProfSet, utils.Parse2Map("data", configInfo))
+	detailInfo, allSuccess = m.Backup(log.ProfSet, backupReq)
 	if !allSuccess {
 		return fmt.Errorf("backup details:\n%v", detailInfo)
 	}
