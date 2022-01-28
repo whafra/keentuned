@@ -24,12 +24,31 @@ func Parse2Map(key string, body interface{}) map[string]interface{} {
 	}
 
 	retMap, ok := info.(map[string]interface{})
-	if !ok {
+	if ok {
+		return retMap
+	}
+
+	doubleMap, ok := info.(map[string]map[string]interface{})
+	if ok {
+		return change2Map(doubleMap)
+	}
+	
+	return nil
+}
+
+func change2Map(doubleMap map[string]map[string]interface{}) map[string]interface{} {
+	if len(doubleMap) == 0 {
 		return nil
+	}
+
+	var retMap = make(map[string]interface{})
+	for name, value := range doubleMap {
+		retMap[name] = value
 	}
 
 	return retMap
 }
+
 
 // ParseValue parse value from body by key
 func ParseValue(key string, body []byte) (interface{}, error) {
@@ -52,6 +71,10 @@ func Map2Struct(m interface{}, dest interface{}) error {
 	byte, err := json.Marshal(m)
 	if err != nil {
 		return fmt.Errorf("marshal [%+v] err:[%v]", m, err)
+	}
+
+	if len(byte)==0{
+		return fmt.Errorf("map is null")
 	}
 
 	if err = json.Unmarshal(byte, dest); err != nil {
