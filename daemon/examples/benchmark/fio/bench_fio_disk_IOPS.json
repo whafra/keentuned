@@ -1,0 +1,20 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path}",
+      "local_script_path": "benchmark/fio/ack_fio_IOPS_base.py",
+      "item": {
+        "IOPS": {
+          "negative": false,
+          "weight": 100,
+          "strict": false
+        },
+        "BW": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        }
+      }
+    }
+  ]
+}  

@@ -32,7 +32,6 @@ func Parse2Map(key string, body interface{}) map[string]interface{} {
 	if ok {
 		return change2Map(doubleMap)
 	}
-
 	return nil
 }
 

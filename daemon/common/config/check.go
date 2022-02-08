@@ -304,6 +304,10 @@ func checkUniqueField(param modules.Parameter) error {
 		fmt.Printf("%v param %vsequence and options, only one of them can exist\n", utils.ColorString("yellow", "[Warning]"), param.ParaName)
 	}
 
+	if (param.Dtype == "string" || param.Dtype == "str") && param.Step > 0.0 {
+		return fmt.Errorf("param %v 'step' field is not supported for data type %v", param.ParaName, param.Dtype)
+	}
+
 	return nil
 }
 

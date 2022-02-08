@@ -73,4 +73,3 @@ class Benchmark():
 if __name__ == "__main__":
     bench = Benchmark()
     suc, result = bench.run()
-
