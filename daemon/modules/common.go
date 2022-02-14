@@ -62,29 +62,37 @@ func (t *Target) Backup() (string, bool) {
 	return t.concurrentRequestSuccess("Backup", true)
 }
 
+func (t *Target) Rollback() (string, bool) {
+	return t.concurrentRequestSuccess("Backup", false)
+}
+
 func (t *Target) concurrentRequestSuccess(uri string, needParam bool) (string, bool) {
 	wg := sync.WaitGroup{}
 	var sucCount int
 	var detailInfo string
 	var request interface{}
+	if (len(t.IPs) != len(t.Params)) || (len(t.IPs) != len(config.KeenTune.Ports)) {
+		return "ip length is not matched to param length", false
+	}
+
 	for index, ip := range t.IPs {
 		wg.Add(1)
 		id := index + 1
 		config.IsInnerApplyRequests[id] = false
-		go func(id int, ip string) () {
+		go func(index, id int, ip string) () {
 			defer wg.Done()
 			if needParam {
-				request = t.Params[id-1]
+				request = t.Params[index]
 			}
 
-			url := fmt.Sprintf("%v:%v/%v", ip, config.KeenTune.Ports[id-1], uri)
+			url := fmt.Sprintf("%v:%v/%v", ip, config.KeenTune.Ports[index], uri)
 			if err := http.ResponseSuccess("POST", url, request); err != nil {
 				detailInfo += fmt.Sprintf("target [%v] %v;\n", id, err)
 				return
 			}
 
 			sucCount++
-		}(id, ip)
+		}(index, id, ip)
 	}
 
 	wg.Wait()

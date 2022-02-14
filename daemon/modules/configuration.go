@@ -199,11 +199,6 @@ func collectParam(applyResp map[string]map[string]interface{}) (string, map[stri
 	}
 
 	for domain, paramMap := range applyResp {
-		/*paramMap, ok := param.(map[string]interface{})
-		if !ok {
-			return "", paramCollection, fmt.Errorf("collect Param assert type [%v] to map failed", reflect.TypeOf(param))
-		}*/
-
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)

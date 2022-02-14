@@ -3,6 +3,7 @@ package modules
 import (
 	"fmt"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
 	"sync"
@@ -16,7 +17,6 @@ func (tuner *Tuner) Apply() {
 	begin := tuner.timeSpend.apply
 	for index, ip := range tuner.Target.IPs {
 		wg.Add(1)
-
 		go func(index int, ip string) () {
 			start := time.Now()
 			id := index + 1
@@ -75,3 +75,25 @@ func (t *Target) applyResult(status map[int]string, results map[string]Configura
 
 	return retSuccessInfo, retConfigs, nil
 }
+
+func (tuner *Tuner) apply() error {
+	var err error
+	var implyApplyResults string
+	implyApplyResults, tuner.TargetConfiguration, err = tuner.nextConfiguration.Apply(&tuner.timeSpend.apply, false)
+	if err != nil {
+		return fmt.Errorf("%vth apply configuration failed:%v, details: %v", tuner.Iteration, err, implyApplyResults)
+	}
+
+	log.Debugf(tuner.logName, "step%v, [apply] round %v details: %v", tuner.Step, tuner.Iteration, implyApplyResults)
+
+	if tuner.Verbose {
+		var applyRuntimeInfo string
+		for index, configuration := range tuner.TargetConfiguration {
+			applyRuntimeInfo += fmt.Sprintf("\n\ttarget [%v] use time: %.3f s", index+1, configuration.timeSpend.Count.Seconds())
+		}
+		log.Infof(tuner.logName, "[Iteration %v] Apply success, details: %v", tuner.Iteration, applyRuntimeInfo)
+	}
+
+	return err
+}
+

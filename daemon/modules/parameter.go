@@ -12,13 +12,11 @@ type Parameter struct {
 	ParaName   string        `json:"name"`
 	SetCMD     string        `json:"cmd_set,omitempty"`
 	GetCMD     string        `json:"cmd_get,omitempty"`
-	Continuity bool          `json:"-"`
 	Scope      []interface{} `json:"range,omitempty"`
 	Options    []string      `json:"options,omitempty"`
 	Sequence   []interface{} `json:"sequence,omitempty"`
 	Dtype      string        `json:"dtype"`
 	Value      interface{}   `json:"value,omitempty"`
-	Base       interface{}   `json:"base,omitempty"`
 	Msg        string        `json:"msg,omitempty"`
 	Step       int           `json:"step,omitempty"`
 	Weight     float32       `json:"weight,omitempty"`

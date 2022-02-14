@@ -158,8 +158,12 @@ func parse2Float(origin map[string]interface{}, key string) (float32, error) {
 	return float32(val), nil
 }
 
-func checkParamConf(confs []string) (map[string]string, map[string]map[string]interface{}, error) {
-	var mergedParam = make(map[string]map[string]interface{})
+func checkParamConf(confs []string) (map[string]string, []map[string]map[string]interface{}, error) {
+	var mergedParam = make([]map[string]map[string]interface{}, PRILevel)
+	for i := range mergedParam {
+		mergedParam[i] = make(map[string]map[string]interface{})
+	}
+
 	if len(confs) == 0 {
 		return nil, nil, fmt.Errorf("param file suffix is not json, param name is needed")
 	}
@@ -224,12 +228,16 @@ func readFile(fileName string) (map[string]map[string]interface{}, error) {
 	return nil, fmt.Errorf("assert domain %v value is not matched, such as: {\"domain\":{\"param1\":{\"dtype\":\"string\",\"options\":[\"0\",\"1\"]}}}", domains[0])
 }
 
-func readParams(domains map[string]string, userParamMap, mergedParam map[string]map[string]interface{}) error {
+func readParams(domains map[string]string, userParamMap map[string]map[string]interface{}, mergedParam []map[string]map[string]interface{}) error {
 	var err error
 	for domainName, domainMap := range userParamMap {
-		_, ok := mergedParam[domainName]
+		priID, ok := PriorityList[domainName]
 		if !ok {
-			mergedParam[domainName] = make(map[string]interface{})
+			priID = 1
+		}
+		_, ok = mergedParam[priID][domainName]
+		if !ok {
+			mergedParam[priID][domainName] = make(map[string]interface{})
 		}
 
 		for name, paramValue := range domainMap {
@@ -251,8 +259,8 @@ func readParams(domains map[string]string, userParamMap, mergedParam map[string]
 				return err
 			}
 
-			if _, ok = mergedParam[domainName][name]; !ok {
-				mergedParam[domainName][name] = paramMap
+			if _, ok = mergedParam[priID][domainName][name]; !ok {
+				mergedParam[priID][domainName][name] = paramMap
 			}
 		}
 		domains[domainName] = domainName

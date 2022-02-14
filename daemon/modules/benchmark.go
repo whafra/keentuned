@@ -192,3 +192,4 @@ func parseScore(body []byte, logName string) (map[string]float32, error) {
 
 	return resultMap, nil
 }
+

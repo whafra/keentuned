@@ -31,7 +31,7 @@ type KeentunedConf struct {
 }
 
 type Group struct {
-	ParamMap map[string]map[string]interface{}
+	ParamMap []map[string]map[string]interface{}
 	IPs      []string
 	Port     string
 }
@@ -176,14 +176,15 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	}
 
 	var err error
-	var ipDomain = make(map[string]map[string]string)
+	var allGroupIPs = make(map[string]string)
 	var ipExist = make(map[string]bool)
 	var id = new(int)
 	c.Target.IPMap = make(map[string]int)
 	for index, groupName := range groupNames {
 		target := cfg.Section(groupName)
 		var group Group
-		group.IPs, err = changeStringToSlice(target.Key("TARGET_IP").MustString(""))
+		ipString := target.Key("TARGET_IP").MustString("")
+		group.IPs, err = changeStringToSlice(ipString)
 		if err != nil {
 			return fmt.Errorf("keentune check target ip %v", err)
 		}
@@ -191,13 +192,13 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		group.Port = target.Key("TARGET_PORT").MustString("9873")
 
 		paramFiles := strings.Split(target.Key("PARAMETER").MustString(""), ",")
-		var domains map[string]string
-		domains, group.ParamMap, err = checkParamConf(paramFiles)
+
+		_, group.ParamMap, err = checkParamConf(paramFiles)
 		if err != nil {
 			return err
 		}
 
-		if err = IPDomainRepeated(groupName, group.IPs, domains, ipDomain); err != nil {
+		if err = checkIPRepeated(groupName, group.IPs, allGroupIPs); err != nil {
 			return fmt.Errorf("%v", err)
 		}
 
@@ -209,20 +210,15 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	return nil
 }
 
-func IPDomainRepeated(groupName string, ips []string, domains map[string]string, ipDomains map[string]map[string]string) error {
+func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
 	for _, ip := range ips {
-		_, exist := ipDomains[ip]
+		_, exist := allGroupIPs[ip]
 		if !exist {
-			ipDomains[ip] = make(map[string]string)
+			allGroupIPs[ip] = groupName
+			continue
 		}
 
-		for _, domain := range domains {
-			originGroup, exist := ipDomains[ip][domain]
-			if exist {
-				return fmt.Errorf("Duplicate definition of parameter domain '%v'  in %v and %v!", domain, originGroup, groupName)
-			}
-			ipDomains[ip][domain] = groupName
-		}
+		return fmt.Errorf("Duplicate ip '%v' in groups %v and %v!", ip, allGroupIPs[ip], groupName)
 	}
 
 	return nil
