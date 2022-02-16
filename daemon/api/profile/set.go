@@ -16,8 +16,11 @@ import (
 )
 
 type SetFlag struct {
-	Name string
+	Name     string
+	Group    []bool
+	ConfFile []string
 }
+
 type Result struct {
 	Info    string
 	Success bool
@@ -40,7 +43,6 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		log.Errorf(log.ProfSet, "Check %v", err)
 		return fmt.Errorf("Check %v", err)
 	}
-
 	configFile, err := checkProfilePath(flag.Name)
 	if err != nil {
 		log.Errorf(log.ProfSet, "Check file [%v] err:%v", flag.Name, err)
@@ -212,4 +214,3 @@ func updateActiveFile(fileName string, info []byte) error {
 
 	return nil
 }
-
