@@ -185,7 +185,8 @@ func (configuration Configuration) parseApplyResponse(body []byte, id int) (Conf
 	for index := range configuration.Parameters {
 		paramInfo, ok := paramCollection[configuration.Parameters[index].ParaName]
 		if !ok {
-			return configuration, fmt.Errorf("find [%v] value missing from target response", configuration.Parameters[index].ParaName)
+			log.Warnf("", "find [%v] value missing from target response", configuration.Parameters[index].ParaName)
+			continue
 		}
 
 		configuration.Parameters[index].Value = paramInfo.Value
