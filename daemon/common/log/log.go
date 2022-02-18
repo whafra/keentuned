@@ -84,7 +84,7 @@ func getLevel(lvl string) logrus.Level {
 }
 
 func init() {
-	fileName := fmt.Sprintf("%v/log/%s", "/var", config.KeenTune.LogConf.FileName)
+	fileName := fmt.Sprintf("%v/log/keentune/%s", "/var", config.KeenTune.LogConf.FileName)
 
 	// 1 set log segmentation method
 	writer, err := rotatelogs.New(
