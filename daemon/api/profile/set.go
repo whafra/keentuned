@@ -43,44 +43,85 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		log.Errorf(log.ProfSet, "Check %v", err)
 		return fmt.Errorf("Check %v", err)
 	}
-	configFile, err := checkProfilePath(flag.Name)
-	if err != nil {
-		log.Errorf(log.ProfSet, "Check file [%v] err:%v", flag.Name, err)
-		return fmt.Errorf("Check file [%v] err:%v", flag.Name, err)
+
+	for i, v := range flag.ConfFile {
+		if flag.Group[i] {
+			configFile, err := checkProfilePath(v)
+			if err != nil {
+				log.Errorf(log.ProfSet, "Check file [%v] err:%v", v, err)
+				return fmt.Errorf("Check file [%v] err:%v", v, err)
+			}
+			requestInfo, err := getConfigParamInfo(configFile)
+			if err != nil {
+				log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", v, err)
+				return fmt.Errorf("Get request info from specified file [%v] err:%v", v, err)
+			}
+			if err := prepareBeforeSet(requestInfo); err != nil {
+				log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
+				return fmt.Errorf("Prepare for Set err:%v", err)
+			}
+			sucInfos, failedInfo, err := setConfiguration(requestInfo)
+			if err != nil {
+				log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
+				return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
+			}
+
+			activeFile := m.GetProfileWorkPath("active.conf")
+			if err := updateActiveFile(activeFile, []byte(file.GetPlainName(v))); err != nil {
+				log.Errorf(log.ProfSet, "Update active file err:%v", err)
+				return fmt.Errorf("Update active file err:%v", err)
+
+			}
+			if len(config.KeenTune.TargetIP) == 1 {
+				log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), v, strings.TrimPrefix(sucInfos[0], "target 1 apply result: "))
+				return nil
+			}
+
+			log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), v)
+			for _, detail := range sucInfos {
+				log.Infof(log.ProfSet, "\n\t%v", detail)
+			}
+		}
 	}
 
-	requestInfo, err := getConfigParamInfo(configFile)
-	if err != nil {
-		log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", flag.Name, err)
-		return fmt.Errorf("Get request info from specified file [%v] err:%v", flag.Name, err)
-	}
+	// configFile, err := checkProfilePath(flag.Name)
+	// if err != nil {
+	// 	log.Errorf(log.ProfSet, "Check file [%v] err:%v", flag.Name, err)
+	// 	return fmt.Errorf("Check file [%v] err:%v", flag.Name, err)
+	// }
 
-	if err := prepareBeforeSet(requestInfo); err != nil {
-		log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
-		return fmt.Errorf("Prepare for Set err:%v", err)
-	}
+	// requestInfo, err := getConfigParamInfo(configFile)
+	// if err != nil {
+	// 	log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", flag.Name, err)
+	// 	return fmt.Errorf("Get request info from specified file [%v] err:%v", flag.Name, err)
+	// }
 
-	sucInfos, failedInfo, err := setConfiguration(requestInfo)
-	if err != nil {
-		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
-		return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
-	}
+	// if err := prepareBeforeSet(requestInfo); err != nil {
+	// 	log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
+	// 	return fmt.Errorf("Prepare for Set err:%v", err)
+	// }
 
-	activeFile := m.GetProfileWorkPath("active.conf")
-	if err := updateActiveFile(activeFile, []byte(file.GetPlainName(flag.Name))); err != nil {
-		log.Errorf(log.ProfSet, "Update active file err:%v", err)
-		return fmt.Errorf("Update active file err:%v", err)
+	// sucInfos, failedInfo, err := setConfiguration(requestInfo)
+	// if err != nil {
+	// 	log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
+	// 	return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
+	// }
 
-	}
-	if len(config.KeenTune.TargetIP) == 1 {
-		log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), flag.Name, strings.TrimPrefix(sucInfos[0], "target 1 apply result: "))
-		return nil
-	}
+	// activeFile := m.GetProfileWorkPath("active.conf")
+	// if err := updateActiveFile(activeFile, []byte(file.GetPlainName(flag.Name))); err != nil {
+	// 	log.Errorf(log.ProfSet, "Update active file err:%v", err)
+	// 	return fmt.Errorf("Update active file err:%v", err)
 
-	log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), flag.Name)
-	for _, detail := range sucInfos {
-		log.Infof(log.ProfSet, "\n\t%v", detail)
-	}
+	// }
+	// if len(config.KeenTune.TargetIP) == 1 {
+	// 	log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), flag.Name, strings.TrimPrefix(sucInfos[0], "target 1 apply result: "))
+	// 	return nil
+	// }
+
+	// log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), flag.Name)
+	// for _, detail := range sucInfos {
+	// 	log.Infof(log.ProfSet, "\n\t%v", detail)
+	// }
 
 	return nil
 }
