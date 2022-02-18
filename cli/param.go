@@ -72,7 +72,7 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log", "keentuned-param-tune", time.Now().Unix())
+			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune/", "keentuned-param-tune", time.Now().Unix())
 
 			RunTuneRemote(cmd.Context(), flag)
 		},

@@ -56,6 +56,12 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %post
 systemctl daemon-reload
 
+%postun
+CONF_DIR=%{_sysconfdir}/keentune/conf
+if [ "$(ls -A $CONF_DIR)" = "" ]; then
+        rm -rf $CONF_DIR
+fi
+
 %files
 %defattr(0444,root,root, 0555)
 %attr(0555, root, root) /usr/bin/keentune
