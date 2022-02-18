@@ -11,31 +11,38 @@ import (
 	"time"
 )
 
-// Tuner define a tuning job include Algorithm, Benchmark, Target
+type implyDetail struct {
+	useTime        string
+	applySummary   string
+	applyDetail    string
+	benchSummary   string
+	backupDetail   string
+	rollbackDetail string
+}
+
+// Tuner define a tuning job include Algorithm, Benchmark, Group
 type Tuner struct {
-	Name                string
-	Algorithm           string // 使用的算法
-	MAXIteration        int    // 最大执行轮次
-	Iteration           int    // 当前轮次
-	TargetHost          []string
-	BenchmarkHost       string
-	StartTime           time.Time
-	Benchmark           Benchmark
-	BaseConfiguration   []Configuration
-	BestConfiguration   Configuration
-	nextConfiguration   Configuration
-	TargetConfiguration []Configuration
-	timeSpend           TimeSpend
-	ParamConf           map[string]map[string]interface{}
-	Verbose             bool
-	Step                int    // tuning process steps
-	isSensitize         bool   // sensitive parameter identification mark
-	Flag                string // command flag, enum: "collect", "tuning"
-	logName             string
-	benchScore          map[string][]float32
-	Group []Target
-	BrainParam []Parameter
-	MergedParam []map[string]interface{}
+	Name          string
+	Algorithm     string // 使用的算法
+	MAXIteration  int    // 最大执行轮次
+	Iteration     int    // 当前轮次
+	StartTime     time.Time
+	Benchmark     Benchmark
+	timeSpend     TimeSpend
+	ParamConf     config.DBLMap
+	Verbose       bool
+	Step          int    // tuning process steps
+	isSensitize   bool   // sensitive parameter identification mark
+	Flag          string // command flag, enum: "collect", "tuning"
+	logName       string
+	feedbackScore map[string][]float32
+	benchScore    map[string]ItemDetail
+	Group         []Group
+	BrainParam    []Parameter
+	ReadConfigure bool
+	implyDetail
+	bestInfo    Configuration
+	allowUpdate bool
 }
 
 type TimeSpend struct {
@@ -53,15 +60,14 @@ type TimeSpend struct {
 // Tune : tuning main process
 func (tuner *Tuner) Tune() {
 	var err error
-
+	tuner.logName = log.ParamTune
 	defer func() {
 		if err != nil {
 			tuner.end()
-			parseTuningError(log.ParamTune, err)
+			tuner.parseTuningError(err)
 		}
 	}()
 
-	tuner.logName = log.ParamTune
 	if err = tuner.init(); err != nil {
 		err = fmt.Errorf("[%v] prepare for tuning: %v", utils.ColorString("red", "ERROR"), err)
 		return
@@ -74,29 +80,29 @@ func (tuner *Tuner) Tune() {
 		return
 	}
 
-	if err = tuner.getBestConfiguration(); err != nil {
-		err = fmt.Errorf("[%v] get best configuration: %v", utils.ColorString("red", "ERROR"), err)
+	if err = tuner.dumpBest(); err != nil {
+		err = fmt.Errorf("[%v] dump best configuration: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 
-	if err = tuner.checkBestConfiguration(); err != nil {
+	if err = tuner.verifyBest(); err != nil {
 		err = fmt.Errorf("[%v] check best configuration: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
 }
 
-func parseTuningError(logName string, err error) {
+func (tuner *Tuner) parseTuningError(err error) {
 	if err == nil {
 		return
 	}
 
-	Rollback(logName)
+	tuner.rollback()
 
 	if strings.Contains(err.Error(), "interrupted") {
-		log.Infof(logName, "parameter optimization job abort!")
+		log.Infof(tuner.logName, "parameter optimization job abort!")
 		return
 	}
-	log.Infof(logName, "%v", err)
+	log.Infof(tuner.logName, "%v", err)
 }
 
 /*acquire configuration from brain*/
@@ -117,7 +123,7 @@ func (tuner *Tuner) acquire() (bool, error) {
 	}
 
 	// check interrupted
-	if isInterrupted(tuner.logName) {
+	if tuner.isInterrupted() {
 		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
 		return false, fmt.Errorf("tuning is interrupted")
 	}
@@ -135,11 +141,8 @@ func (tuner *Tuner) acquire() (bool, error) {
 		log.Infof(tuner.logName, "[Iteration %v] Acquire success, %v", tuner.Iteration, timeCost.Desc)
 	}
 
-	// assign to nextConfiguration
-	tuner.nextConfiguration = Configuration{
-		Parameters: acquiredInfo.Candidate,
-		Round:      acquiredInfo.Iteration,
-		budget:     acquiredInfo.Budget,
+	if err = tuner.parseAcquireParam(acquiredInfo); err != nil {
+		return false, err
 	}
 
 	return false, nil
@@ -150,7 +153,7 @@ func (tuner *Tuner) feedback() error {
 	start := time.Now()
 	feedbackMap := map[string]interface{}{
 		"iteration":   tuner.Iteration - 1,
-		"bench_score": tuner.benchScore,
+		"bench_score": tuner.feedbackScore,
 	}
 
 	err := http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/feedback", feedbackMap)
@@ -175,10 +178,10 @@ func (tuner *Tuner) end() {
 		return
 	}
 
-	tuner.setTimeCostToTableString(totalTime)
+	tuner.setTimeSpentDetail(totalTime)
 }
 
-func (tuner *Tuner) setTimeCostToTableString(totalTime float64) {
+func (tuner *Tuner) setTimeSpentDetail(totalTime float64) {
 	initRatio := fmt.Sprintf("%.2f%%", tuner.timeSpend.init.Seconds()*100/totalTime)
 	applyRatio := fmt.Sprintf("%.2f%%", tuner.timeSpend.apply.Seconds()*100/totalTime)
 	acquireRatio := fmt.Sprintf("%.2f%%", tuner.timeSpend.acquire.Seconds()*100/totalTime)
@@ -213,13 +216,13 @@ func (tuner *Tuner) setTimeCostToTableString(totalTime float64) {
 // Collect Sensitive parameters
 func (tuner *Tuner) Collect() {
 	var err error
-
+	tuner.logName = log.SensitizeCollect
+	tuner.isSensitize = true
 	defer func() {
 		tuner.end()
-		parseTuningError(log.SensitizeCollect, err)
+		tuner.parseTuningError(err)
 	}()
 
-	tuner.logName = log.SensitizeCollect
 	if err = tuner.init(); err != nil {
 		err = fmt.Errorf("[%v] init Collect: %v", utils.ColorString("red", "ERROR"), err)
 		return
@@ -228,7 +231,6 @@ func (tuner *Tuner) Collect() {
 	log.Infof(log.SensitizeCollect, "\nStep%v. Collect init success.", tuner.IncreaseStep(1))
 	log.Infof(log.SensitizeCollect, "\nStep%v. Start sensitization collection, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
-	tuner.isSensitize = true
 	if err = tuner.loop(); err != nil {
 		err = fmt.Errorf("[%v] loop collect: %v\n", utils.ColorString("red", "ERROR"), err)
 		return
@@ -245,24 +247,5 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
-}
-
-func backup(logName string, conf *Configuration) error {
-	requestInfo, err := conf.assembleApplyRequestMap()
-	if err != nil {
-		return fmt.Errorf("get backup request err: %v", err)
-	}
-
-	backupReq := utils.Parse2Map("data", requestInfo)
-	if backupReq == nil {
-		return fmt.Errorf("get backup request is null")
-	}
-
-	details, suc := Backup(logName, backupReq)
-	if !suc {
-		return fmt.Errorf("backup detail:\n%v", details)
-	}
-
-	return nil
 }
 

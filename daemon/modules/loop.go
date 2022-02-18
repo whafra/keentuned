@@ -21,7 +21,7 @@ func (tuner *Tuner) loop() error {
 		}
 
 		// 2. apply
-		if err = tuner.apply(); err != nil {
+		if err = tuner.setConfigure(); err != nil {
 			return err
 		}
 
@@ -41,7 +41,7 @@ func (tuner *Tuner) loop() error {
 			log.Infof(tuner.logName, "\tCurrent optimal iteration: %v\n", optimalRatioInfo)
 		}
 
-		if isInterrupted(tuner.logName) {
+		if tuner.isInterrupted() {
 			log.Infof(tuner.logName, "Tuning interrupted after step%v, [loop tuning] round %v finish.", tuner.Step, i)
 			return fmt.Errorf("tuning is interrupted")
 		}
@@ -53,8 +53,8 @@ func (tuner *Tuner) loop() error {
 func (tuner *Tuner) benchmark() error {
 	// get round of execution benchmark
 	var round int
-	if int(tuner.nextConfiguration.budget) != 0 {
-		round = int(tuner.nextConfiguration.budget)
+	if int(tuner.Group[0].Dump.budget) != 0 {
+		round = int(tuner.Group[0].Dump.budget)
 	} else {
 		if tuner.isSensitize {
 			round = config.KeenTune.Sensitize.BenchRound
@@ -63,11 +63,11 @@ func (tuner *Tuner) benchmark() error {
 		}
 	}
 
-	// execution benchmark
-	var implyBenchResult string
 	var err error
+
+	// execution benchmark
 	tuner.Benchmark.LogName = tuner.logName
-	tuner.benchScore, tuner.nextConfiguration.Score, implyBenchResult, err = tuner.Benchmark.RunBenchmark(round, &tuner.timeSpend.benchmark, tuner.Verbose)
+	tuner.feedbackScore, tuner.benchScore, tuner.benchSummary, err = tuner.RunBenchmark(round)
 	if err != nil {
 		if err.Error() == "get benchmark is interrupted" {
 			log.Infof(tuner.logName, "Tuning interrupted after step%v, [run benchmark] round %v stopped.", tuner.Step, tuner.Iteration)
@@ -76,15 +76,10 @@ func (tuner *Tuner) benchmark() error {
 		return fmt.Errorf("tuning execute %vth benchmark err:%v", tuner.Iteration, err)
 	}
 
-	log.Infof(tuner.logName, "[Iteration %v] Benchmark result: %v", tuner.Iteration, implyBenchResult)
-	tuner.TargetConfiguration[0].Score = tuner.nextConfiguration.Score
+	log.Infof(tuner.logName, "[Iteration %v] Benchmark result: %v", tuner.Iteration, tuner.benchSummary)
 	// dump benchmark result of current tuning Iteration
-	if config.KeenTune.DumpConf.ExecDump && !tuner.isSensitize {
-		for index := range tuner.TargetConfiguration {
-			targetID := index + 1
-			tuner.TargetConfiguration[index].Score = tuner.nextConfiguration.Score
-			tuner.TargetConfiguration[index].Dump(tuner.Name, fmt.Sprintf("_exec_%v_target_%v.json", tuner.Iteration, targetID))
-		}
+	if !tuner.isSensitize {
+		tuner.dump(processOpt)
 	}
 
 	return nil

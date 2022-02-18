@@ -14,13 +14,13 @@ func (tuner *Tuner) analyseBestResult() string {
 
 	var currentRatioInfo string
 	for _, name := range tuner.Benchmark.SortedItems {
-		info, ok := tuner.BestConfiguration.Score[name]
+		info, ok := tuner.bestInfo.Score[name]
 		if !ok {
 			log.Warnf("", "%vth best config [%v] info not exist", tuner.Iteration, name)
 			continue
 		}
 
-		currentInfo, ok := tuner.benchScore[name]
+		currentInfo, ok := tuner.feedbackScore[name]
 		if !ok {
 			log.Warnf("", "%vth bench config [%v] info not exist", tuner.Iteration, name)
 			continue
@@ -43,13 +43,13 @@ func (tuner *Tuner) analyseResult() string {
 		return ""
 	}
 
-	if err := tuner.requestBest(); err != nil {
+	if err := tuner.getBest(); err != nil {
 		return ""
 	}
 
 	var currentRatioInfo string
 	for _, name := range tuner.Benchmark.SortedItems {
-		info, ok := tuner.BestConfiguration.Score[name]
+		info, ok := tuner.bestInfo.Score[name]
 		if !ok {
 			log.Warnf("", "%vth config [%v] info not exist", tuner.Iteration, name)
 			continue
@@ -64,7 +64,7 @@ func (tuner *Tuner) analyseResult() string {
 	}
 
 	if currentRatioInfo != "" {
-		return fmt.Sprintf("[Iteration %v]:%v", tuner.BestConfiguration.Round+1, currentRatioInfo)
+		return fmt.Sprintf("[Iteration %v]:%v", tuner.Group[0].Dump.Round+1, currentRatioInfo)
 	}
 
 	return currentRatioInfo

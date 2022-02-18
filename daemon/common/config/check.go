@@ -6,9 +6,20 @@ import (
 	"io/ioutil"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/utils"
-	"keentune/daemon/modules"
 	"strings"
 )
+
+type Parameter struct {
+	Domain   string        `json:"domain"`
+	Name     string        `json:"name"`
+	Scope    []interface{} `json:"range,omitempty"`
+	Options  []string      `json:"options,omitempty"`
+	Sequence []interface{} `json:"sequence,omitempty"`
+	Dtype    string        `json:"dtype"`
+	Value    interface{}   `json:"value,omitempty"`
+	Step     int           `json:"step,omitempty"`
+	Weight   float32       `json:"weight,omitempty"`
+}
 
 func checkBenchConf(conf *string) error {
 	if !strings.HasSuffix(*conf, ".json") {
@@ -158,10 +169,10 @@ func parse2Float(origin map[string]interface{}, key string) (float32, error) {
 	return float32(val), nil
 }
 
-func checkParamConf(confs []string) (map[string]string, []map[string]map[string]interface{}, error) {
-	var mergedParam = make([]map[string]map[string]interface{}, PRILevel)
+func checkParamConf(confs []string) (map[string]string, []DBLMap, error) {
+	var mergedParam = make([]DBLMap, PRILevel)
 	for i := range mergedParam {
-		mergedParam[i] = make(map[string]map[string]interface{})
+		mergedParam[i] = make(DBLMap)
 	}
 
 	if len(confs) == 0 {
@@ -194,7 +205,7 @@ func checkParamConf(confs []string) (map[string]string, []map[string]map[string]
 	return domains, mergedParam, nil
 }
 
-func readFile(fileName string) (map[string]map[string]interface{}, error) {
+func readFile(fileName string) (DBLMap, error) {
 	bytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("read [%v] file:%v\n", fileName, err)
@@ -204,7 +215,7 @@ func readFile(fileName string) (map[string]map[string]interface{}, error) {
 		return nil, fmt.Errorf("file is empty")
 	}
 
-	var retMap map[string]map[string]interface{}
+	var retMap DBLMap
 	err = json.Unmarshal(bytes, &retMap)
 	if err == nil && len(retMap) != 0 {
 		return retMap, nil
@@ -228,7 +239,7 @@ func readFile(fileName string) (map[string]map[string]interface{}, error) {
 	return nil, fmt.Errorf("assert domain %v value is not matched, such as: {\"domain\":{\"param1\":{\"dtype\":\"string\",\"options\":[\"0\",\"1\"]}}}", domains[0])
 }
 
-func readParams(domains map[string]string, userParamMap map[string]map[string]interface{}, mergedParam []map[string]map[string]interface{}) error {
+func readParams(domains map[string]string, userParamMap DBLMap, mergedParam []DBLMap) error {
 	var err error
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
@@ -270,16 +281,16 @@ func readParams(domains map[string]string, userParamMap map[string]map[string]in
 }
 
 func checkParam(name string, paramMap map[string]interface{}) error {
-	var param modules.Parameter
+	var param Parameter
 	err := utils.Map2Struct(paramMap, &param)
 	if err != nil {
 		return fmt.Errorf("map to struct err:%v", err)
 	}
 
-	param.ParaName = name
+	param.Name = name
 	// check data type
 	if !isDataTypeOK(param.Dtype) {
-		return fmt.Errorf("param %v data type must be one of int, float, string or bool. find: %v", param.ParaName, param.Dtype)
+		return fmt.Errorf("param %v data type must be one of int, float, string or bool. find: %v", param.Name, param.Dtype)
 	}
 
 	// check range length=2
@@ -288,7 +299,7 @@ func checkParam(name string, paramMap map[string]interface{}) error {
 		range2, ok2 := param.Scope[1].(float64)
 		if ok1 && ok2 {
 			if range2 <= range1 {
-				return fmt.Errorf("param %v range[1] must be larger than range[0]", param.ParaName)
+				return fmt.Errorf("param %v range[1] must be larger than range[0]", param.Name)
 			}
 		}
 	}
@@ -296,24 +307,24 @@ func checkParam(name string, paramMap map[string]interface{}) error {
 	return checkUniqueField(param)
 }
 
-func checkUniqueField(param modules.Parameter) error {
+func checkUniqueField(param Parameter) error {
 	if len(param.Scope) == 0 && len(param.Sequence) == 0 && len(param.Options) == 0 {
-		return fmt.Errorf("param %v field range, options and sequence, only one of them can exist", param.ParaName)
+		return fmt.Errorf("param %v field range, options and sequence, only one of them can exist", param.Name)
 	}
 	if len(param.Scope) > 0 && len(param.Sequence) > 0 {
-		return fmt.Errorf("param %v range and sequence, only one of them can exist", param.ParaName)
+		return fmt.Errorf("param %v range and sequence, only one of them can exist", param.Name)
 	}
 
 	if len(param.Scope) > 0 && len(param.Options) > 0 {
-		return fmt.Errorf("param %v range and options, only one of them can exist", param.ParaName)
+		return fmt.Errorf("param %v range and options, only one of them can exist", param.Name)
 	}
 
 	if len(param.Sequence) > 0 && len(param.Options) > 0 {
-		fmt.Printf("%v param %vsequence and options, only one of them can exist\n", utils.ColorString("yellow", "[Warning]"), param.ParaName)
+		fmt.Printf("%v param %vsequence and options, only one of them can exist\n", utils.ColorString("yellow", "[Warning]"), param.Name)
 	}
 
 	if (param.Dtype == "string" || param.Dtype == "str") && param.Step > 0.0 {
-		return fmt.Errorf("param %v 'step' field is not supported for data type %v", param.ParaName, param.Dtype)
+		return fmt.Errorf("param %v 'step' field is not supported for data type %v", param.Name, param.Dtype)
 	}
 
 	return nil

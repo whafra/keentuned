@@ -11,13 +11,9 @@ import (
 
 // KeentunedConf
 type KeentunedConf struct {
-	Home       string
-	Port       string
-	BenchIP    string
-	BenchPort  string
-	BaseRound  int
-	ExecRound  int
-	AfterRound int
+	Home string
+	Port string
+	Bench
 	TargetIP   []string
 	TargetPort string
 	Target
@@ -30,8 +26,18 @@ type KeentunedConf struct {
 	LogConf
 }
 
+type Bench struct {
+	BenchIP    string
+	BenchPort  string
+	BaseRound  int
+	ExecRound  int
+	AfterRound int
+	BenchConf  string
+	BenchDest  string
+}
+
 type Group struct {
-	ParamMap []map[string]map[string]interface{}
+	ParamMap []DBLMap
 	IPs      []string
 	Port     string
 }
@@ -65,6 +71,9 @@ type LogConf struct {
 	BackupCount int
 }
 
+// DBLMap Double Map
+type DBLMap = map[string]map[string]interface{}
+
 const (
 	keentuneConfigFile = "/etc/keentune/conf/keentuned.conf"
 )
@@ -84,7 +93,7 @@ var (
 	KeenTune *KeentunedConf
 
 	// ParamAllFile ...
-	ParamAllFile = "parameter/param_all.json"
+	ParamAllFile = "parameter/sysctl.json"
 
 	IsInnerBenchRequests     []bool
 	IsInnerApplyRequests     []bool
@@ -111,13 +120,13 @@ func init() {
 }
 
 func initChanAndIPMap() {
-	IsInnerBenchRequests = make([]bool, len(KeenTune.TargetIP)+2)
-	IsInnerApplyRequests = make([]bool, len(KeenTune.TargetIP)+2)
-	IsInnerSensitizeRequests = make([]bool, len(KeenTune.TargetIP)+2)
-	ApplyResultChan = make([]chan []byte, len(KeenTune.TargetIP)+2)
+	IsInnerBenchRequests = make([]bool, len(KeenTune.IPMap)+2)
+	IsInnerApplyRequests = make([]bool, len(KeenTune.IPMap)+2)
+	IsInnerSensitizeRequests = make([]bool, len(KeenTune.IPMap)+2)
+	ApplyResultChan = make([]chan []byte, len(KeenTune.IPMap)+2)
 
-	for index, _ := range KeenTune.TargetIP {
-		ApplyResultChan[index+1] = make(chan []byte, 1)
+	for _, index := range KeenTune.IPMap {
+		ApplyResultChan[index] = make(chan []byte, 1)
 	}
 }
 
@@ -138,6 +147,16 @@ func (c *KeentunedConf) Save() error {
 	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
 	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
 	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
+	c.BenchDest = bench.Key("BENCH_DESTINATION").MustString("")
+	c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
+
+	if c.BenchConf == "" {
+		fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+	}
+
+	if err = checkBenchConf(&c.BenchConf); err != nil {
+		return err
+	}
 
 	if err = c.getTargetGroup(cfg); err != nil {
 		return err
@@ -240,7 +259,6 @@ func (c *KeentunedConf) addIPMap(port string, ips []string, ipExist map[string]b
 			ipExist[ip] = true
 			c.Target.IPMap[ip] = *id
 			c.Target.IPs = append(c.Target.IPs, ip)
-			c.Target.Ports = append(c.Target.Ports, port)
 		}
 	}
 }

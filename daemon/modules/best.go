@@ -10,21 +10,7 @@ import (
 	"time"
 )
 
-func (tuner *Tuner) getBestConfiguration() error {
-	err := tuner.requestBest()
-	if err != nil {
-		return err
-	}
-
-	// dump best configuration
-	if config.KeenTune.DumpConf.BestDump {
-		tuner.BestConfiguration.Dump(tuner.Name, "_best.json")
-		log.Infof(log.ParamTune, "Step%v. Best configuration dump to [%v/parameter/%v/%v] successfully.\n", tuner.IncreaseStep(), config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name+"_best.json")
-	}
-	return nil
-}
-
-func (tuner *Tuner) requestBest() error {
+func (tuner *Tuner) getBest() error {
 	// get best configuration
 	start := time.Now()
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/best"
@@ -39,30 +25,29 @@ func (tuner *Tuner) requestBest() error {
 		return fmt.Errorf("unmarshal best config: %v\n", err)
 	}
 
-	tuner.BestConfiguration.Round = bestConfig.Iteration
-	tuner.BestConfiguration.Parameters = bestConfig.Candidate
-	tuner.BestConfiguration.Score = bestConfig.Score
-
 	// time cost
 	timeCost := utils.Runtime(start)
 	tuner.timeSpend.best += timeCost.Count
+
+	tuner.bestInfo.Round = bestConfig.Iteration
+	tuner.bestInfo.Score = bestConfig.Score
+	tuner.bestInfo.Parameters=bestConfig.Candidate
+
 	return nil
 }
 
-func (tuner *Tuner) checkBestConfiguration() error {
-	var implyBenchResult string
-	implyApplyResults, bestConfiguration, err := tuner.BestConfiguration.Apply(&tuner.timeSpend.apply, false)
+func (tuner *Tuner) verifyBest() error {
+	err := tuner.setConfigure()
 	if err != nil {
-		log.Errorf(log.ParamTune, "best apply configuration failed:%v, details: %v", implyApplyResults)
+		log.Errorf(log.ParamTune, "best apply configuration failed:%v, details: %v", tuner.applySummary)
 		return err
 	}
-	log.Debugf(log.ParamTune, "Step%v. apply configuration details: %v", tuner.Step, implyApplyResults)
 
-	tuner.BestConfiguration = bestConfiguration[0]
+	log.Debugf(log.ParamTune, "Step%v. apply configuration details: %v", tuner.Step, tuner.applyDetail)
 
 	log.Infof(log.ParamTune, "Step%v. Tuning is finished, checking benchmark score of best configuration.\n", tuner.IncreaseStep())
 
-	if tuner.benchScore, _, implyBenchResult, err = tuner.Benchmark.RunBenchmark(config.KeenTune.AfterRound, &tuner.timeSpend.benchmark, tuner.Verbose); err != nil {
+	if tuner.feedbackScore, _, tuner.benchSummary, err = tuner.RunBenchmark(config.KeenTune.AfterRound); err != nil {
 		if err.Error() == "get benchmark is interrupted" {
 			log.Infof(log.ParamTune, "Tuning interrupted after step%v, [check best configuration benchmark] stopped.", tuner.Step)
 			return fmt.Errorf("run benchmark interrupted")
@@ -71,7 +56,7 @@ func (tuner *Tuner) checkBestConfiguration() error {
 		return err
 	}
 
-	log.Infof(log.ParamTune, "[BEST] Benchmark result: %v\n", implyBenchResult)
+	log.Infof(log.ParamTune, "[BEST] Benchmark result: %v\n", tuner.benchSummary)
 
 	currentRatioInfo := tuner.analyseBestResult()
 	if currentRatioInfo != "" {

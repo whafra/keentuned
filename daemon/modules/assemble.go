@@ -11,11 +11,15 @@ import (
 	"strings"
 )
 
-// Target ...
-type Target struct {
-	IPs    []string
-	Params []map[string]map[string]interface{}
-	Port   string
+// Group ...
+type Group struct {
+	IPs         []string
+	Params      []config.DBLMap
+	Port        string
+	ReadOnly    bool
+	Dump        Configuration
+	MergedParam map[string]interface{}
+	AllowUpdate map[string]bool // prevent map concurrency security problems
 }
 
 const brainNameParts = 3
@@ -26,46 +30,58 @@ const (
 )
 
 func (tuner *Tuner) initParams() error {
-	var target Target
+	var target *Group
 	var err error
 	tuner.BrainParam = []Parameter{}
 	for index, group := range config.KeenTune.Group {
-		target.Params, err = getInitParam(index+1, group.ParamMap, &tuner.BrainParam)
+		target, err = getInitParam(index+1, group.ParamMap, &tuner.BrainParam)
 		if err != nil {
 			return err
 		}
 
 		target.IPs = group.IPs
 		target.Port = group.Port
-		tuner.Group = append(tuner.Group, target)
+		target.mergeParam()
+
+		var updateIP = make(map[string]bool)
+		for i := 0; i < len(target.IPs); i++ {
+			if i == 0 {
+				updateIP[target.IPs[i]] = true
+				continue
+			}
+			updateIP[target.IPs[i]] = false
+		}
+
+		target.AllowUpdate = updateIP
+		tuner.Group = append(tuner.Group, *target)
 	}
 
 	if len(tuner.Group) == 0 {
 		return fmt.Errorf("found group is null")
 	}
 
-	tuner.mergeParam()
-
 	return nil
 }
 
-func getInitParam(groupID int, paramMaps []map[string]map[string]interface{}, brainParam *[]Parameter) ([]map[string]map[string]interface{}, error) {
-	var retMap = make([]map[string]map[string]interface{}, len(paramMaps))
-	for i := range retMap {
-		retMap[i] = make(map[string]map[string]interface{})
+func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Parameter) (*Group, error) {
+	var target = new(Group)
+	var params = make([]config.DBLMap, len(paramMaps))
+	for i := range params {
+		params[i] = make(config.DBLMap)
 	}
 
-	var oneParam Parameter
-	for priID, paramMap := range paramMaps {
-		for domain, params := range paramMap {
+	var nameSaltedParam, originParam Parameter
+	var initConf Configuration
+	for index, paramMap := range paramMaps {
+		for domain, parameters := range paramMap {
 			var temp = make(map[string]interface{})
-			for name, value := range params {
+			for name, value := range parameters {
 				param, ok := value.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("assert %v to parameter failed", value)
 				}
 
-				if err := utils.Map2Struct(value, &oneParam); err != nil {
+				if err := utils.Map2Struct(value, &nameSaltedParam); err != nil {
 					return nil, fmt.Errorf("map to struct: %v", err)
 				}
 
@@ -74,32 +90,38 @@ func getInitParam(groupID int, paramMaps []map[string]map[string]interface{}, br
 					priID = 1
 				}
 				paramSuffix := fmt.Sprintf("@%v%v@%v%v", groupIDPrefix, groupID, priorityIDPrefix, priID)
-				oneParam.ParaName = fmt.Sprintf("%v%v", name, paramSuffix)
-				oneParam.DomainName = domain
-				*brainParam = append(*brainParam, oneParam)
+				nameSaltedParam.ParaName = fmt.Sprintf("%v%v", name, paramSuffix)
+				nameSaltedParam.DomainName = domain
+
+				originParam = nameSaltedParam
+				originParam.ParaName = name
+				*brainParam = append(*brainParam, nameSaltedParam)
+				initConf.Parameters = append(initConf.Parameters, originParam)
 				delete(param, "options")
 				delete(param, "range")
 				delete(param, "step")
 				temp[name] = param
 			}
 
-			retMap[priID][domain] = temp
+			params[index][domain] = temp
 		}
 	}
 
-	return retMap, nil
+	target.Params = params
+	target.Dump = initConf
+
+	return target, nil
 }
 
 // getBrainInitParams get request parameters for brain init
 func (tuner *Tuner) getBrainInitParams() error {
 	for i := range tuner.BrainParam {
-		name, groupID, _, err := parseBrainName(tuner.BrainParam[i].ParaName)
+		name, groupID, err := parseBrainName(tuner.BrainParam[i].ParaName)
 		if err != nil {
 			return err
 		}
-		group := tuner.Group[groupID]
 
-		tuner.BrainParam[i].Base, err = group.getBase(group.IPs[0], tuner.BrainParam[i].DomainName, name)
+		tuner.BrainParam[i].Base, err = tuner.Group[groupID].getBase(tuner.BrainParam[i].DomainName, name)
 		if err != nil {
 			return fmt.Errorf("get base for brain init: %v", err)
 		}
@@ -108,36 +130,31 @@ func (tuner *Tuner) getBrainInitParams() error {
 	return nil
 }
 
-func parseBrainName(originName string) (name string, groupID, priID int, err error) {
+func parseBrainName(originName string) (name string, groupIndex int, err error) {
 	names := strings.Split(originName, "@")
 	if len(names) < brainNameParts {
-		return "", 0, -1, fmt.Errorf("brain param name %v part length is not correct", originName)
+		return "", 0, fmt.Errorf("brain param name %v part length is not correct", originName)
 	}
 
 	name = names[0]
 
 	groupIDStr := strings.TrimPrefix(names[1], groupIDPrefix)
-	groupID, err = strconv.Atoi(groupIDStr)
-	if groupID <= 0 || groupID > len(config.KeenTune.Group) {
-		return "", 0, -1, fmt.Errorf("parse brain name groupID %v %v", groupIDStr, err)
+	groupID, err := strconv.Atoi(groupIDStr)
+	groupIndex = groupID - 1
+	if groupIndex < 0 || groupIndex >= len(config.KeenTune.Group) {
+		return "", 0, fmt.Errorf("parse brain name groupIndex %v %v", groupIDStr, err)
 	}
 
-	priorityID := strings.TrimPrefix(names[2], priorityIDPrefix)
-	priID, err = strconv.Atoi(priorityID)
-	if priID < 0 || priID >= config.PRILevel {
-		return "", 0, -1, fmt.Errorf("parse brain name priority ID %v %v", priorityID, err)
-	}
-
-	return name, groupID, priID, nil
+	return name, groupIndex, nil
 }
 
-func (t *Target) getBase(ip string, domain string, name string) (interface{}, error) {
+func (gp *Group) getBase(domain string, name string) (interface{}, error) {
 	index := config.PriorityList[domain]
 	if index < 0 || index >= config.PRILevel {
-		return nil, fmt.Errorf("ip %v param priority index %v is out of range [0, 1]", ip, index)
+		return nil, fmt.Errorf("param priority index %v is out of range [0, 1]", index)
 	}
 
-	param, ok := t.Params[index][domain][name]
+	param, ok := gp.Params[index][domain][name]
 	if !ok {
 		return nil, fmt.Errorf("%v not found in %vth param", name, index)
 	}
@@ -146,27 +163,54 @@ func (t *Target) getBase(ip string, domain string, name string) (interface{}, er
 }
 
 // parseAcquireParam parse acquire response value for apply request
-func (t *Target) parseAcquireParam(resp []Parameter) error {
-	for _, param := range resp {
-		paramName, _, _, err := parseBrainName(param.ParaName)
+func (tuner *Tuner) parseAcquireParam(resp ReceivedConfigure) error {
+	for _, param := range resp.Candidate {
+		paramName, groupID, err := parseBrainName(param.ParaName)
 		if err != nil {
 			return err
 		}
 
-		for _, ip := range t.IPs {
-			if err := t.updateValue(ip, paramName, param); err != nil {
-				return fmt.Errorf("update %v value %v", paramName, err)
-			}
+		param.ParaName = paramName
+		if err := tuner.Group[groupID].updateValue(param); err != nil {
+			return fmt.Errorf("update %v value %v", paramName, err)
 		}
+	}
+
+	for index := range tuner.Group {
+		tuner.Group[index].Dump.Round = resp.Iteration
+		tuner.Group[index].Dump.budget = resp.Budget
 	}
 
 	return nil
 }
 
-// updateApplyResult update param values by apply result
-func (t *Target) updateApplyResult(ip string, params map[string]Parameter) error {
+// parseBestParam parse best response value for best dump
+func (tuner *Tuner) parseBestParam() error {
+	var bestParams = make([][]Parameter, len(tuner.Group))
+	for _, param := range tuner.bestInfo.Parameters {
+		paramName, groupID, err := parseBrainName(param.ParaName)
+		if err != nil {
+			return err
+		}
+
+		param.ParaName = paramName
+		bestParams[groupID] = append(bestParams[groupID], param)
+	}
+
+	for index := range tuner.Group {
+		tuner.Group[index].Dump.Round = tuner.bestInfo.Round
+		tuner.Group[index].Dump.Score = tuner.bestInfo.Score
+		tuner.Group[index].Dump.Parameters = bestParams[index]
+	}
+
+	return nil
+}
+
+// updateParams update param values by apply result
+func (gp *Group) updateParams(params map[string]Parameter) error {
 	for name, param := range params {
-		err := t.updateValue(ip, name, param)
+		param.ParaName = name
+		err := gp.updateValue(param)
 		if err != nil {
 			return err
 		}
@@ -175,13 +219,13 @@ func (t *Target) updateApplyResult(ip string, params map[string]Parameter) error
 	return nil
 }
 
-func (t *Target) updateValue(ip, name string, param Parameter) error {
+func (gp *Group) updateValue(param Parameter) error {
 	index := config.PriorityList[param.DomainName]
 	if index < 0 || index >= config.PRILevel {
-		return fmt.Errorf("ip %v priority id %v is out of range [0, 1]", ip, index)
+		return fmt.Errorf("ip %v priority id %v is out of range [0, 1]", index)
 	}
-
-	value, ok := t.Params[index][param.DomainName][name]
+	name := param.ParaName
+	value, ok := gp.Params[index][param.DomainName][name]
 	if !ok {
 		return fmt.Errorf("%v not found in %vth param", name, index)
 	}
@@ -193,27 +237,42 @@ func (t *Target) updateValue(ip, name string, param Parameter) error {
 
 	detail["value"] = param.Value
 
-	t.Params[index][param.DomainName][name] = detail
+	gp.Params[index][param.DomainName][name] = detail
 	return nil
 }
 
-func (tuner *Tuner) mergeParam() {
-	tuner.MergedParam = make([]map[string]interface{}, len(tuner.Group))
-	for index, target := range tuner.Group {
-		tuner.MergedParam[index] = make(map[string]interface{})
-		for _, paramMaps := range target.Params {
-			for domain, paramMap := range paramMaps {
-				tuner.MergedParam[index][domain] = paramMap
-			}
+func (gp *Group) mergeParam() {
+	gp.MergedParam = make(map[string]interface{})
+	for _, paramMaps := range gp.Params {
+		for domain, paramMap := range paramMaps {
+			gp.MergedParam[domain] = paramMap
 		}
 	}
 }
 
-func (t *Target) applyReq(index int, ip string) map[string]interface{} {
+func (gp *Group) applyReq(ip string, params interface{}) map[string]interface{} {
 	retRequest := map[string]interface{}{}
-	retRequest["data"] = t.Params[index]
+	retRequest["data"] = params
 	retRequest["resp_ip"] = config.RealLocalIP
-	retRequest["resp_port"] = config.KeenTune.Port
+	retRequest["resp_port"] = gp.Port
 	retRequest["target_id"] = config.KeenTune.IPMap[ip]
+	retRequest["readonly"] = gp.ReadOnly
 	return retRequest
 }
+
+func (gp *Group) Get(ip string, ipIndex int) error {
+	gp.ReadOnly = true
+	return gp.Configure(ip, ipIndex, gp.applyReq(ip, gp.MergedParam))
+}
+
+func (gp *Group) updateDump(param map[string]Parameter) {
+	for i := range gp.Dump.Parameters {
+		name := gp.Dump.Parameters[i].ParaName
+		domain := gp.Dump.Parameters[i].DomainName
+		info, ok := param[name]
+		if ok && domain == info.DomainName {
+			gp.Dump.Parameters[i].Value = info.Value
+		}
+	}
+}
+

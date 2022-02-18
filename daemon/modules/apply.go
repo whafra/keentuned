@@ -10,90 +10,106 @@ import (
 	"time"
 )
 
-func (tuner *Tuner) Apply() {
+func (tuner *Tuner) getConfigure() error {
+	tuner.ReadConfigure = true
+	return tuner.configure()
+}
+
+func (tuner *Tuner) setConfigure() error {
+	tuner.ReadConfigure = false
+	return tuner.configure()
+}
+
+func (tuner *Tuner) configure() error {
 	wg := sync.WaitGroup{}
-	var errMsg error
-	var targetFinishStatus = make(map[int]string, len(tuner.Target.IPs))
-	begin := tuner.timeSpend.apply
-	for index, ip := range tuner.Target.IPs {
-		wg.Add(1)
-		go func(index int, ip string) () {
-			start := time.Now()
-			id := index + 1
-			defer func() {
-				wg.Done()
-				if errMsg != nil {
-					targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
-				}
-			}()
-
-			host := fmt.Sprintf("%v:%v", ip, config.KeenTune.Ports[index])
-			body, err := http.RemoteCall("POST", host+"/configure", tuner.applyReq(index, ip))
-			if err != nil {
-				errMsg = fmt.Errorf("remote call: %v", err)
-				return
-			}
-
-			_, _, err = GetApplyResult(body, id)
-			if err != nil {
-				errMsg = fmt.Errorf("apply response: %v", err)
-				return
-			}
-
-			// TODO parse dump configure info
-
-			tuner.timeSpend.apply += utils.Runtime(start).Count
-			targetFinishStatus[id] = "success"
-		}(index, ip)
+	var applySummary string
+	var targetFinishStatus = make(map[int]string, len(config.KeenTune.IPMap))
+	start := time.Now()
+	for groupID, group := range tuner.Group {
+		for _, ip := range group.IPs {
+			wg.Add(1)
+			go func(ip string, groupID int) {
+				tuner.apply(&wg, targetFinishStatus, ip, groupID)
+			}(ip, groupID)
+		}
 	}
 
 	wg.Wait()
-	fmt.Printf("use time: %.3fs", (tuner.timeSpend.apply - begin).Seconds())
-	return
+
+	for i := 1; i <= len(config.KeenTune.IPMap); i++ {
+		applySummary += fmt.Sprintf("\n\ttarget %v, apply result: %v", i, targetFinishStatus[i])
+	}
+
+	tuner.applySummary = applySummary
+	timeCost := utils.Runtime(start)
+	tuner.timeSpend.apply += timeCost.Count
+
+	if tuner.Verbose && !tuner.ReadConfigure {
+		log.Infof(tuner.logName, "[Iteration %v] Apply success, %v", tuner.Iteration, timeCost.Desc)
+	}
+
+	return nil
 }
 
-func (t *Target) applyResult(status map[int]string, results map[string]Configuration) (string, []Configuration, error) {
-	var retConfigs []Configuration
-	var retSuccessInfo string
-	for index, ip := range t.IPs {
-		id := index + 1
-		sucInfo, ok := status[id]
-		retSuccessInfo += fmt.Sprintf("\n\ttarget id %v, apply result: %v", id, sucInfo)
-		if sucInfo != "success" || !ok {
-			continue
+func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus map[int]string, ip string, groupID int) {
+	start := time.Now()
+	var errMsg error
+	id := config.KeenTune.IPMap[ip]
+	defer func() {
+		wg.Done()
+		if errMsg != nil {
+			targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
 		}
-		retConfigs = append(retConfigs, results[ip])
+	}()
+
+	if tuner.ReadConfigure {
+		errMsg = tuner.Group[groupID].Get(ip, id)
+	} else {
+		errMsg = tuner.Group[groupID].Set(ip, id)
 	}
 
-	if len(retConfigs) == 0 {
-		return retSuccessInfo, retConfigs, fmt.Errorf("get target configuration result is null")
+	if errMsg != nil {
+		return
 	}
 
-	if len(retConfigs) != len(t.IPs) {
-		return retSuccessInfo, retConfigs, fmt.Errorf("partial success")
-	}
-
-	return retSuccessInfo, retConfigs, nil
+	targetFinishStatus[id] = "success"
+	tuner.timeSpend.apply += utils.Runtime(start).Count
 }
 
-func (tuner *Tuner) apply() error {
-	var err error
-	var implyApplyResults string
-	implyApplyResults, tuner.TargetConfiguration, err = tuner.nextConfiguration.Apply(&tuner.timeSpend.apply, false)
+func (gp *Group) Set(ip string, id int) error {
+	for index := range gp.Params {
+		gp.ReadOnly = false
+		err := gp.Configure(ip, id, gp.applyReq(ip, gp.Params[index]))
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (gp *Group) Configure(ip string, id int, request interface{}) error {
+	uri := fmt.Sprintf("%v:%v/configure", ip, gp.Port)
+	body, err := http.RemoteCall("POST", uri, request)
 	if err != nil {
-		return fmt.Errorf("%vth apply configuration failed:%v, details: %v", tuner.Iteration, err, implyApplyResults)
+		return fmt.Errorf("remote call: %v", err)
 	}
 
-	log.Debugf(tuner.logName, "step%v, [apply] round %v details: %v", tuner.Step, tuner.Iteration, implyApplyResults)
+	_, paramInfo, err := GetApplyResult(body, id)
+	if err != nil {
+		return fmt.Errorf("apply response: %v", err)
+	}
 
-	if tuner.Verbose {
-		var applyRuntimeInfo string
-		for index, configuration := range tuner.TargetConfiguration {
-			applyRuntimeInfo += fmt.Sprintf("\n\ttarget [%v] use time: %.3f s", index+1, configuration.timeSpend.Count.Seconds())
+	// pay attention to: the results in the same group are the same and only need to be updated once to prevent map concurrency security problems
+	if gp.AllowUpdate[ip] {
+		err = gp.updateParams(paramInfo)
+		if err != nil {
+			return fmt.Errorf("update apply result: %v", err)
 		}
-		log.Infof(tuner.logName, "[Iteration %v] Apply success, details: %v", tuner.Iteration, applyRuntimeInfo)
+
+		gp.updateDump(paramInfo)
 	}
 
-	return err
+	return nil
 }
 

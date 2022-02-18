@@ -60,14 +60,13 @@ func runTuning(flag TuneFlag) {
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
-	benchInfo, err := GetBenchmarkInst(flag.BenchConf)
+	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchConf)
 	if err != nil {
 		return err
 	}
 
 	tuner := &m.Tuner{
 		MAXIteration: flag.Round,
-		TargetHost:   config.KeenTune.TargetIP,
 		Name:         flag.Name,
 		StartTime:    time.Now(),
 		Verbose:      flag.Verbose,
@@ -112,7 +111,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 		return nil, fmt.Errorf("benchmark json is null")
 	}
 
-	tuneIP := strings.Split(config.KeenTune.TargetIP[0], ",")
+	tuneIP := strings.Split(config.KeenTune.BenchDest, ",")
 	if len(tuneIP) == 0 {
 		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
 	}
