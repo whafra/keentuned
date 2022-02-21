@@ -7,16 +7,18 @@ fake data: mv all files in this directory to /var/
     
     tuning_workspace/
     	[task name]/
-        	data/
-           	best.json
-            target_group.conf
+            bench.json
+            group.conf
+            knobs.json
+            points.csv
+            score.csv          
             
         [task name 2]/
             
     sensitize_workspace/
     	[task name]/
-        	result.csv(文件格式需要西弗确定)
-           	log
+        	result.csv
+            knobs.json
     
     files/
     profile/
