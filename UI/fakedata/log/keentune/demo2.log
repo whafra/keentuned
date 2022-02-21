@@ -1,0 +1,520 @@
+Step1. Parameter auto tuning start, using algorithm = hord.
+
+Step2. AI Engine is ready.
+
+Step3. Run benchmark as baseline:
+
+	[Requests_sec]	(weight: 100.0)	average scores = 14031.970
+
+Step4. Start tuning, total iteration is 100.
+
+[Iteration 1] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15366.420
+   Current optimal iteration: [Iteration 1] 
+	[Requests_sec]	Improved by 9.510%
+
+[Iteration 2] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15344.740
+   Current optimal iteration: [Iteration 1] 
+	[Requests_sec]	Improved by 9.510%
+
+[Iteration 3] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13783.460
+   Current optimal iteration: [Iteration 1] 
+	[Requests_sec]	Improved by 9.510%
+
+[Iteration 4] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15149.790
+   Current optimal iteration: [Iteration 1] 
+	[Requests_sec]	Improved by 9.510%
+
+[Iteration 5] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15433.040
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 6] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15239.920
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 7] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15244.630
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 8] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15425.550
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 9] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15340.050
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 10] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15116.320
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 11] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15390.780
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 12] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15353.280
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 13] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15388.270
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 14] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15269.020
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 15] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15131.590
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 16] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14931.280
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 17] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15045.930
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 18] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15121.200
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 19] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13801.560
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 20] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15378.420
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 21] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15094.100
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 22] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15399.640
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 23] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15108.030
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 24] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14452.050
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 25] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14371.360
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 26] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15010.340
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 27] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15308.950
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 28] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15364.830
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 29] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15369.140
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 30] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15031.400
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 31] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15234.190
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 32] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15351.380
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 33] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15391.020
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 34] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14396.950
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 35] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15268.100
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 36] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15074.180
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 37] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15363.500
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 38] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15255.830
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 39] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15213.390
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 40] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15327.030
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 41] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14371.200
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 42] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15330.520
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 43] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14720.690
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 44] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15388.400
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 45] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15242.610
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 46] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15091.420
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 47] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15100.310
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 48] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15127.240
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 49] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15063.750
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 50] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15182.540
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 51] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15397.530
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 52] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13810.200
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 53] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15232.550
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 54] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14247.750
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 55] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14562.740
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 56] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14372.660
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 57] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14212.140
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 58] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14059.300
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 59] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14145.130
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 60] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14078.750
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 61] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14365.580
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 62] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14274.950
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 63] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14371.670
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 64] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14109.720
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 65] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14021.740
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 66] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14431.580
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 67] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14218.940
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 68] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14130.440
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 69] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13969.550
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 70] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14411.640
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 71] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14015.330
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 72] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14186.100
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 73] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14207.790
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 74] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13780.610
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 75] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14177.900
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 76] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14117.250
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 77] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14255.520
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 78] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14293.170
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 79] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13717.890
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 80] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13072.160
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 81] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14187.950
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 82] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14125.540
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 83] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14053.820
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 84] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14205.350
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 85] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14165.100
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 86] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14105.840
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 87] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14052.460
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 88] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13876.650
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 89] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14265.840
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 90] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13925.830
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 91] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 13992.120
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 92] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14152.280
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 93] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 14123.580
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 94] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 12039.210
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 95] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 11831.730
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 96] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 11371.200
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 97] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 11759.000
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 98] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 11708.600
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 99] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 11784.970
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+[Iteration 100] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15375.690
+   Current optimal iteration: [Iteration 5] 
+	[Requests_sec]	Improved by 9.985%
+
+Step5. Best configuration dump to [/var/keentune/parameter/https_short_hord_1228/https_short_hord_1228_best.json] successfully.
+
+Step6. Tuning is finished, checking benchmark score of best configuration.
+
+[BEST] Benchmark result: 
+	[Requests_sec]	(weight: 100.0)	average scores = 15412.410
+
+[BEST] Tuning improvement: 
+	[Requests_sec]	Improved by 9.838%
+

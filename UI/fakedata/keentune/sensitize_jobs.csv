@@ -1,0 +1,2 @@
+name,starttime,endtime,totaltime,trials,status,epoch,log,workspace
+sensi_linear_https_short,2022-1-10 18:00,2022-1-10 19:31,1h31m,2,finish,100,/var/log/keentune/demo2.log,/var/keentune/sensitize_workspace/sensi_linear_https_short

@@ -1,0 +1,33 @@
+[
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "open_file_cache@group1",
+        "sequence": [
+            "max=1024 inactive=10s",
+            "max=2048 inactive=10s",
+            "max=4096 inactive=10s",
+            "max=8192 inactive=10s",
+            "max=16384 inactive=10s",
+            "max=32768 inactive=10s"
+        ]
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "worker_rlimit_nofile@group1",
+        "range": [
+            300,
+            655350
+        ]
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "sendfile@group1",
+        "options": [
+            "on",
+            "off"
+        ]
+    }
+]

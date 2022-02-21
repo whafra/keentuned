@@ -1,0 +1,26 @@
+{
+    "Latency_90": {
+        "negative": true,
+        "weight": 0,
+        "strict": false,
+        "baseline": 44190
+    },
+    "Latency_99": {
+        "negative": true,
+        "weight": 0,
+        "strict": false,
+        "baseline": 72590
+    },
+    "Requests_sec": {
+        "negative": false,
+        "weight": 100,
+        "strict": false,
+        "baseline": 13932.16
+    },
+    "Transfer_sec": {
+        "negative": false,
+        "weight": 0,
+        "strict": false,
+        "baseline": 9110000
+    }
+}
