@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	egTune          = "\tkeentune param tune --param sysctl.json --bench bench_wrk_nginx_long.json --job tune_test --iteration 10\n\tkeentune param tune --param sysctl.json --bench bench_wrk_nginx_long.json --job tune_test"
+	egTune          = "\tkeentune param tune --job tune_test --iteration 10\n\tkeentune param tune --job tune_test"
 	egDump          = "\tkeentune param dump --job tune_test --output tune_test.conf"
 	egParamDel      = "\tkeentune param delete --job tune_test"
 	egParamList     = "\tkeentune param list"
@@ -66,7 +66,7 @@ func tuneCmd() *cobra.Command {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" || len(flag.ParamConf) == 0 {
+			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return

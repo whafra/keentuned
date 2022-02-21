@@ -80,8 +80,8 @@ func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("param.Tune", flag)
 
 	fmt.Printf("%v Running Param Tune Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
-	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
+	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
 	return
 }
 
@@ -127,8 +127,8 @@ func RunCollectRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("sensitize.Collect", flag)
 
 	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
-	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
+	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
 	return
 }
 

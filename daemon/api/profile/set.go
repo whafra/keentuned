@@ -110,9 +110,9 @@ func prepareBeforeSet(configInfo map[string]interface{}) error {
 		return fmt.Errorf("backup info is null")
 	}
 	// step3. backup the target machine
-	detailInfo, allSuccess := m.Backup(log.ProfSet, backupReq)
-	if !allSuccess {
-		return fmt.Errorf("backup details:\n%v", detailInfo)
+	err = m.Backup(log.ProfSet)
+	if err !=nil {
+		return fmt.Errorf("backup details:\n%v", err)
 	}
 	return nil
 }
