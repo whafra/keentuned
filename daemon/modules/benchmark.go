@@ -97,11 +97,11 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 		average = sumScores[name] / float32(len(scoreSlice))
 
 		if benchmark.verbose {
-			resultString += fmt.Sprintf("\n	[%v]\t(weight: %.1f)\tscores %v,\taverage = %.3f,\t%v", name, info.Weight, scoreSlice, average, utils.Fluctuation(scoreSlice, average))
+			resultString += fmt.Sprintf("\n\t[%v]\t(weight: %.1f)\tscores %v,\taverage = %.3f,\t%v", name, info.Weight, scoreSlice, average, utils.Fluctuation(scoreSlice, average))
 		}
 
 		if !benchmark.verbose && info.Weight > 0.0 {
-			resultString += fmt.Sprintf("\n	[%v]\t(weight: %.1f)\taverage scores = %.3f", name, info.Weight, average)
+			resultString += fmt.Sprintf("\n\t[%v]\t(weight: %.1f)\taverage scores = %.3f", name, info.Weight, average)
 		}
 
 		benchScoreResult[name] = ItemDetail{

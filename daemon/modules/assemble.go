@@ -22,11 +22,10 @@ type Group struct {
 	AllowUpdate map[string]bool // prevent map concurrency security problems
 }
 
-const brainNameParts = 3
+const brainNameParts = 2
 
 const (
-	groupIDPrefix    = "group-"
-	priorityIDPrefix = "pri-"
+	groupIDPrefix = "group-"
 )
 
 func (tuner *Tuner) initParams() error {
@@ -70,7 +69,6 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 		params[i] = make(config.DBLMap)
 	}
 
-	var nameSaltedParam, originParam Parameter
 	var initConf Configuration
 	for index, paramMap := range paramMaps {
 		for domain, parameters := range paramMap {
@@ -81,15 +79,12 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 					return nil, fmt.Errorf("assert %v to parameter failed", value)
 				}
 
+				var nameSaltedParam, originParam Parameter
 				if err := utils.Map2Struct(value, &nameSaltedParam); err != nil {
 					return nil, fmt.Errorf("map to struct: %v", err)
 				}
 
-				priID, ok := config.PriorityList[domain]
-				if !ok {
-					priID = 1
-				}
-				paramSuffix := fmt.Sprintf("@%v%v@%v%v", groupIDPrefix, groupID, priorityIDPrefix, priID)
+				paramSuffix := fmt.Sprintf("@%v%v", groupIDPrefix, groupID)
 				nameSaltedParam.ParaName = fmt.Sprintf("%v%v", name, paramSuffix)
 				nameSaltedParam.DomainName = domain
 
@@ -100,6 +95,7 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 				delete(param, "options")
 				delete(param, "range")
 				delete(param, "step")
+				delete(param, "desc")
 				temp[name] = param
 			}
 
@@ -254,7 +250,7 @@ func (gp *Group) applyReq(ip string, params interface{}) map[string]interface{} 
 	retRequest := map[string]interface{}{}
 	retRequest["data"] = params
 	retRequest["resp_ip"] = config.RealLocalIP
-	retRequest["resp_port"] = gp.Port
+	retRequest["resp_port"] = config.KeenTune.Port
 	retRequest["target_id"] = config.KeenTune.IPMap[ip]
 	retRequest["readonly"] = gp.ReadOnly
 	return retRequest

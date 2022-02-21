@@ -19,9 +19,9 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ProfRollback)
 	}()
 
-	result, allSuccess := m.Rollback(log.ProfRollback)
-	if !allSuccess {
-		return fmt.Errorf("Rollback details:\n%v", result)
+	err := m.Rollback(log.ProfRollback)
+	if err!=nil {
+		return fmt.Errorf("Rollback details:\n%v", err)
 	}
 
 	fileName := config.GetProfileWorkPath("active.conf")
