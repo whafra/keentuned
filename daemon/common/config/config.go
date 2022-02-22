@@ -47,7 +47,6 @@ type Target struct {
 	IPs      []string
 	IPMap    map[string]int
 	GroupMap map[string]int
-	Ports    []string
 }
 
 type DumpConf struct {
@@ -199,7 +198,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	var ipExist = make(map[string]bool)
 	var id = new(int)
 	c.Target.IPMap = make(map[string]int)
-	for index, groupName := range groupNames {
+	for _, groupName := range groupNames {
 		target := cfg.Section(groupName)
 		var group Group
 		ipString := target.Key("TARGET_IP").MustString("")
@@ -222,7 +221,6 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		}
 
 		c.Target.Group = append(c.Target.Group, group)
-		c.Target.GroupMap[strings.TrimPrefix(groupName, "target-")] = index
 		c.addIPMap(group.Port, group.IPs, ipExist, id)
 	}
 

@@ -39,7 +39,7 @@ func (tuner *Tuner) getBest() error {
 func (tuner *Tuner) verifyBest() error {
 	err := tuner.setConfigure()
 	if err != nil {
-		log.Errorf(log.ParamTune, "best apply configuration failed:%v, details: %v", tuner.applySummary)
+		log.Errorf(log.ParamTune, "best apply configuration failed, details: %v", tuner.applySummary)
 		return err
 	}
 

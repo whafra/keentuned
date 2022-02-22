@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"sync"
 	"time"
 )
 
@@ -22,12 +23,12 @@ func (tuner *Tuner) init() error {
 
 	err = tuner.rollback()
 	if err != nil {
-		return fmt.Errorf("rollback before :\n%v", tuner.rollbackDetail)
+		return fmt.Errorf("rollback:\n%v", tuner.rollbackDetail)
 	}
 
 	err = tuner.getConfigure()
 	if err != nil {
-		return fmt.Errorf("get configure:\n%v", tuner.rollbackDetail)
+		return fmt.Errorf("get configure:\n%v", err)
 	}
 
 	log.Debugf(tuner.logName, "Step%v. apply baseline configuration details: %v", tuner.Step+1, tuner.applySummary)
@@ -113,6 +114,10 @@ func (tuner *Tuner) dumpBest() error {
 }
 
 func (tuner *Tuner) baseline() error {
+	if !tuner.isSensitize {
+		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:", tuner.IncreaseStep())
+	}
+
 	success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send)
 	if err != nil || !success {
 		return fmt.Errorf("send script file  result: %v, details:%v", success, err)
@@ -128,7 +133,7 @@ func (tuner *Tuner) baseline() error {
 	}
 
 	if !tuner.isSensitize {
-		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:%v", tuner.IncreaseStep(), tuner.benchSummary)
+		log.Infof(tuner.logName, "%v", tuner.benchSummary)
 		tuner.dump(baseOpt)
 	}
 
@@ -162,52 +167,50 @@ func (tuner *Tuner) brainInit() error {
 	tuner.timeSpend.init += timeCost.Count
 
 	if !tuner.isSensitize {
-		log.Infof(tuner.logName, "Step%v. AI Engine is ready.\n", tuner.IncreaseStep())
+		log.Infof(tuner.logName, "\nStep%v. AI Engine is ready.", tuner.IncreaseStep())
 	}
 	return nil
 }
 
 func (tuner *Tuner) rollback() error {
-	var sucCount int
-	var retResult string
-	for i, target := range tuner.Group {
-		go func(i int, target Group) {
-			result, allSuc := target.Rollback()
-			retResult += result
-			if allSuc {
-				sucCount++
-			} else {
-				log.Warnf(tuner.logName, "rollback failed, %v", result)
-			}
-		}(i, target)
-	}
-
-	if sucCount != len(tuner.Group) {
-		return fmt.Errorf("failure occur")
-	}
-
-	tuner.rollbackDetail = retResult
-	return nil
+	return tuner.concurrent("rollback", false)
 }
 
 func (tuner *Tuner) backup() error {
-	var sucCount int
-	var retResult string
+	return tuner.concurrent("backup", true)
+}
+
+func (tuner *Tuner) concurrent(uri string, needReq bool) error {
+	var sucCount = new(int)
+	var retResult = new(string)
+	wg := sync.WaitGroup{}
 	for i, target := range tuner.Group {
-		go func(i int, target Group) {
-			result, allSuc := target.Backup(target.MergedParam)
-			retResult += result
-			if allSuc {
-				sucCount++
+		wg.Add(1)
+		go func(i int, target Group, wg *sync.WaitGroup) {
+			defer wg.Done()
+			var request interface{}
+			if needReq {
+				request = target.MergedParam
 			}
-		}(i, target)
+			result, allSuc := target.concurrentSuccess(uri, request)
+			*retResult += result
+			if allSuc {
+				*sucCount++
+			}
+		}(i, target, &wg)
 	}
 
-	if sucCount != len(tuner.Group) {
+	wg.Wait()
+	switch uri {
+	case "backup":
+		tuner.backupDetail = *retResult
+	case "rollback":
+		tuner.rollbackDetail = *retResult
+	}
+
+	if *sucCount != len(tuner.Group) {
 		return fmt.Errorf("failure occur")
 	}
-
-	tuner.backupDetail = retResult
 
 	return nil
 }
