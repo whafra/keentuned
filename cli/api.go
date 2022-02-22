@@ -27,7 +27,9 @@ type DumpFlag struct {
 }
 
 type SetFlag struct {
-	Name string
+	Name     string
+	Group    []bool
+	ConfFile []string
 }
 
 type TrainFlag struct {
@@ -164,4 +166,3 @@ func RunJobsRemote(ctx context.Context) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
-
