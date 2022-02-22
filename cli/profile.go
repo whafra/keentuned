@@ -2,13 +2,15 @@ package main
 
 import (
 	"fmt"
+	"keentune/daemon/common/config"
 	"strings"
+
 	"github.com/spf13/cobra"
 )
 
 const (
 	egInfo         = "\tkeentune profile info --name cpu_high_load.conf"
-	egSet          = "\tkeentune profile set --name cpu_high_load.conf"
+	egSet          = "\tkeentune profile set --group1 cpu_high_load.conf"
 	egGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
 	egProfDelete   = "\tkeentune profile delete --name tune_test.conf"
 	egProfList     = "\tkeentune profile list"
@@ -88,27 +90,103 @@ func listProfileCmd() *cobra.Command {
 	return cmd
 }
 
+// func setCmd() *cobra.Command {
+// 	var setFlag SetFlag
+// 	cmd := &cobra.Command{
+// 		Use:     "set",
+// 		Short:   "Apply a profile to the target machine",
+// 		Long:    "Apply a profile to the target machine",
+// 		Example: egSet,
+// 		Run: func(cmd *cobra.Command, args []string) {
+// 			if strings.Trim(setFlag.Name, " ") == "" {
+// 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+// 				cmd.Help()
+// 				return
+// 			}
+
+// 			setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
+// 			RunSetRemote(cmd.Context(), setFlag)
+// 			return
+// 		},
+// 	}
+
+// 	cmd.Flags().StringVar(&setFlag.Name, "name", "", "profile name, query by command \"keentune profile list\"")
+// 	return cmd
+// }
+
 func setCmd() *cobra.Command {
 	var setFlag SetFlag
+	const GroupNum int = 20
+	conf := new(config.KeentunedConf)
 	cmd := &cobra.Command{
 		Use:     "set",
 		Short:   "Apply a profile to the target machine",
 		Long:    "Apply a profile to the target machine",
 		Example: egSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(setFlag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+			/*
+				if strings.Trim(setFlag.Name, " ") == "" {
+					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+					cmd.Help()
+					return
+				}
+				setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
+			*/
+			fmt.Println("args", args)
+			//判断若args有值且以.conf结尾，则认为是默认所有group下发统一配置
+			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
+				for i, _ := range setFlag.ConfFile {
+					setFlag.Group[i] = true
+					setFlag.ConfFile[i] = args[0]
+				}
+			} else {
+				//若groupX已配置且以.conf结尾，则认为该配置有效
+				for i, v := range setFlag.ConfFile {
+					if len(v) != 0 && strings.HasSuffix(v, ".conf") {
+						setFlag.Group[i] = true
+					} else {
+						setFlag.Group[i] = false
+					}
+				}
 			}
-
-			setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
+			// for _, v := range setFlag.ConfFile {
+			// 	fmt.Println(v)
+			// }
+			// for _, v := range setFlag.Group {
+			// 	fmt.Println(v)
+			// }
 			RunSetRemote(cmd.Context(), setFlag)
 			return
 		},
 	}
 
-	cmd.Flags().StringVar(&setFlag.Name, "name", "", "profile name, query by command \"keentune profile list\"")
+	var group string = ""
+	if err := conf.Save(); err != nil {
+		setFlag.Group = make([]bool, GroupNum)
+		setFlag.ConfFile = make([]string, GroupNum)
+		for index := 0; index < GroupNum; index++ {
+			group = fmt.Sprintf("group%d", index)
+			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
+		}
+	} else {
+		/*
+			setFlag.Group = make([]string, len(conf.TargetIP))
+			setFlag.ConfFile = make([]string, len(conf.TargetIP))
+			for index, _ := range conf.TargetIP {
+				group = fmt.Sprintf("group%d",index+1)
+				cmd.Flags().StringVar(&setFlag.Group[index], group, "", "profile name, query by command \"keentune profile list\"")
+			}
+		*/
+
+		setFlag.Group = make([]bool, GroupNum+2)
+		setFlag.ConfFile = make([]string, GroupNum+2)
+		for index := 0; index < GroupNum; index++ {
+			group = fmt.Sprintf("group%d", index+1)
+			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
+		}
+
+	}
+
 	return cmd
 }
 
