@@ -69,12 +69,12 @@ func Dump2File(path, fileName string, info interface{}) error {
 	
 	resultBytes, err := json.Marshal(info)
 	if err != nil {
-		return  fmt.Errorf("marshal info to bytes err:[%v] ", fileName, err)
+		return  fmt.Errorf("marshal info %v to bytes err:[%v]", info, err)
 	}
 
 	err = ioutil.WriteFile(fullPath, resultBytes, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("write to file [%v] err:[%v] ", fileName, err)
+		return fmt.Errorf("write to file [%v] err:[%v]", fileName, err)
 	}
 
 	return nil

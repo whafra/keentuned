@@ -70,7 +70,7 @@ func collectCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log", "keentuned-sensitize-collect", time.Now().Unix())
+			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-collect", time.Now().Unix())
 			RunCollectRemote(cmd.Context(), flag)
 			return
 		},
@@ -103,7 +103,7 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
-			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log", "keentuned-sensitize-train", time.Now().Unix())
+			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
 			RunTrainRemote(cmd.Context(), trainflags)
 		},
