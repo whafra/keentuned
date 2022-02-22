@@ -73,12 +73,16 @@ func monitorClientStatus(clientName *string) {
 }
 
 func IsClientOffline(clientName *string) bool {
-	for index, ip := range config.KeenTune.TargetIP {
-		targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.TargetPort)
-		if checkOffline(targetURI) {
-			*clientName = fmt.Sprintf("target %v", index+1)
-			return true
+	for _, group := range config.KeenTune.Group {
+		for _, ip := range group.IPs {
+			targetURI := fmt.Sprintf("%v:%v/status", ip, group.Port)
+			id := config.KeenTune.IPMap[ip]
+			if checkOffline(targetURI) {
+				*clientName = fmt.Sprintf("target %v", id)
+				return true
+			}
 		}
+
 	}
 
 	benchURI := config.KeenTune.BenchIP + ":" + config.KeenTune.BenchPort + "/status"

@@ -3,6 +3,7 @@ package profile
 import (
 	"fmt"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
 )
@@ -23,7 +24,7 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		return fmt.Errorf("Rollback details:\n%v", result)
 	}
 
-	fileName := m.GetProfileWorkPath("active.conf")
+	fileName := config.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(fileName, []byte{}); err != nil {
 		log.Errorf(log.ProfRollback, "Update active file failed, err:%v", err)
 		return fmt.Errorf("Update active file failed, err:%v", err)

@@ -8,7 +8,6 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -39,31 +38,30 @@ type ItemDetail struct {
 	Baseline []float32 `json:"base,omitempty"`
 }
 
-// Dump configuration to profile file
-func (configuration Configuration) Dump(fileName, suffix string) {
+// Save configuration to profile file
+func (conf Configuration) Save(fileName, suffix string) error {
 	// acquire API return round is 1 less than the actual round value
-	configuration.Round += 1
+	conf.Round += 1
 
-	err := file.Dump2File(GetTuningWorkPath(fileName), fileName+suffix, configuration)
+	err := file.Dump2File(config.GetTuningWorkPath(fileName), fileName+suffix, conf)
 	if err != nil {
-		log.Warnf("", "dump config info to json file [%v] err: %v", fileName, err)
-		return
+		return err
 	}
-	return
+	return err
 }
 
 // Apply configuration to Client
-func (configuration Configuration) Apply(timeCost *time.Duration, readOnly bool) (string, []Configuration, error) {
-	configuration.targetIP = config.KeenTune.TargetIP
-	applyReq, err := configuration.assembleApplyRequestMap()
+func (conf Configuration) Apply(timeCost *time.Duration, readOnly bool) (string, []Configuration, error) {
+	conf.targetIP = config.KeenTune.TargetIP
+	applyReq, err := conf.assembleApplyRequestMap()
 	if err != nil {
 		return "", []Configuration{}, err
 	}
 	wg := sync.WaitGroup{}
 	var errMsg error
-	var targetFinishStatus = make(map[int]string, len(configuration.targetIP))
-	var applyResults = make(map[string]Configuration, len(configuration.targetIP))
-	for index, ip := range configuration.targetIP {
+	var targetFinishStatus = make(map[int]string, len(conf.targetIP))
+	var applyResults = make(map[string]Configuration, len(conf.targetIP))
+	for index, ip := range conf.targetIP {
 		wg.Add(1)
 
 		go func(id int, ip string) () {
@@ -82,13 +80,13 @@ func (configuration Configuration) Apply(timeCost *time.Duration, readOnly bool)
 				return
 			}
 
-			tempResult, err := configuration.parseApplyResponse(body, id)
+			tempResult, err := conf.parseApplyResponse(body, id)
 			if err != nil {
 				errMsg = fmt.Errorf("parse response: %v", err)
 				return
 			}
 
-			tempResult.Round = configuration.Round
+			tempResult.Round = conf.Round
 			tempResult.timeSpend = utils.Runtime(start)
 			*timeCost += tempResult.timeSpend.Count
 			targetFinishStatus[id] = "success"
@@ -98,13 +96,13 @@ func (configuration Configuration) Apply(timeCost *time.Duration, readOnly bool)
 
 	wg.Wait()
 
-	return configuration.applyResult(targetFinishStatus, applyResults)
+	return conf.applyResult(targetFinishStatus, applyResults)
 }
 
-func (configuration Configuration) applyResult(status map[int]string, results map[string]Configuration) (string, []Configuration, error) {
+func (conf Configuration) applyResult(status map[int]string, results map[string]Configuration) (string, []Configuration, error) {
 	var retConfigs []Configuration
 	var retSuccessInfo string
-	for index, ip := range configuration.targetIP {
+	for index, ip := range conf.targetIP {
 		id := index + 1
 		sucInfo, ok := status[id]
 		retSuccessInfo += fmt.Sprintf("\n\ttarget id %v, apply result: %v", id, sucInfo)
@@ -115,22 +113,22 @@ func (configuration Configuration) applyResult(status map[int]string, results ma
 	}
 
 	if len(retConfigs) == 0 {
-		return retSuccessInfo, retConfigs, fmt.Errorf("get target configuration result is null")
+		return retSuccessInfo, retConfigs, fmt.Errorf("get target conf result is null")
 	}
 
-	if len(retConfigs) != len(configuration.targetIP) {
+	if len(retConfigs) != len(conf.targetIP) {
 		return retSuccessInfo, retConfigs, fmt.Errorf("partial success")
 	}
 
 	return retSuccessInfo, retConfigs, nil
 }
 
-func (configuration Configuration) assembleApplyRequestMap() (map[string]interface{}, error) {
+func (conf Configuration) assembleApplyRequestMap() (map[string]interface{}, error) {
 	domainMap := make(map[string][]map[string]interface{})
 	reqApplyMap := make(map[string]interface{})
 
 	//  step 1: assemble domainMap type:map[string][]map[string]interface{}
-	for _, param := range configuration.Parameters {
+	for _, param := range conf.Parameters {
 		paramMap, err := utils.Interface2Map(param)
 		if err != nil {
 			log.Warnf("", "StructToMap err:[%v]\n", err)
@@ -148,7 +146,7 @@ func (configuration Configuration) assembleApplyRequestMap() (map[string]interfa
 
 	// step 2: range the domainMap and change the []map[string]interface{} to map[string]interface{} by key
 	for domain, params := range domainMap {
-		var tempDomainMap = make(map[string]map[string]interface{})
+		var tempDomainMap = make(config.DBLMap)
 		for _, param := range params {
 			name, ok := param["name"].(string)
 			if !ok {
@@ -163,50 +161,44 @@ func (configuration Configuration) assembleApplyRequestMap() (map[string]interfa
 		reqApplyMap[domain] = tempDomainMap
 	}
 
-	respIP, err := utils.GetExternalIP()
-	if err != nil {
-		return nil, fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
-	}
-
 	retRequest := map[string]interface{}{}
 	retRequest["data"] = reqApplyMap
-	retRequest["resp_ip"] = respIP
+	retRequest["resp_ip"] = config.RealLocalIP
 	retRequest["resp_port"] = config.KeenTune.Port
 
 	return retRequest, nil
 }
 
-func (configuration Configuration) parseApplyResponse(body []byte, id int) (Configuration, error) {
+func (conf Configuration) parseApplyResponse(body []byte, id int) (Configuration, error) {
 	_, paramCollection, err := GetApplyResult(body, id)
 	if err != nil {
 		return Configuration{}, err
 	}
 
-	for index := range configuration.Parameters {
-		paramInfo, ok := paramCollection[configuration.Parameters[index].ParaName]
+	for index := range conf.Parameters {
+		paramInfo, ok := paramCollection[conf.Parameters[index].ParaName]
 		if !ok {
 			log.Warnf("", "find [%v] value missing from target response", configuration.Parameters[index].ParaName)
 			continue
 		}
 
-		configuration.Parameters[index].Value = paramInfo.Value
+		conf.Parameters[index].Value = paramInfo.Value
 	}
 
-	return configuration, nil
+	return conf, nil
 }
 
 // collectParam collect param change map to struct map and state param success information
-func collectParam(applyResp map[string]interface{}) (string, map[string]Parameter, error) {
+func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error) {
 	var paramCollection = make(map[string]Parameter)
 	var sucCount, failedCount int
 	var failedInfoSlice [][]string
 
-	for domain, param := range applyResp {
-		paramMap, ok := param.(map[string]interface{})
-		if !ok {
-			return "", paramCollection, fmt.Errorf("collect Param assert type [%v] to map failed", reflect.TypeOf(param))
-		}
+	if len(applyResp) == 0 {
+		return "", nil, fmt.Errorf("apply response is null")
+	}
 
+	for domain, paramMap := range applyResp {
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
@@ -215,9 +207,9 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			}
 
 			appliedInfo.DomainName = domain
-
-			if appliedInfo.Dtype == "string" && strings.Contains(appliedInfo.Value.(string), "\t") {
-				appliedInfo.Value = strings.ReplaceAll(appliedInfo.Value.(string), "\t", " ")
+			value, ok := appliedInfo.Value.(string)
+			if ok && strings.Contains(value, "\t") {
+				appliedInfo.Value = strings.ReplaceAll(value, "\t", " ")
 			}
 
 			paramCollection[name] = appliedInfo
@@ -231,7 +223,6 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			if failedCount == 1 {
 				failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
 			}
-
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
 	}
@@ -253,7 +244,7 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 	return setResult, paramCollection, nil
 }
 
-func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
+func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	var applyShortRet struct {
 		Success bool `json:"suc"`
 	}
@@ -268,9 +259,9 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	}
 
 	var applyResp struct {
-		Success bool                   `json:"suc"`
-		Data    map[string]interface{} `json:"data"`
-		Msg     interface{}            `json:"msg"`
+		Success bool          `json:"suc"`
+		Data    config.DBLMap `json:"data"`
+		Msg     interface{}   `json:"msg"`
 	}
 
 	config.IsInnerApplyRequests[id] = true
@@ -280,7 +271,6 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 		if err := json.Unmarshal(body, &applyResp); err != nil {
 			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
-
 	}
 
 	if !applyResp.Success {
@@ -299,8 +289,3 @@ func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 	return collectParam(applyResp)
 }
 
-func (configuration Configuration) UpdateBase(origin *Configuration) {
-	for i := range origin.Parameters {
-		origin.Parameters[i].Base = configuration.Parameters[i].Value
-	}
-}
