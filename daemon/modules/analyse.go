@@ -64,7 +64,7 @@ func (tuner *Tuner) analyseResult() string {
 	}
 
 	if currentRatioInfo != "" {
-		return fmt.Sprintf("[Iteration %v]:%v", tuner.Group[0].Dump.Round+1, currentRatioInfo)
+		return fmt.Sprintf("[Iteration %v]:%v", tuner.bestInfo.Round+1, currentRatioInfo)
 	}
 
 	return currentRatioInfo

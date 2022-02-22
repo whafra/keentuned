@@ -35,41 +35,33 @@ func Backup(logName string) error {
 	return tune.backup()
 }
 
-func (gp *Group) Backup(request interface{}) (string, bool) {
-	return gp.concurrentRequestSuccess("Backup", request)
-}
-
-func (gp *Group) Rollback() (string, bool) {
-	return gp.concurrentRequestSuccess("Backup", nil)
-}
-
-func (gp *Group) concurrentRequestSuccess(uri string, request interface{}) (string, bool) {
+func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, bool) {
 	wg := sync.WaitGroup{}
-	var sucCount int
-	var detailInfo string
+	var sucCount = new(int)
+	var detailInfo= new(string)
 
 	for index, ip := range gp.IPs {
 		wg.Add(1)
 		id := config.KeenTune.IPMap[ip]
 		config.IsInnerApplyRequests[id] = false
-		go func(index, id int, ip string) () {
+		go func(index, id int, ip string, wg *sync.WaitGroup) () {
 			defer wg.Done()
-			url := fmt.Sprintf("%v:%v/%v", ip, config.KeenTune.Ports[index], uri)
+			url := fmt.Sprintf("%v:%v/%v", ip, gp.Port, uri)
 			if err := http.ResponseSuccess("POST", url, request); err != nil {
-				detailInfo += fmt.Sprintf("target [%v] %v;\n", id, err)
+				*detailInfo += fmt.Sprintf("target [%v] %v;\n", id, err)
 				return
 			}
 
-			sucCount++
-			detailInfo += fmt.Sprintf("target [%v] success;\n", id)
-		}(index, id, ip)
+			*sucCount++
+			*detailInfo += fmt.Sprintf("target [%v] success;\n", id)
+		}(index, id, ip, &wg)
 	}
 
 	wg.Wait()
-	if sucCount == len(gp.IPs) {
-		return detailInfo, true
+	if *sucCount == len(gp.IPs) {
+		return *detailInfo, true
 	}
 
-	return strings.TrimSuffix(detailInfo, ";\n") + ".", false
+	return strings.TrimSuffix(*detailInfo, ";\n") + ".", false
 }
 

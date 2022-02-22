@@ -14,9 +14,9 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ParamRollback)
 	}()
 
-	result, allSuccess := m.Rollback(log.ParamRollback)
-	if !allSuccess {
-		return fmt.Errorf("Rollback details:\n%v", result)
+	err := m.Rollback(log.ParamRollback)
+	if err!=nil {
+		return fmt.Errorf("Rollback details:\n%v", err)
 	}
 
 	log.Infof(log.ParamRollback, fmt.Sprintf("[ok] %v rollback successfully", flag.Cmd))
