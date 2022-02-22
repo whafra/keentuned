@@ -4,9 +4,9 @@ import (
 	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/api/param"
-	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
 	"strings"
 	"time"
 )
@@ -75,11 +75,11 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 		}
 	}
 
-	if err = file.Save2CSV(config.GetDumpCSVPath(), flag.Name+".csv", scores); err != nil {
+	if err = file.Save2CSV(m.GetDumpCSVPath(), flag.Name+".csv", scores); err != nil {
 		log.Warnf(log.ParamTune, "Save  Baseline benchmark  to file %v failed, reason:[%v]", flag.Name, err)
 	}
 
 	step++
-	log.Infof(log.Benchmark, "\nStep%v. Benchmark result dump to %v susccessfully.", step, fmt.Sprintf("%v/%v.csv", config.GetDumpCSVPath(), flag.Name))
+	log.Infof(log.Benchmark, "\nStep%v. Benchmark result dump to %v susccessfully.", step, fmt.Sprintf("%v/%v.csv", m.GetDumpCSVPath(), flag.Name))
 	return nil
 }

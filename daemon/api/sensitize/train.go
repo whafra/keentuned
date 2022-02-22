@@ -72,7 +72,7 @@ func runTrain(flags TrainFlag) {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flags.Output))
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))
 }
 
 func initiateSensitization(flags *TrainFlag) error {
@@ -160,7 +160,7 @@ func isTrainFlagsRightful(flag TrainFlag) bool {
 		return false
 	}
 
-	fileName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flag.Output)
+	fileName := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flag.Output)
 	if file.IsPathExist(fileName) && !flag.Force {
 		log.Errorf(log.SensitizeTrain, "output file [%v] exist and you have given up to overwrite it", flag.Output)
 		return false
@@ -170,7 +170,7 @@ func isTrainFlagsRightful(flag TrainFlag) bool {
 
 func dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {
 	fileName := "sensi-" + recordName + ".json"
-	if err := file.Dump2File(config.GetSensitizePath(), fileName, resultMap); err != nil {
+	if err := file.Dump2File(m.GetSensitizePath(), fileName, resultMap); err != nil {
 		log.Errorf(log.SensitizeTrain, "dump sensitivity result to file [%v] err:[%v] ", fileName, err)
 		return err
 	}

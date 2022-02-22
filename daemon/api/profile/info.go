@@ -3,7 +3,7 @@ package profile
 import (
 	"fmt"
 	"io/ioutil"
-	"keentune/daemon/common/config"
+	com "keentune/daemon/api/common"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 )
@@ -15,7 +15,7 @@ func (s *Service) Info(fileName string, reply *string) error {
 		log.ClearCliLog(log.ProfInfo)
 	}()
 
-	fullName := config.GetAbsolutePath(fileName, "profile", ".conf", "")
+	fullName := com.GetAbsolutePath(fileName, "profile", ".conf", "")
 	if !file.IsPathExist(fullName) {
 		log.Errorf(log.ProfInfo, "File %v is non-existent.", fileName)
 		return fmt.Errorf("File %v is non-existent.", fileName)

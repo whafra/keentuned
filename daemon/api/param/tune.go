@@ -60,15 +60,21 @@ func runTuning(flag TuneFlag) {
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
-	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchConf)
+	var paramMap  map[string]map[string]interface{}
+	if err := json.Unmarshal([]byte(flag.ParamMap), &paramMap); err != nil {
+		return err
+	}
+	benchInfo, err := GetBenchmarkInst(flag.BenchConf)
 	if err != nil {
 		return err
 	}
 
 	tuner := &m.Tuner{
 		MAXIteration: flag.Round,
+		TargetHost:   config.KeenTune.TargetIP,
 		Name:         flag.Name,
 		StartTime:    time.Now(),
+		ParamConf:    paramMap,
 		Verbose:      flag.Verbose,
 		Step:         1,
 		Flag:         cmd,
@@ -91,7 +97,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 }
 
 func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
-	benchConf := config.GetBenchJsonPath(benchFile)
+	benchConf := GetBenchJsonPath(benchFile)
 	if !file.IsPathExist(benchConf) {
 		return nil, fmt.Errorf("Read BenchConf file [%v] err, file absolute path [%v] does not exist", benchFile, benchConf)
 	}
@@ -111,7 +117,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 		return nil, fmt.Errorf("benchmark json is null")
 	}
 
-	tuneIP := strings.Split(config.KeenTune.BenchDest, ",")
+	tuneIP := strings.Split(config.KeenTune.TargetIP[0], ",")
 	if len(tuneIP) == 0 {
 		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
 	}
@@ -121,6 +127,24 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.BenchIP, config.KeenTune.BenchPort)
 	inst.SortedItems = sortBenchItemNames(inst.Items)
 	return &inst, nil
+}
+
+func GetBenchJsonPath(fileName string) string {
+	if string(fileName[0]) == "/" || fileName == "" {
+		return fileName
+	}
+
+	parts := strings.Split(fileName, "/")
+	if len(parts) == 1 {
+		benchPath, err := file.GetWalkPath(m.GetBenchHomePath(), fileName)
+		if err != nil {
+			return fileName
+		}
+
+		return benchPath
+	}
+
+	return fmt.Sprintf("%v/%v", m.GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
 
 func sortBenchItemNames(items map[string]m.ItemDetail) []string {

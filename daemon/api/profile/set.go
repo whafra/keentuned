@@ -137,13 +137,13 @@ func checkProfilePath(name string) (string, error) {
 
 func prepareBeforeSet(configInfo map[string]interface{}) error {
 	// step1. rollback the target machine
-	err := m.Rollback(log.ProfSet)
-	if err!=nil {
-		return fmt.Errorf("rollback details:\n%v", err)
+	detailInfo, allSuccess := m.Rollback(log.ProfSet)
+	if !allSuccess {
+		return fmt.Errorf("rollback details:\n%v", detailInfo)
 	}
 
 	// step2. clear the active file
-	fileName := config.GetProfileWorkPath("active.conf")
+	fileName := m.GetProfileWorkPath("active.conf")
 	if err := updateActiveFile(fileName, []byte{}); err != nil {
 		return fmt.Errorf("update active file failed, err:%v", err)
 	}
@@ -152,8 +152,9 @@ func prepareBeforeSet(configInfo map[string]interface{}) error {
 	if backupReq == nil || len(backupReq) == 0 {
 		return fmt.Errorf("backup info is null")
 	}
+
 	// step3. backup the target machine
-	detailInfo, allSuccess := m.Backup(log.ProfSet, backupReq)
+	detailInfo, allSuccess = m.Backup(log.ProfSet, backupReq)
 	if !allSuccess {
 		return fmt.Errorf("backup details:\n%v", detailInfo)
 	}

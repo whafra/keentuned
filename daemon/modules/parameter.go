@@ -2,7 +2,6 @@ package modules
 
 import (
 	"fmt"
-	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 )
@@ -13,6 +12,7 @@ type Parameter struct {
 	ParaName   string        `json:"name"`
 	SetCMD     string        `json:"cmd_set,omitempty"`
 	GetCMD     string        `json:"cmd_get,omitempty"`
+	Continuity bool          `json:"-"`
 	Scope      []interface{} `json:"range,omitempty"`
 	Options    []string      `json:"options,omitempty"`
 	Sequence   []interface{} `json:"sequence,omitempty"`
@@ -57,7 +57,7 @@ func updateParameter(partial, total *Parameter) {
 }
 
 // AssembleParams assemble params for tune init, include init  and apply  API request params
-func AssembleParams(userParam config.DBLMap, totalParamMap ...config.DBLMap) *Configuration {
+func AssembleParams(userParam map[string]map[string]interface{}, totalParamMap ...map[string]map[string]interface{}) *Configuration {
 	var initParams []Parameter
 	var initConfig = new(Configuration)
 

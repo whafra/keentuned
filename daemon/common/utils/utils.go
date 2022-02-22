@@ -71,8 +71,6 @@ func ColorString(color string, content string) string {
 		return fmt.Sprintf("%c[1;40;31m%s%c[0m", 0x1B, content, 0x1B)
 	case "GREEN":
 		return fmt.Sprintf("%c[1;40;32m%s%c[0m", 0x1B, content, 0x1B)
-	case "YELLOW":
-		return fmt.Sprintf("%c[1;40;33m%s%c[0m", 0x1B, content, 0x1B)
 	default:
 		return content
 	}

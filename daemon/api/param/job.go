@@ -1,8 +1,8 @@
 package param
 
 import (
-	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
 )
 
 // Jobs run param jobs service
@@ -14,7 +14,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 
 	jobHeader := "Tune Jobs"	
 
-	tuneJob, err := walkAndShow(config.GetTuningWorkPath("") + "/", "", true, jobHeader, "/generate/")
+	tuneJob, err := walkAndShow(m.GetTuningWorkPath("") + "/", "", true, jobHeader, "/generate/")
 	if err != nil {
 		log.Errorf(log.ParamJobs, "Walk path failed, err: %v", err)
 		return nil
