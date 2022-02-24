@@ -25,6 +25,10 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 	fullName := m.GetProfileWorkPath(flag.Name)
 	readMap, err := file.ConvertConfFileToJson(fullName)
 	if err != nil {
+                ResetValue(&fullName, m.GetProfileHomePath(flag.Name))
+        }
+        readMap, err = file.ConvertConfFileToJson(fullName)
+	if err != nil {
 		log.Errorf(log.ProfGenerate, "Convert file: %v, err:%v\n", flag.Name, err)
 		return fmt.Errorf("Convert file: %v, err:%v", flag.Name, err)
 	}
@@ -44,4 +48,13 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 
 	log.Infof(log.ProfGenerate, "[ok] %v generate successfully", m.GetGenerateWorkPath(flag.Output))
 	return nil
+}
+
+//ResetValue modify string value
+func ResetValue(s *string, newValue string) {
+        sByte := []byte(*s)
+        for i :=0; i < len(sByte); i++ {
+                sByte[i] = ' '
+        }
+        *s = newValue
 }
