@@ -50,7 +50,7 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 	return nil
 }
 
-//Modify sting value
+//ResetValue modify string value
 func ResetValue(s *string, newValue string) {
         sByte := []byte(*s)
         for i :=0; i < len(sByte); i++ {
