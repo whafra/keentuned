@@ -43,6 +43,7 @@ type Tuner struct {
 	implyDetail
 	bestInfo    Configuration
 	allowUpdate bool
+	Seter
 }
 
 type TimeSpend struct {
@@ -248,4 +249,3 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
 }
-

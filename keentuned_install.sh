@@ -76,7 +76,7 @@ sed -i "s/BRAIN_IP = .*/BRAIN_IP = "${brain_ip}"/" $keentuned_home/conf/keentune
 sed -i "s/BENCH_IP = .*/BENCH_IP = "${bench_ip}"/" $keentuned_home/conf/keentuned.conf
 sed -i "17s/ALGORITHM = .*/ALGORITHM = "${algorithm}"/" $keentuned_home/conf/keentuned.conf
 sed -i "51s/ALGORITHM = .*/ALGORITHM = "${sensitive_algorithm}"/" $keentuned_home/conf/keentuned.conf
-sed -i "s/TARGET_IP = .*/TARGET_IP = "${target_ip}"/" $keentuned_home/conf/keentuned.conf
+#sed -i "s/TARGET_IP = .*/TARGET_IP = "${target_ip}"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/BASELINE_BENCH_ROUND = .*/BASELINE_BENCH_ROUND = "$base_round"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/TUNING_BENCH_ROUND = .*/TUNING_BENCH_ROUND = "$tune_round"/" $keentuned_home/conf/keentuned.conf
 sed -i "s/RECHECK_BENCH_ROUND = .*/RECHECK_BENCH_ROUND = "$check_round"/" $keentuned_home/conf/keentuned.conf

@@ -215,3 +215,50 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	return nil
 }
 
+func (tuner *Tuner) rollback_profile_set() error {
+	return tuner.concurrent_profile_set("rollback", false)
+}
+
+func (tuner *Tuner) backup_profile_set() error {
+	return tuner.concurrent_profile_set("backup", true)
+}
+
+func (tuner *Tuner) concurrent_profile_set(uri string, needReq bool) error {
+	var sucCount = new(int)
+	var retResult = new(string)
+	wg := sync.WaitGroup{}
+	for i, target := range tuner.Group {
+		wg.Add(1)
+		go func(i int, target Group, wg *sync.WaitGroup) {
+			defer wg.Done()
+
+			fmt.Println(target.ProfileSetFlag)
+			//对于未进行profile set的group，不进行rollback、backup
+			if target.ProfileSetFlag {
+				var request interface{}
+				if needReq {
+					request = target.MergedParam
+				}
+				result, allSuc := target.concurrentSuccess(uri, request)
+				*retResult += result
+				if allSuc {
+					*sucCount++
+				}
+			}
+		}(i, target, &wg)
+	}
+
+	wg.Wait()
+	switch uri {
+	case "backup":
+		tuner.backupDetail = *retResult
+	case "rollback":
+		tuner.rollbackDetail = *retResult
+	}
+
+	if *sucCount != len(tuner.Group) {
+		return fmt.Errorf("failure occur")
+	}
+
+	return nil
+}

@@ -64,7 +64,7 @@ func (conf Configuration) Apply(timeCost *time.Duration, readOnly bool) (string,
 	for index, ip := range conf.targetIP {
 		wg.Add(1)
 
-		go func(id int, ip string) () {
+		go func(id int, ip string) {
 			start := time.Now()
 			defer func() {
 				wg.Done()
@@ -178,7 +178,7 @@ func (conf Configuration) parseApplyResponse(body []byte, id int) (Configuration
 	for index := range conf.Parameters {
 		paramInfo, ok := paramCollection[conf.Parameters[index].ParaName]
 		if !ok {
-			log.Warnf("", "find [%v] value missing from target response", configuration.Parameters[index].ParaName)
+			log.Warnf("", "find [%v] value missing from target response", conf.Parameters[index].ParaName)
 			continue
 		}
 
@@ -288,4 +288,3 @@ func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 
 	return collectParam(applyResp)
 }
-
