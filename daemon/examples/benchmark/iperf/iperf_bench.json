@@ -1,0 +1,35 @@
+{
+    "benchmark": [
+      {
+        "benchmark_cmd": "python3 {remote_script_path} {keentuned_ip}",
+        "local_script_path": "benchmark/iperf/iperf.py",
+        "items": {
+          "Sender_Bandwidth": {
+            "negative": false,
+            "weight": 0,
+            "strict": false
+          },
+          "Receiver_Bandwidth": {
+            "negative": false,
+            "weight": 100,
+            "strict": false
+          },
+          "Sender_Transfer": {
+            "negative": false,
+            "weight": 0,
+            "strict": false
+          },
+          "Receiver_Transfer": {
+            "negative": false,
+            "weight": 0,
+            "strict": false
+          },
+          "Interval": {
+            "negative": false,
+            "weight": 0,
+            "strict": false
+          }
+        }
+      }
+    ]
+}
