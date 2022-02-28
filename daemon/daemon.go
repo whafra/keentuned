@@ -60,14 +60,24 @@ func mkWorkDir() {
 	if !file.IsPathExist(config.GetSensitizePath()) {
 		os.MkdirAll(config.GetSensitizePath(), os.ModePerm)
 	}
+
+	activeConf := config.GetProfileWorkPath("active.conf")
+	if !file.IsPathExist(activeConf) {
+		fp, _ := os.Create(activeConf)
+		if fp != nil {
+			fp.Close()
+		}
+	}
 }
 
 func showStart() {
 	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
-	for ip, id := range config.KeenTune.IPMap {
-		fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, id)
+	for _, group := range config.KeenTune.Group {
+		for _, ip := range group.IPs {
+			fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, config.KeenTune.IPMap[ip])
+		}
 	}
 
 	fmt.Println("KeenTune daemon running...")

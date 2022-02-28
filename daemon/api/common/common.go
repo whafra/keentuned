@@ -38,7 +38,7 @@ type RollbackFlag struct {
 // DumpFlag ...
 type DumpFlag struct {
 	Name   string
-	Output string
+	Output []string
 	Force  bool
 }
 

@@ -48,9 +48,7 @@ type Group struct {
 
 type Target struct {
 	Group    []Group
-	IPs      []string
 	IPMap    map[string]int
-	GroupMap map[string]int
 }
 
 type DumpConf struct {
@@ -235,7 +233,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 			return fmt.Errorf("%v", err)
 		}
 		c.Target.Group = append(c.Target.Group, group)
-		c.addIPMap(group.Port, group.IPs, ipExist, id)
+		c.addIPMap(group.IPs, ipExist, id)
 	}
 
 	return nil
@@ -264,13 +262,12 @@ func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
 	c.LogConf.BackupCount = logInst.Key("LOGFILE_BACKUP_COUNT").MustInt(14)
 }
 
-func (c *KeentunedConf) addIPMap(port string, ips []string, ipExist map[string]bool, id *int) {
+func (c *KeentunedConf) addIPMap(ips []string, ipExist map[string]bool, id *int) {
 	for _, ip := range ips {
 		if !ipExist[ip] {
 			*id++
 			ipExist[ip] = true
 			c.Target.IPMap[ip] = *id
-			c.Target.IPs = append(c.Target.IPs, ip)
 		}
 	}
 }

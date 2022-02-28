@@ -206,7 +206,7 @@ func deleteProfileCmd() *cobra.Command {
 }
 
 func generateCmd() *cobra.Command {
-	var genFlag DumpFlag
+	var genFlag GenFlag
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Short:   "Generate a parameter configuration file from profile",

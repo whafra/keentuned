@@ -6,12 +6,10 @@ import (
 	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
-	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
 	"os"
 	"reflect"
-	"strings"
 )
 
 // Dump run param dump service
@@ -26,39 +24,14 @@ func (s *Service) Dump(dump com.DumpFlag, reply *string) error {
 	}()
 
 	tunedTaskPath := config.GetTuningWorkPath(dump.Name)
-	outputFile := config.GetProfileWorkPath(dump.Output)
-	err := checkDumpParam(tunedTaskPath, outputFile, dump.Force)
-	if err != nil {
-		log.Errorf(log.ParamDump, "Check dump param failed, err:%v", err)
-		return fmt.Errorf("Check dump param failed, err:%v", err)
-	}
-
-	jsonFile := fmt.Sprintf("%s/%s_best.json", tunedTaskPath, dump.Name)
-	if err = convertJsonFile2ConfigFile(jsonFile, outputFile); err != nil {
-		log.Errorf(log.ParamDump, "Dump file failed, err:%v", err)
-		return fmt.Errorf("Dump file failed, err:%v", err)
-	}
-
-	log.Infof(log.ParamDump, "[ok] %v dump successfully", outputFile)
-	return nil
-}
-
-func checkDumpParam(path, outputFile string, confirm bool) error {
-	if !file.IsPathExist(path) {
-		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", path, strings.Split(path, "/")[len(strings.Split(path, "/"))-1])
-	}
-
-	activeFileName := config.GetProfileWorkPath("active.conf")
-	if !file.IsPathExist(activeFileName) {
-		fp, err := os.Create(activeFileName)
-		if err != nil {
-			return fmt.Errorf("create active file err:[%v]", err)
+	var err error
+	for index, outputFile := range dump.Output {
+		jsonFile := fmt.Sprintf("%s/%s_group%v_best.json", tunedTaskPath, dump.Name, index+1)
+		if err = convertJsonFile2ConfigFile(jsonFile, outputFile); err != nil {
+			log.Errorf(log.ParamDump, "Dump file failed, err:%v", err)
+			return fmt.Errorf("Dump file failed, err:%v", err)
 		}
-		fp.Close()
-	}
-
-	if file.IsPathExist(outputFile) && !confirm {
-		return fmt.Errorf("outputFile exist and you have given up to overwrite it")
+		log.Infof(log.ParamDump, "[ok] %v dump successfully", outputFile)
 	}
 
 	return nil
@@ -75,7 +48,7 @@ func convertJsonFile2ConfigFile(jsonFile, outputFile string) error {
 		return fmt.Errorf("Unmarshal err:%v", err)
 	}
 
-	var proffileInfo string
+	var content string
 
 	var paramsMap = make(map[string][]m.Parameter)
 
@@ -86,11 +59,11 @@ func convertJsonFile2ConfigFile(jsonFile, outputFile string) error {
 	index := 0
 	for domain, params := range paramsMap {
 		index++
-		proffileInfo += fmt.Sprintf("[%s]\n", domain)
+		content += fmt.Sprintf("[%s]\n", domain)
 
 		for _, info := range params {
 			if info.Dtype == "string" {
-				proffileInfo += fmt.Sprintf("%s: \"%v\"\n", info.ParaName, info.Value)
+				content += fmt.Sprintf("%s: \"%v\"\n", info.ParaName, info.Value)
 				continue
 			}
 
@@ -99,15 +72,15 @@ func convertJsonFile2ConfigFile(jsonFile, outputFile string) error {
 				log.Warnf(log.ParamDump, "[%v] type %v is not float64", info.ParaName, reflect.TypeOf(info.Value))
 				continue
 			}
-			proffileInfo += fmt.Sprintf("%s: %v\n", info.ParaName, uint(num))
+			content += fmt.Sprintf("%s: %v\n", info.ParaName, uint(num))
 		}
 
 		if len(paramsMap) != index {
-			proffileInfo += fmt.Sprintln()
+			content += fmt.Sprintln()
 		}
 	}
 
-	if err := ioutil.WriteFile(outputFile, []byte(proffileInfo), os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(outputFile, []byte(content), os.ModePerm); err != nil {
 		return fmt.Errorf("write to file [%v] err: %v", outputFile, err)
 	}
 
