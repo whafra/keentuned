@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	m "keentune/daemon/modules"
 )
 
 const (
@@ -157,7 +158,12 @@ func dumpCmd() *cobra.Command {
 				dump.Output = strings.TrimSuffix(dump.Output, ".conf") + ".conf"
 			}
 
-			RunDumpRemote(cmd.Context(), dump)
+			//Determine whether conf file already exists
+                        ProfilePath := m.GetProfileWorkPath(dump.Output)
+                        _, err := os.Stat(ProfilePath)
+                        if err == nil {
+                                RunDumpRemote(cmd.Context(), dump)
+                        }
 			return
 		},
 	}
