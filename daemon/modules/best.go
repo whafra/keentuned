@@ -43,7 +43,7 @@ func (tuner *Tuner) verifyBest() error {
 		return err
 	}
 
-	log.Debugf(log.ParamTune, "Step%v. apply configuration details: %v", tuner.Step, tuner.applyDetail)
+	log.Debugf(log.ParamTune, "Step%v. apply best configuration details: %v", tuner.Step, tuner.applySummary)
 
 	log.Infof(log.ParamTune, "Step%v. Tuning is finished, checking benchmark score of best configuration.\n", tuner.IncreaseStep())
 
@@ -69,6 +69,37 @@ func (tuner *Tuner) verifyBest() error {
 		log.Infof(log.ParamTune, "Time cost statistical information:%v", tuner.timeSpend.detailInfo)
 	}
 
+	return nil
+}
+
+func (tuner *Tuner) dumpBest() error {
+	if !config.KeenTune.DumpConf.BestDump {
+		return nil
+	}
+
+	err := tuner.getBest()
+	if err != nil {
+		return err
+	}
+
+	err = tuner.parseBestParam()
+	if err != nil {
+		return err
+	}
+
+	suffix := "_best.json"
+	var fileList string
+	for index := range tuner.Group {
+		err = tuner.Group[index].Dump.Save(tuner.Name, fmt.Sprintf("_group%v%v", index+1, suffix))
+		if err != nil {
+			log.Warnf(tuner.logName, "dump best.json failed, %v", err)
+			continue
+		}
+		
+		fileList += fmt.Sprintf("\n\t%v/parameter/%v/%v_group%v%v", config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name, index+1, suffix)
+	}
+
+	log.Infof(tuner.logName, "Step%v. Best configuration dump successfully. File list: %v\n", tuner.IncreaseStep(), fileList)
 	return nil
 }
 

@@ -66,7 +66,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 				return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
 			}
 
-			activeFile := m.GetProfileWorkPath("active.conf")
+			activeFile := config.GetProfileWorkPath("active.conf")
 			if err := updateActiveFile(activeFile, []byte(file.GetPlainName(v))); err != nil {
 				log.Errorf(log.ProfSet, "Update active file err:%v", err)
 				return fmt.Errorf("Update active file err:%v", err)

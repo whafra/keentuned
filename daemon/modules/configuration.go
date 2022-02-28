@@ -178,7 +178,7 @@ func (conf Configuration) parseApplyResponse(body []byte, id int) (Configuration
 	for index := range conf.Parameters {
 		paramInfo, ok := paramCollection[conf.Parameters[index].ParaName]
 		if !ok {
-			log.Warnf("", "find [%v] value missing from target response", configuration.Parameters[index].ParaName)
+			log.Warnf("", "find [%v] value missing from target response", conf.Parameters[index].ParaName)
 			continue
 		}
 
