@@ -22,6 +22,13 @@ type TuneFlag struct {
 // DumpFlag ...
 type DumpFlag struct {
 	Name   string
+	Output []string
+	Force  bool
+}
+
+// GenFlag ...
+type GenFlag struct {
+	Name   string
 	Output string
 	Force  bool
 }
@@ -88,8 +95,6 @@ func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 }
 
 func RunDumpRemote(ctx context.Context, flag DumpFlag) {
-	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
-	flag.Force = confirm()
 	remoteImpl("param.Dump", flag)
 }
 
@@ -119,7 +124,7 @@ func RunSetRemote(ctx context.Context, flag SetFlag) {
 	remoteImpl("profile.Set", flag)
 }
 
-func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
+func RunGenerateRemote(ctx context.Context, flag GenFlag) {
 	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
 	flag.Force = confirm()
 	remoteImpl("profile.Generate", flag)

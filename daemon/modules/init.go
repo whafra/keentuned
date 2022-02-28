@@ -85,33 +85,6 @@ func (tuner *Tuner) dump(option string) {
 		}
 	}
 }
-func (tuner *Tuner) dumpBest() error {
-	if !config.KeenTune.DumpConf.BestDump {
-		return nil
-	}
-
-	err := tuner.getBest()
-	if err != nil {
-		return err
-	}
-
-	err = tuner.parseBestParam()
-	if err != nil {
-		return err
-	}
-
-	suffix := "_best.json"
-
-	for index := range tuner.Group {
-		err = tuner.Group[index].Dump.Save(tuner.Name, fmt.Sprintf("_group%v%v", index+1, suffix))
-		if err != nil {
-			log.Warnf(tuner.logName, "dump best.json failed, %v", err)
-		}
-	}
-
-	log.Infof(tuner.logName, "Step%v. Best configuration dump to [%v/parameter/%v/%v] successfully.\n", tuner.IncreaseStep(), config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name+"group**_best.json")
-	return nil
-}
 
 func (tuner *Tuner) baseline() error {
 	if !tuner.isSensitize {

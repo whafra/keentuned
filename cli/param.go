@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"os"
 	"strings"
 	"time"
@@ -10,7 +12,7 @@ import (
 
 const (
 	egTune          = "\tkeentune param tune --job tune_test --iteration 10\n\tkeentune param tune --job tune_test"
-	egDump          = "\tkeentune param dump --job tune_test --output tune_test.conf"
+	egDump          = "\tkeentune param dump --job tune_test"
 	egParamDel      = "\tkeentune param delete --job tune_test"
 	egParamList     = "\tkeentune param list"
 	egParamRollback = "\tkeentune param rollback"
@@ -72,7 +74,7 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune/", "keentuned-param-tune", time.Now().Unix())
+			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-param-tune", time.Now().Unix())
 
 			RunTuneRemote(cmd.Context(), flag)
 		},
@@ -151,10 +153,10 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 
-			if strings.Trim(dump.Output, " ") == "" {
-				dump.Output = dump.Name + ".conf"
-			} else {
-				dump.Output = strings.TrimSuffix(dump.Output, ".conf") + ".conf"
+			err := checkDumpParam(&dump)
+			if err != nil {
+				fmt.Printf("%v Check dump param failed, err:%v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
 			}
 
 			RunDumpRemote(cmd.Context(), dump)
@@ -164,6 +166,32 @@ func dumpCmd() *cobra.Command {
 
 	flags := cmd.Flags()
 	flags.StringVarP(&dump.Name, "job", "j", "", "dynamic parameter tuning job name, query by command \"keentune param jobs\"")
-	flags.StringVarP(&dump.Output, "output", "o", "", "output profile file name, default with suffix \".conf\"")
 	return cmd
 }
+
+func checkDumpParam(dump *DumpFlag) error {
+	workPath := config.GetProfileWorkPath("")
+	job := config.GetTuningWorkPath(dump.Name)
+	if !file.IsPathExist(job) {
+		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+	}
+
+	var fileExist bool
+	for i := range config.KeenTune.Group {
+		id := i + 1
+		fileName := fmt.Sprintf("%v/%v_group%v.conf", workPath, dump.Name, id)
+		dump.Output = append(dump.Output, fileName)
+		fileExist = fileExist || file.IsPathExist(fileName)
+	}
+
+	outputTips := "Dump %v has already operated, overwrite? Y(yes)/N(no)"
+	if fileExist {
+		fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, dump.Name))
+		if !confirm() {
+			return fmt.Errorf("outputFile exist and you have given up to overwrite it")
+		}
+	}
+
+	return nil
+}
+

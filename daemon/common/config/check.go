@@ -170,16 +170,12 @@ func parse2Float(origin map[string]interface{}, key string) (float32, error) {
 }
 
 func checkParamConf(confs []string) (map[string]string, []DBLMap, error) {
-	var mergedParam = make([]DBLMap, PRILevel)
-	for i := range mergedParam {
-		mergedParam[i] = make(DBLMap)
-	}
-
 	if len(confs) == 0 {
 		return nil, nil, fmt.Errorf("param file suffix is not json, param name is needed")
 	}
 
 	var domains = make(map[string]string)
+	var mergedParam = make([]DBLMap, PRILevel)
 	for _, conf := range confs {
 		fileName := strings.Trim(conf, " ")
 		if !strings.HasSuffix(fileName, ".json") {
@@ -245,6 +241,10 @@ func readParams(domains map[string]string, userParamMap DBLMap, mergedParam []DB
 		priID, ok := PriorityList[domainName]
 		if !ok {
 			priID = 1
+		}
+
+		if mergedParam[priID] == nil {
+			mergedParam[priID] = make(DBLMap)
 		}
 		_, ok = mergedParam[priID][domainName]
 		if !ok {

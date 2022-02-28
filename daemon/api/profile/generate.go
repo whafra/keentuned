@@ -2,15 +2,21 @@ package profile
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
 )
 
+// GenFlag ...
+type GenFlag struct {
+	Name   string
+	Output string
+	Force  bool
+}
+
 // Generate run profile generate service
-func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
+func (s *Service) Generate(flag GenFlag, reply *string) error {
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfGenerate]
 		log.ClearCliLog(log.ProfGenerate)
