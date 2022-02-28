@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -23,7 +24,7 @@ func (tuner *Tuner) setConfigure() error {
 func (tuner *Tuner) configure() error {
 	wg := sync.WaitGroup{}
 	var applySummary string
-	var targetFinishStatus = make(map[int]string, len(config.KeenTune.IPMap))
+	var targetFinishStatus = make([]string, len(config.KeenTune.IPMap))
 	start := time.Now()
 	for groupID, group := range tuner.Group {
 		for _, ip := range group.IPs {
@@ -36,8 +37,16 @@ func (tuner *Tuner) configure() error {
 
 	wg.Wait()
 
-	for i := 1; i <= len(config.KeenTune.IPMap); i++ {
-		applySummary += fmt.Sprintf("\n\ttarget %v, apply result: %v", i, targetFinishStatus[i])
+	var errDetail string
+	for index, status := range targetFinishStatus {
+		applySummary += fmt.Sprintf("\n\ttarget %v, apply result: %v", index+1, status)
+		if strings.Contains(status, "apply failed") {
+			errDetail += fmt.Sprintf("\n%v", status)
+		}
+	}
+
+	if errDetail != "" {
+		return fmt.Errorf(errDetail)
 	}
 
 	tuner.applySummary = applySummary
@@ -51,14 +60,14 @@ func (tuner *Tuner) configure() error {
 	return nil
 }
 
-func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus map[int]string, ip string, groupID int) {
+func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, ip string, groupID int) {
 	start := time.Now()
 	var errMsg error
 	id := config.KeenTune.IPMap[ip]
 	defer func() {
 		wg.Done()
 		if errMsg != nil {
-			targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
+			targetFinishStatus[id-1] = fmt.Sprintf("target [%v] apply failed, errmsg %v", id, errMsg)
 		}
 	}()
 
@@ -72,12 +81,16 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus map[int]string,
 		return
 	}
 
-	targetFinishStatus[id] = "success"
+	targetFinishStatus[id-1] = "success"
 	tuner.timeSpend.apply += utils.Runtime(start).Count
 }
 
 func (gp *Group) Set(ip string, id int) error {
 	for index := range gp.Params {
+		if gp.Params[index] == nil {
+			continue
+		}
+
 		gp.ReadOnly = false
 		err := gp.Configure(ip, id, gp.applyReq(ip, gp.Params[index]))
 		if err != nil {
@@ -111,5 +124,10 @@ func (gp *Group) Configure(ip string, id int, request interface{}) error {
 	}
 
 	return nil
+}
+
+func (gp *Group) Get(ip string, ipIndex int) error {
+	gp.ReadOnly = true
+	return gp.Configure(ip, ipIndex, gp.applyReq(ip, gp.MergedParam))
 }
 

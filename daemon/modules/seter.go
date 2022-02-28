@@ -63,7 +63,7 @@ func (tuner *Tuner) Set() {
 	}
 	fmt.Println(requestInfoAll)
 
-	if err := tuner.prepareBeforeSet(requestInfoAll); err != nil {
+	if err = tuner.prepareBeforeSet(requestInfoAll); err != nil {
 		log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
 		return
 	}
@@ -119,7 +119,7 @@ func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int]map[string]interface{
 
 	// step2. clear the active file
 	fileName := config.GetProfileWorkPath("active.conf")
-	if err := UpdateActiveFile(fileName, []byte{}); err != nil {
+	if err = UpdateActiveFile(fileName, []byte{}); err != nil {
 		return fmt.Errorf("update active file failed, err:%v", err)
 	}
 

@@ -69,19 +69,22 @@ func (tuner *Tuner) initParams() error {
 func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Parameter) (*Group, error) {
 	var target = new(Group)
 	var params = make([]config.DBLMap, len(paramMaps))
-	for i := range params {
-		params[i] = make(config.DBLMap)
-	}
 
 	var initConf Configuration
 	for index, paramMap := range paramMaps {
+		if paramMap != nil {
+			params[index] = make(config.DBLMap)
+		}
+		
 		for domain, parameters := range paramMap {
 			var temp = make(map[string]interface{})
 			for name, value := range parameters {
-				param, ok := value.(map[string]interface{})
+				origin, ok := value.(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("assert %v to parameter failed", value)
 				}
+
+				param := deepCopy(origin)
 
 				var nameSaltedParam, originParam Parameter
 				if err := utils.Map2Struct(value, &nameSaltedParam); err != nil {
@@ -111,6 +114,15 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 	target.Dump = initConf
 
 	return target, nil
+}
+
+func deepCopy(origin map[string]interface{}) map[string]interface{} {
+	var newMap = make(map[string]interface{})
+	for key, value := range origin {
+		newMap[key] = value
+	}
+
+	return newMap
 }
 
 // getBrainInitParams get request parameters for brain init
@@ -258,11 +270,6 @@ func (gp *Group) applyReq(ip string, params interface{}) map[string]interface{} 
 	retRequest["target_id"] = config.KeenTune.IPMap[ip]
 	retRequest["readonly"] = gp.ReadOnly
 	return retRequest
-}
-
-func (gp *Group) Get(ip string, ipIndex int) error {
-	gp.ReadOnly = true
-	return gp.Configure(ip, ipIndex, gp.applyReq(ip, gp.MergedParam))
 }
 
 func (gp *Group) updateDump(param map[string]Parameter) {

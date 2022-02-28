@@ -5,5 +5,5 @@ const PRILevel = 2
 var PriorityList = map[string]int{
 	"sysctl":     1,
 	"cri_sysctl": 1,
-	"nginx_conf": 0,
+	"nginx": 0,
 }
