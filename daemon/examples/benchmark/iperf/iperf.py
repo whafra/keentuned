@@ -32,6 +32,8 @@ class Benchmark():
         self.time = time_data
         self.parallel = parallel_data
         self.command = command
+        self.out = ""
+        self.error = ""
     
     def __transfMeasurement(self, value, measurement):
         if measurement in ['B', 'b']:
@@ -44,7 +46,7 @@ class Benchmark():
             return value * 10 ** 9
         
         else:
-            logger.warning("Unknown measurement: {}".format(measurement))
+            logger.warning("Unknown measurement: %s" % measurement)
             return value
 
     def run(self):
@@ -67,7 +69,7 @@ class Benchmark():
         if result.returncode == 0:
             logger.info(self.out)
 
-            label = "\s+\d" if int(self.parallel) == 1 else "SUM"
+            label = r"\s+\d" if int(self.parallel) == 1 else "SUM"
             sender_transfer = re.compile(r'\[{}\]\s+0\.00-{}\..+sec\s+([\d.]+)\s+([A-Z]+)ytes.+sender'.format(label, self.time))
             sender_bandwidth = re.compile(r'\[{}\]\s+0\.00-{}\..+Bytes\s+([\d.]+)\s+([a-zA-Z]+)its/sec.+sender'.format(label, self.time))
             receiver_transfer = re.compile(r'\[{}\]\s+0\.00-{}\..+sec\s+([\d.]+)\s+([A-Z]+)ytes.+receiver'.format(label, self.time))
@@ -77,7 +79,7 @@ class Benchmark():
                 or not re.search(sender_bandwidth, self.out) \
                 or not re.search(receiver_transfer, self.out) \
                 or not re.search(receiver_bandwidth, self.out):
-                logger.error("can not parse output: {}".format(self.out))
+                logger.error("can not parse output: %s" % self.out)
                 return False, []
             
             _transfer = float(re.search(sender_transfer, self.out).group(1))
@@ -118,4 +120,4 @@ if __name__ == "__main__":
         print("'Keentuned ip' is wanted: python3 ack_nginx_http_short.py [Target ip]")
         exit(1)
     bench = Benchmark(sys.argv[1])
-    suc, result = bench.run()
+    suc, res = bench.run()
