@@ -230,7 +230,7 @@ func (gp *Group) updateParams(params map[string]Parameter) error {
 func (gp *Group) updateValue(param Parameter) error {
 	index := config.PriorityList[param.DomainName]
 	if index < 0 || index >= config.PRILevel {
-		return fmt.Errorf("ip %v priority id %v is out of range [0, 1]", index)
+		return fmt.Errorf("priority id %v is out of range [0, 1]", index)
 	}
 	name := param.ParaName
 	value, ok := gp.Params[index][param.DomainName][name]
