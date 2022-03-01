@@ -160,6 +160,7 @@ func dumpCmd() *cobra.Command {
 
 			//Determine whether conf file already exists
                         ProfilePath := m.GetProfileWorkPath(dump.Output)
+                        _, err := os.Stat(ProfilePath)
                         if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
                                 dump.Force = confirm()
