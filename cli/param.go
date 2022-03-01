@@ -163,6 +163,10 @@ func dumpCmd() *cobra.Command {
                         if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
                                 dump.Force = confirm()
+                                if !dump.Force {
+                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+                                    os.Exit(1)
+                                }
                                 RunDumpRemote(cmd.Context(), dump)
                         } else {
 				RunDumpRemote(cmd.Context(), dump)
