@@ -13,13 +13,16 @@ import (
 
 // Group ...
 type Group struct {
-	IPs         []string
-	Params      []config.DBLMap
-	Port        string
-	ReadOnly    bool
-	Dump        Configuration
-	MergedParam map[string]interface{}
-	AllowUpdate map[string]bool // prevent map concurrency security problems
+	IPs            []string
+	Params         []config.DBLMap
+	Port           string
+	ReadOnly       bool
+	Dump           Configuration
+	MergedParam    map[string]interface{}
+	AllowUpdate    map[string]bool // prevent map concurrency security problems
+	GroupName      string          //target-group-x
+	GroupNo        int             //target-group-x
+	ProfileSetFlag bool
 }
 
 const brainNameParts = 2
@@ -40,6 +43,7 @@ func (tuner *Tuner) initParams() error {
 
 		target.IPs = group.IPs
 		target.Port = group.Port
+		target.GroupName = group.GroupName
 		target.mergeParam()
 
 		var updateIP = make(map[string]bool)
@@ -279,3 +283,56 @@ func (gp *Group) updateDump(param map[string]Parameter) {
 	}
 }
 
+func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group) bool {
+
+	// if groupNo == 0 {
+	// 	return false
+	// } else if tuner.Seter.Group[groupNo-1] {
+	// 	return true
+	// }
+
+	for index, groupSetFlag := range tuner.Seter.Group {
+		if groupSetFlag && (groupNo == index+1) {
+			target.ProfileSetFlag = true
+			return true
+		}
+	}
+	return false
+}
+
+func (tuner *Tuner) initProfiles() error {
+	var target *Group
+	var err error
+	tuner.BrainParam = []Parameter{}
+	for index, group := range config.KeenTune.Group {
+		target, err = getInitParam(index+1, group.ParamMap, &tuner.BrainParam)
+		if err != nil {
+			return err
+		}
+
+		target.IPs = group.IPs
+		target.Port = group.Port
+		target.GroupName = group.GroupName
+		target.GroupNo = group.GroupNo
+		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target)
+		target.mergeParam()
+
+		var updateIP = make(map[string]bool)
+		for i := 0; i < len(target.IPs); i++ {
+			if i == 0 {
+				updateIP[target.IPs[i]] = true
+				continue
+			}
+			updateIP[target.IPs[i]] = false
+		}
+
+		target.AllowUpdate = updateIP
+		tuner.Group = append(tuner.Group, *target)
+	}
+
+	if len(tuner.Group) == 0 {
+		return fmt.Errorf("found group is null")
+	}
+
+	return nil
+}

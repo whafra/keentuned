@@ -64,7 +64,7 @@ func (conf Configuration) Apply(timeCost *time.Duration, readOnly bool) (string,
 	for index, ip := range conf.targetIP {
 		wg.Add(1)
 
-		go func(id int, ip string) () {
+		go func(id int, ip string) {
 			start := time.Now()
 			defer func() {
 				wg.Done()
@@ -288,4 +288,3 @@ func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 
 	return collectParam(applyResp)
 }
-

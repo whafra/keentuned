@@ -20,12 +20,12 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 	}()
 
 	err := m.Rollback(log.ProfRollback)
-	if err!=nil {
+	if err != nil {
 		return fmt.Errorf("Rollback details:\n%v", err)
 	}
 
 	fileName := config.GetProfileWorkPath("active.conf")
-	if err := updateActiveFile(fileName, []byte{}); err != nil {
+	if err := m.UpdateActiveFile(fileName, []byte{}); err != nil {
 		log.Errorf(log.ProfRollback, "Update active file failed, err:%v", err)
 		return fmt.Errorf("Update active file failed, err:%v", err)
 	}

@@ -132,7 +132,7 @@ func setCmd() *cobra.Command {
 				}
 				setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
 			*/
-			fmt.Println("args", args)
+			//fmt.Println("args", args)
 			//判断若args有值且以.conf结尾，则认为是默认所有group下发统一配置
 			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
 				for i, _ := range setFlag.ConfFile {
@@ -149,11 +149,8 @@ func setCmd() *cobra.Command {
 					}
 				}
 			}
-			// for _, v := range setFlag.ConfFile {
-			// 	fmt.Println(v)
-			// }
-			// for _, v := range setFlag.Group {
-			// 	fmt.Println(v)
+			// for i, _ := range setFlag.Group {
+			// 	fmt.Printf("setFlag.Group[%d]=%v, setFlag.ConfFile[%d]=%s\n", i, setFlag.Group[i], i, setFlag.ConfFile[i])
 			// }
 			RunSetRemote(cmd.Context(), setFlag)
 			return
@@ -169,22 +166,14 @@ func setCmd() *cobra.Command {
 			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
 		}
 	} else {
-		/*
-			setFlag.Group = make([]string, len(conf.TargetIP))
-			setFlag.ConfFile = make([]string, len(conf.TargetIP))
-			for index, _ := range conf.TargetIP {
-				group = fmt.Sprintf("group%d",index+1)
-				cmd.Flags().StringVar(&setFlag.Group[index], group, "", "profile name, query by command \"keentune profile list\"")
-			}
-		*/
-
-		setFlag.Group = make([]bool, GroupNum+2)
-		setFlag.ConfFile = make([]string, GroupNum+2)
-		for index := 0; index < GroupNum; index++ {
+		//fmt.Printf("len(conf.Target.Group)=%d\n", len(conf.Target.Group))
+		setFlag.Group = make([]bool, len(conf.Target.Group))
+		setFlag.ConfFile = make([]string, len(conf.Target.Group))
+		for index, _ := range conf.Target.Group {
 			group = fmt.Sprintf("group%d", index+1)
+			//fmt.Println(group)
 			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
 		}
-
 	}
 
 	return cmd
