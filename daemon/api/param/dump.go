@@ -56,10 +56,6 @@ func checkDumpParam(path, outputFile string, confirm bool) error {
 		fp.Close()
 	}
 
-	if file.IsPathExist(outputFile) && !confirm {
-		return fmt.Errorf("outputFile exist and you have given up to overwrite it")
-	}
-
 	return nil
 }
 
