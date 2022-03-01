@@ -1,0 +1,29 @@
+{
+    "iperf": {
+      "length_buffers": {
+        "desc": "默认值：10240, 128KB 最大值：1048576",
+        "dtype": "int",
+        "range": [
+          1,
+          1048570
+        ]
+      },
+      "Parallel": {
+        "desc": "默认值：1",
+        "dtype": "int",
+        "range": [
+          1,
+          "#!cpu_core#*2"
+        ],
+        "step": 1
+      },
+      "window_size": {
+        "desc": "默认值：10240 最大值：8388608，8M",
+        "dtype": "int",
+        "range": [
+          1,
+          8388608
+        ]
+      }
+    }
+}

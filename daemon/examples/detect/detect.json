@@ -1,0 +1,3 @@
+{
+    "cpu_core":"cat /proc/cpuinfo | grep process | wc -l"
+}

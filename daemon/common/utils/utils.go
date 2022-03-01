@@ -201,3 +201,16 @@ func decorateString(maxes []int) string {
 	return decorateStr + fmt.Sprintln()
 }
 
+// Remove Repeated
+func RemoveRepeated(s []string) []string {
+	var result []string
+	m := make(map[string]bool)
+	for _, v := range s {
+		if _, ok := m[v]; !ok {
+			result = append(result, v)
+			m[v] = true
+		}
+	}
+	return result
+}
+
