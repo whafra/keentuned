@@ -46,7 +46,7 @@ class Benchmark():
             return value * 10 ** 9
         
         else:
-            logger.warning("Unknown measurement: %s" % measurement)
+            logger.warning("Unknown measurement: %s", measurement)
             return value
 
     def run(self):
@@ -79,7 +79,7 @@ class Benchmark():
                 or not re.search(sender_bandwidth, self.out) \
                 or not re.search(receiver_transfer, self.out) \
                 or not re.search(receiver_bandwidth, self.out):
-                logger.error("can not parse output: %s" % self.out)
+                logger.error("can not parse output: %s", self.out)
                 return False, []
             
             _transfer = float(re.search(sender_transfer, self.out).group(1))
