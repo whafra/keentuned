@@ -1,0 +1,324 @@
+[
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "open_file_cache@group1",
+        "options": [
+            "max=1024 inactive=10s",
+            "max=2048 inactive=10s",
+            "max=4096 inactive=10s",
+            "max=8192 inactive=10s",
+            "max=16384 inactive=10s",
+            "max=32768 inactive=10s"
+        ],
+        "baseline":"max=2048 inactive=10s"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "worker_rlimit_nofile@group1",
+        "range": [
+            300,
+            655350
+        ],
+        "baseline":300
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "sendfile",
+        "options": [
+            "on",
+            "off"
+        ],
+        "baseline":"on"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "keepalive_requests@group1",
+        "range": [
+            10,
+            65535
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "send_timeout@group1",
+        "range": [
+            1,
+            300
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "gzip_buffers@group1",
+        "sequence": [
+            "32 4k",
+            "16 8k",
+            "8 16k",
+            "4 32k",
+            "2 64k"
+        ],
+        "baseline":"2 64k"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "client_max_body_size@group1",
+        "sequence": [
+            "2m",
+            "4m",
+            "8m",
+            "16m",
+            "32m",
+            "64m",
+            "128m",
+            "256m",
+            "512m"
+        ],
+        "baseline":"512m"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "client_header_timeout@group1",
+        "range": [
+            1,
+            300
+        ],
+        "baseline":100
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "open_file_cache_valid@group1",
+        "sequence": [
+            "10s",
+            "20s",
+            "30s",
+            "60s",
+            "90s",
+            "120s",
+            "150s",
+            "180s"
+        ],
+        "baseline":"60s"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "open_file_cache_min_uses@group1",
+        "range": [
+            1,
+            10
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "gzip@group1",
+        "options": [
+            "on",
+            "off"
+        ],
+        "baseline":"on"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "ssl_session_timeout@group1",
+        "sequence": [
+            "1m",
+            "2m",
+            "4m",
+            "8m",
+            "16m",
+            "32m",
+            "64m",
+            "128m"
+        ],
+        "baseline":"8m"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "worker_connection@group1s",
+        "range": [
+            300,
+            160000
+        ],
+        "baseline":300
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "multi_accept@group1",
+        "options": [
+            "on",
+            "off"
+        ],
+        "baseline":"on"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "proxy_connect_timeout@group1",
+        "range": [
+            1,
+            300
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "proxy_send_timeout@group1",
+        "range": [
+            6,
+            600
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "proxy_read_timeout@group1",
+        "range": [
+            6,
+            600
+        ],
+        "baseline":100
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "gzip_comp_level@group1",
+        "range": [
+            1,
+            9
+        ],
+        "baseline":1
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "ssl_session_cache@group1",
+        "options": [
+            "off",
+            "none",
+            "builtin:1000",
+            "shared:SSL:1m"
+        ],
+        "baseline":"off"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "client_body_buffer_size@group1",
+        "sequence": [
+            "8k",
+            "16k",
+            "32k",
+            "64k",
+            "128k",
+            "256k",
+            "512k",
+            "1024k",
+            "2048k",
+            "4096k",
+            "8192k",
+            "16384k",
+            "32768k"
+        ],
+        "baseline":"32k"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "gzip_min_length@group1",
+        "range": [
+            128,
+            65536
+        ],
+        "baseline":128
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "ssl_buffer_size@group1",
+        "sequence": [
+            "64",
+            "128",
+            "526",
+            "4k",
+            "64k",
+            "256k",
+            "1m",
+            "4m"
+        ],
+        "baseline":"64k"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "tcp_nopush@group1",
+        "options": [
+            "on",
+            "off"
+        ],
+        "baseline":"on"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "client_body_timeout@group1",
+        "range": [
+            1,
+            300
+        ],
+        "baseline":10
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "client_header_buffer_size@group1",
+        "sequence": [
+            "1k",
+            "2k",
+            "4k",
+            "8k",
+            "16k",
+            "32k",
+            "64k",
+            "128k",
+            "256k"
+        ],
+        "baseline":"64k"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "string",
+        "name": "tcp_nodelay@group1",
+        "options": [
+            "on",
+            "off"
+        ],
+        "baseline":"on"
+    },
+    {
+        "domain": "nginx",
+        "dtype": "int",
+        "name": "keepalive_timeout@group1",
+        "range": [
+            5,
+            500
+        ],
+        "baseline":5
+    }
+]
