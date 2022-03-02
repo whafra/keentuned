@@ -161,6 +161,19 @@ func assembleParam(param map[string]interface{}, domainName, paramName string) (
 		delete(param, "domain")
 	}
 
+	if paramName == "size" {
+                param["name"] = paramName
+                param["domain"] = domainName
+                if err := detectParam(param, paramName); err != nil {
+                        return Parameter{}, fmt.Errorf("detect macro defination param:%v", err)
+                }
+
+                delete(param, "name")
+                delete(param, "domain")
+        }
+
+	//numjobs no init
+
 	var initParam Parameter
 	initParamMap := make(map[string]interface{})
 	for name, value := range param {
@@ -178,34 +191,61 @@ func assembleParam(param map[string]interface{}, domainName, paramName string) (
 }
 
 func detectParam(param map[string]interface{}, paramName string) error {
-	if paramName != "Parallel" {
-		return nil
-	}
-	ranges, ok := param["range"].([]interface{})
-	if !ok {
-		return fmt.Errorf("assert range to slice interface failed, real type %v", reflect.TypeOf(param["range"]))
-	}
-	var range2Int []int
-	var detectedMacroValue = make(map[string]int)
-	for _, v := range ranges {
-		value, ok := v.(float64)
-		if ok {
-			range2Int = append(range2Int, int(value))
-			continue
+	if paramName == "Parallel" {
+		ranges, ok := param["range"].([]interface{})
+		if !ok {
+			return fmt.Errorf("assert range to slice interface failed, real type %v", reflect.TypeOf(param["range"]))
 		}
-		macroString, ok := v.(string)
-		re, _ := regexp.Compile(defMarcoString)
-		macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
-		if err := getMacroValue(macros, detectedMacroValue); err != nil {
-			return fmt.Errorf("get detect value failed: %v", err)
+		var range2Int []int
+		var detectedMacroValue = make(map[string]int)
+		for _, v := range ranges {
+			value, ok := v.(float64)
+			if ok {
+				range2Int = append(range2Int, int(value))
+				continue
+			}
+			macroString, ok := v.(string)
+			re, _ := regexp.Compile(defMarcoString)
+			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
+			if err := getMacroValue(macros, detectedMacroValue); err != nil {
+				return fmt.Errorf("get detect value failed: %v", err)
+			}
+			calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
+			if err != nil {
+				return fmt.Errorf("calculate err: %v", err)
+			}
+			range2Int = append(range2Int, int(calcResult))
 		}
-		calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
-		if err != nil {
-			return fmt.Errorf("calculate err: %v", err)
-		}
-		range2Int = append(range2Int, int(calcResult))
+		param["range"] = range2Int
 	}
-	param["range"] = range2Int
+	if paramName == "size" {
+		option, ok := param["options"].([]string)
+		if !ok {
+	                return fmt.Errorf("assert options to slice interface failed, real type %v", reflect.TypeOf(param["options"]))
+	        }
+		var option2Int []int
+		var detectedMacroValue = make(map[string]int)
+		for _, v := range option {
+	                value, ok := v.(float64)
+	                if ok {
+	                        option2Int = append(option2Int, int(value))
+	                        continue
+	                }
+	                macroString, ok := v.(string)
+	                re, _ := regexp.Compile(defMarcoString)
+	                macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
+	                if err := getMacroValue(macros, detectedMacroValue); err != nil {
+	                        return fmt.Errorf("get detect value failed: %v", err)
+	                }
+	                calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
+	                if err != nil {
+	                        return fmt.Errorf("calculate err: %v", err)
+	                }
+	                option2Int = append(option3Int, int(calcResult))
+	        }
+	        param["options"] = option2Int
+	}
+
 	return nil
 }
 func convertString(macroString string, macroMap map[string]int) string {
