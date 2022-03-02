@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"github.com/spf13/cobra"
+	"os"
+	m "keentune/daemon/modules"
 )
 
 const (
@@ -159,7 +161,21 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
-			RunGenerateRemote(cmd.Context(), genFlag)
+			//Determine whether json file already exists
+                        ParamPath := m.GetGenerateWorkPath(genFlag.Output)
+                        _, err := os.Stat(ParamPath)
+                        if err == nil {
+                                fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
+                                genFlag.Force = confirm()
+                                if !genFlag.Force {
+                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+                                    os.Exit(1)
+                                }
+                                RunGenerateRemote(cmd.Context(), genFlag)
+                        } else {
+                                RunGenerateRemote(cmd.Context(), genFlag)
+                        }
+
 			return
 		},
 	}

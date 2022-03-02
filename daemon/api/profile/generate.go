@@ -16,12 +16,6 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 		log.ClearCliLog(log.ProfGenerate)
 	}()
 
-	if file.IsPathExist(m.GetGenerateWorkPath(flag.Output)) && !flag.Force {
-		log.Errorf(log.ProfGenerate, "Output File: %v exist and you have given up to overwrite it\n", flag.Name)
-		return fmt.Errorf("Output File: %v  exist and you have given up to overwrite it", flag.Name)
-
-	}
-
 	fullName := m.GetProfileWorkPath(flag.Name)
 	readMap, err := file.ConvertConfFileToJson(fullName)
 	if err != nil {

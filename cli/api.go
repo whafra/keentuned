@@ -116,8 +116,6 @@ func RunSetRemote(ctx context.Context, flag SetFlag) {
 }
 
 func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
-	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
-	flag.Force = confirm()
 	remoteImpl("profile.Generate", flag)
 }
 
