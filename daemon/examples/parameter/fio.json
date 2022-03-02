@@ -1,0 +1,37 @@
+{
+    "fio": {
+      "size": {
+        "desc": "默认值：110g, 单位1M， 最大值：为环境内存/2",
+        "dtype": "int",
+        "options": [
+            "128",
+            "112640",
+            "#!mem_size#/16",
+            "#!mem_size#/8",
+            "#!mem_size#/4",
+            "#!mem_size#/2"
+        ]
+      },
+      "bs": {
+        "desc": "默认值：512B",
+        "dtype": "string",
+        "options": [
+            "512B",
+            "4K",
+            "64K",
+            "1M",
+            "4M",
+            "64M"
+        ]
+      },
+      "numjobs": {
+        "desc": "默认值：1",
+        "dtype": "int",
+        "range": [
+          1,
+          "#!cpu_core#/2"
+        ],
+        "step": 1
+      }
+    }
+}
