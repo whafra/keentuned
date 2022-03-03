@@ -48,37 +48,44 @@ func (tuner *Tuner) Set() {
 		err = fmt.Errorf("[%v] prepare for profile set: %v", utils.ColorString("red", "ERROR"), err)
 		return
 	}
-
 	configFileALL, err := tuner.checkProfilePath()
 	if err != nil {
 		log.Errorf(log.ProfSet, "Check file err:%v", err)
 		return
 	}
-	fmt.Println(configFileALL)
-
 	requestInfoAll, err := tuner.getConfigParamInfo(configFileALL)
 	if err != nil {
 		log.Errorf(log.ProfSet, "Get request info from specified file [%v] err:%v", tuner.Seter.ConfFile[0], err)
 		return
 	}
-	fmt.Println(requestInfoAll)
-
 	if err = tuner.prepareBeforeSet(requestInfoAll); err != nil {
 		log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
 		return
 	}
-
 	sucInfos, failedInfo, err := tuner.setConfiguration(requestInfoAll)
 	if err != nil {
 		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
 		return
 	}
-
 	activeFile := config.GetProfileWorkPath("active.conf")
-	if err := appendActiveFile(activeFile, []byte(file.GetPlainName("123"))); err != nil {
+
+	//先拼接，再写入
+	var fileSet string
+	for groupIndex, v := range tuner.Seter.Group {
+		if v {
+			// fileName := file.GetPlainName(tuner.Seter.ConfFile[groupIndex]) + "\n"
+			// fileSet = fileSet + fileName
+			fileSet = fileSet + file.GetPlainName(tuner.Seter.ConfFile[groupIndex]) + "\n"
+		}
+	}
+	if err := UpdateActiveFile(activeFile, []byte(fileSet)); err != nil {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return
 	}
+	// if err := appendActiveFile(activeFile, []byte(file.GetPlainName(tuner.Seter.ConfFile[groupIndex]))); err != nil {
+	// 	log.Errorf(log.ProfSet, "Update active file err:%v", err)
+	// 	return
+	// }
 
 	for groupIndex, v := range tuner.Seter.Group {
 		if v {
@@ -168,12 +175,14 @@ func (tuner *Tuner) setConfiguration(requestAll map[int]map[string]interface{}) 
 	var applyResult = make(map[int]ResultProfileSet)
 
 	//groupIndex为target-group-x   x= groupIndex + 1
+	var index = 0
 	for groupIndex, request := range requestAll {
 		for _, target := range tuner.Group {
 			if target.GroupNo == groupIndex+1 {
-				for index, ip := range target.IPs {
+				for _, ip := range target.IPs {
 					wg.Add(1)
-					go tuner.set(request, &wg, applyResult, index+1, ip)
+					go tuner.set(request, &wg, applyResult, index+1, ip, target.Port)
+					index++
 				}
 			}
 		}
@@ -188,13 +197,21 @@ func (tuner *Tuner) analysisApplyResults(applyResult map[int]ResultProfileSet) (
 	var failedInfo string
 	var successInfo []string
 	// add detail info in order
-	for index, _ := range config.KeenTune.TargetIP {
-		id := index + 1
-		if !applyResult[id].Success {
-			failedInfo += applyResult[id].Info
+	// for index, _ := range config.KeenTune.TargetIP {
+	// 	id := index + 1
+	// 	if !applyResult[id].Success {
+	// 		failedInfo += applyResult[id].Info
+	// 		continue
+	// 	}
+	// 	successInfo = append(successInfo, applyResult[id].Info)
+	// }
+
+	for result := range applyResult {
+		if !applyResult[result].Success {
+			failedInfo += applyResult[result].Info
 			continue
 		}
-		successInfo = append(successInfo, applyResult[id].Info)
+		successInfo = append(successInfo, applyResult[result].Info)
 	}
 
 	failedInfo = strings.TrimSuffix(failedInfo, ";")
@@ -202,19 +219,19 @@ func (tuner *Tuner) analysisApplyResults(applyResult map[int]ResultProfileSet) (
 	if len(successInfo) == 0 {
 		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
 	}
-
-	if len(successInfo) != len(config.KeenTune.TargetIP) {
+	//判断待修改
+	if len(successInfo) != len(applyResult) {
 		return successInfo, failedInfo, fmt.Errorf("partial failed")
 	}
 	return successInfo, "", nil
 }
 
-func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int]ResultProfileSet, index int, ip string) {
+func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int]ResultProfileSet, index int, ip string, port string) {
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[index] = false
 	}()
-	uri := fmt.Sprintf("%s:%s/configure", ip, config.KeenTune.TargetPort)
+	uri := fmt.Sprintf("%s:%s/configure", ip, port)
 	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
 	if err != nil {
 		applyResult[index] = ResultProfileSet{
@@ -259,7 +276,7 @@ func appendActiveFile(fileName string, info []byte) error {
 	var err error
 	if Exists(fileName) {
 		//使用追加模式打开文件
-		file, err = os.OpenFile(fileName, os.O_APPEND, 0666)
+		file, err = os.OpenFile(fileName, os.O_APPEND, os.ModePerm|os.ModeAppend)
 		if err != nil {
 			fmt.Println("Open file err =", err)
 			return err
@@ -273,7 +290,8 @@ func appendActiveFile(fileName string, info []byte) error {
 	}
 	defer file.Close()
 
-	n, err := file.WriteString(string(info))
+	//n, err := file.WriteString(string(info))
+	n, err := file.WriteString("hello yuxj")
 	if err != nil {
 		fmt.Println("Write file err =", err)
 		return err

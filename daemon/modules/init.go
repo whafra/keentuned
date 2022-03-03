@@ -204,8 +204,6 @@ func (tuner *Tuner) concurrent_profile_set(uri string, needReq bool) error {
 		wg.Add(1)
 		go func(i int, target Group, wg *sync.WaitGroup) {
 			defer wg.Done()
-
-			fmt.Println(target.ProfileSetFlag)
 			//对于未进行profile set的group，不进行rollback、backup
 			if target.ProfileSetFlag {
 				var request interface{}

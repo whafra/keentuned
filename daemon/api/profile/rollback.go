@@ -19,7 +19,7 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ProfRollback)
 	}()
 
-	err := m.Rollback(log.ProfRollback)
+	err := m.Rollback(log.ProfRollback, "profile")
 	if err != nil {
 		return fmt.Errorf("Rollback details:\n%v", err)
 	}
