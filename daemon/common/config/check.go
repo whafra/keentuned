@@ -227,9 +227,6 @@ func readFile(fileName string) (DBLMap, error) {
 	for domain, _ := range paramMap {
 		domains = append(domains, domain)
 	}
-	fmt.Println("aaaa")
-	//fmt.Println(domains)
-	fmt.Println("bbbb")
 
 	if len(domains) == 0 {
 		return nil, fmt.Errorf("assert domain does not exist")

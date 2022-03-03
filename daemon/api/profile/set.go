@@ -41,7 +41,7 @@ func runSeting(flag SetFlag, reply *string) {
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
 	}()
-	log.Infof(log.ProfSet, "Step1. Profile Set start\n")
+	//log.Infof(log.ProfSet, "Step1. Profile Set start\n")
 	if err := SetingImpl(flag, "tuning"); err != nil {
 		log.Errorf(log.ProfSet, "Profile Set failed, msg: %v", err)
 		return

@@ -14,8 +14,8 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ParamRollback)
 	}()
 
-	err := m.Rollback(log.ParamRollback)
-	if err!=nil {
+	err := m.Rollback(log.ParamRollback, "param")
+	if err != nil {
 		return fmt.Errorf("Rollback details:\n%v", err)
 	}
 

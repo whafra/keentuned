@@ -47,8 +47,8 @@ type Group struct {
 }
 
 type Target struct {
-	Group    []Group
-	IPMap    map[string]int
+	Group []Group
+	IPMap map[string]int
 }
 
 type DumpConf struct {
@@ -212,12 +212,12 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		group.Port = target.Key("TARGET_PORT").MustString("9873")
 
 		group.GroupName = groupName
-		fmt.Printf("groupName=%s\n", groupName)
+		//		fmt.Printf("groupName=%s\n", groupName)
 		groupName = groupName[13:] //截取“target-group-”后面的内容
-		fmt.Printf("groupName=%s\n", groupName)
+		//		fmt.Printf("groupName=%s\n", groupName)
 		groupNo, err := strconv.Atoi(groupName)
 
-		fmt.Printf("groupNo=%d\n", groupNo)
+		//		fmt.Printf("groupNo=%d\n", groupNo)
 		if err != nil || groupNo <= 0 {
 			return fmt.Errorf("target-group is error, please check configure first")
 		}
