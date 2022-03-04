@@ -27,7 +27,7 @@ e.g.
 FileName = "/dev/sdb"
 Block_Size = "512B"
 DEFAULT_rw = "read"
-SIZE = "110"
+SIZE = "110g"
 NumJobs = "16"
 
 class Benchmark():
