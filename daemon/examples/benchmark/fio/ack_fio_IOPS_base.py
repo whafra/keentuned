@@ -31,7 +31,7 @@ SIZE = "110g"
 NumJobs = "16"
 
 class Benchmark():
-    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw, size=SIZE, numjobs=NuJobs):
+    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw, size=SIZE, numjobs=NumJobs):
         """Init benchmark
         """
         self.filename = filename
