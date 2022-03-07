@@ -27,22 +27,26 @@ e.g.
 FileName = "/dev/sdb"
 Block_Size = "512B"
 DEFAULT_rw = "read"
+SIZE = "110g"
+NumJobs = "16"
 
 class Benchmark():
-    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw):
+    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw, size=SIZE, numjobs=NumJobs):
         """Init benchmark
         """
         self.filename = filename
         self.bs = bs
         self.rw = rw
+        self.size = size
+        self.numjobs = numjobs
 
     def run(self):
         """Run benchmark and parse output
 
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        cmd = 'fio -filename={} -ioengine=psync -time_based=1 -rw={} -direct=1 -buffered=0 -thread -size=110g -bs={} -numjobs=16 -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read'.format(
-                self.filename,self.rw,self.bs)
+        cmd = 'fio -filename={} -ioengine=psync -time_based=1 -rw={} -direct=1 -buffered=0 -thread -size={} -bs={} -numjobs={} -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read'.format(
+                self.filename,self.rw,self.size,self.bs,self.numjobs)
         logger.info(cmd)
         result = subprocess.run(
                     cmd,
