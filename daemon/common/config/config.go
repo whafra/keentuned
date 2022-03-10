@@ -27,13 +27,17 @@ type KeentunedConf struct {
 }
 
 type Bench struct {
-	BenchIP    string
-	BenchPort  string
+	Bench_Src_IP    string
+	Bench_Src_Port  string
+	Bench_Dest_IP	string
+	Bench_Dest_Port	string
 	BaseRound  int
 	ExecRound  int
 	AfterRound int
 	BenchConf  string
 	BenchDest  string
+	Group      []Group
+        IPMap      map[string]int
 }
 
 type Group struct {
@@ -138,15 +142,6 @@ func (c *KeentunedConf) Save() error {
 	c.Port = keentune.Key("PORT").MustString("9871")
 	c.HeartbeatTime = keentune.Key("HEARTBEAT_TIME").MustInt(30)
 
-	bench := cfg.Section("benchmark")
-	c.BenchIP = bench.Key("BENCH_IP").MustString("")
-	c.BenchPort = bench.Key("BENCH_PORT").MustString("9874")
-	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
-	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
-	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
-	c.BenchDest = bench.Key("BENCH_DESTINATION").MustString("")
-	c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
-
 	if c.BenchConf == "" {
 		fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
 	}
@@ -156,6 +151,10 @@ func (c *KeentunedConf) Save() error {
 	}
 
 	if err = c.getTargetGroup(cfg); err != nil {
+		return err
+	}
+
+	if err = c.getBenchGroup(cfg); err != nil {
 		return err
 	}
 
@@ -219,10 +218,56 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		}
 
 		c.Target.Group = append(c.Target.Group, group)
-		c.addIPMap(group.IPs, ipExist, id)
+		c.addTargetIPMap(group.IPs, ipExist, id)
 	}
 
 	return nil
+}
+
+func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
+        var groupNames []string
+        sections := cfg.SectionStrings()
+        for _, section := range sections {
+                if strings.Contains(section, "bench-group") {
+                        groupNames = append(groupNames, section)
+                }
+        }
+
+        if len(groupNames) == 0 {
+                return fmt.Errorf("bench-group is null, please configure first")
+        }
+
+        var err error
+        var allGroupIPs = make(map[string]string)
+        var ipExist = make(map[string]bool)
+        var id = new(int)
+        c.Bench.IPMap = make(map[string]int)
+        for _, groupName := range groupNames {
+                bench := cfg.Section(groupName)
+                var group Group
+                ipString := bench.Key("BENCH_SRC_IP").MustString("")
+                group.IPs, err = changeStringToSlice(ipString)
+                if err != nil {
+                        return fmt.Errorf("keentune check bench ip %v", err)
+                }
+
+                group.Port = bench.Key("BENCH_SRC_PORT").MustString("9874")
+
+		if err = checkIPRepeated(groupName, group.IPs, allGroupIPs); err != nil {
+                        return fmt.Errorf("%v", err)
+                }
+
+                c.Bench.Group = append(c.Bench.Group, group)
+                c.addBenchIPMap(group.IPs, ipExist, id)
+        }
+
+		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
+                c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
+                c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
+                c.BenchDest = bench.Key("BENCH_DESTINATION").MustString("")
+                c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
+
+		return nil
 }
 
 func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
@@ -248,7 +293,7 @@ func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
 	c.LogConf.BackupCount = logInst.Key("LOGFILE_BACKUP_COUNT").MustInt(14)
 }
 
-func (c *KeentunedConf) addIPMap(ips []string, ipExist map[string]bool, id *int) {
+func (c *KeentunedConf) addTargetIPMap(ips []string, ipExist map[string]bool, id *int) {
 	for _, ip := range ips {
 		if !ipExist[ip] {
 			*id++
@@ -256,6 +301,16 @@ func (c *KeentunedConf) addIPMap(ips []string, ipExist map[string]bool, id *int)
 			c.Target.IPMap[ip] = *id
 		}
 	}
+}
+
+func (c *KeentunedConf) addBenchIPMap(ips []string, ipExist map[string]bool, id *int) {
+        for _, ip := range ips {
+                if !ipExist[ip] {
+                        *id++
+                        ipExist[ip] = true
+                        c.Bench.IPMap[ip] = *id
+                }
+        }
 }
 
 func changeStringToSlice(ipString string) ([]string, error) {
