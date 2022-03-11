@@ -25,7 +25,7 @@ func (tuner *Tuner) loop() error {
 			return err
 		}
 
-		log.Debugf(log.ParamTune, "Step%v. loop %vth set configuration details:%v", tuner.Step, tuner.Iteration, tuner.applySummary)
+		log.Debugf(log.ParamTune, "Step%v. loop %vth set configuration details: %v", tuner.Step, tuner.Iteration, tuner.applySummary)
 
 		// 3. benchmark
 		if err = tuner.benchmark(); err != nil {

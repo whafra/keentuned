@@ -7,10 +7,7 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
-	"keentune/daemon/common/utils/http"
 	"strings"
-	"sync"
-	"time"
 )
 
 // Configuration define a group of parameter and benchmark score in this configuration.
@@ -48,144 +45,6 @@ func (conf Configuration) Save(fileName, suffix string) error {
 		return err
 	}
 	return err
-}
-
-// Apply configuration to Client
-func (conf Configuration) Apply(timeCost *time.Duration, readOnly bool) (string, []Configuration, error) {
-	conf.targetIP = config.KeenTune.TargetIP
-	applyReq, err := conf.assembleApplyRequestMap()
-	if err != nil {
-		return "", []Configuration{}, err
-	}
-	wg := sync.WaitGroup{}
-	var errMsg error
-	var targetFinishStatus = make(map[int]string, len(conf.targetIP))
-	var applyResults = make(map[string]Configuration, len(conf.targetIP))
-	for index, ip := range conf.targetIP {
-		wg.Add(1)
-
-		go func(id int, ip string) {
-			start := time.Now()
-			defer func() {
-				wg.Done()
-				if errMsg != nil {
-					targetFinishStatus[id] = fmt.Sprintf("%v", errMsg)
-				}
-			}()
-
-			host := ip + ":" + config.KeenTune.TargetPort
-			body, err := http.RemoteCall("POST", host+"/configure", utils.ConcurrentSecurityMap(applyReq, []string{"target_id", "readonly"}, []interface{}{id, readOnly}))
-			if err != nil {
-				errMsg = fmt.Errorf("remote call: %v", err)
-				return
-			}
-
-			tempResult, err := conf.parseApplyResponse(body, id)
-			if err != nil {
-				errMsg = fmt.Errorf("parse response: %v", err)
-				return
-			}
-
-			tempResult.Round = conf.Round
-			tempResult.timeSpend = utils.Runtime(start)
-			*timeCost += tempResult.timeSpend.Count
-			targetFinishStatus[id] = "success"
-			applyResults[ip] = tempResult
-		}(index+1, ip)
-	}
-
-	wg.Wait()
-
-	return conf.applyResult(targetFinishStatus, applyResults)
-}
-
-func (conf Configuration) applyResult(status map[int]string, results map[string]Configuration) (string, []Configuration, error) {
-	var retConfigs []Configuration
-	var retSuccessInfo string
-	for index, ip := range conf.targetIP {
-		id := index + 1
-		sucInfo, ok := status[id]
-		retSuccessInfo += fmt.Sprintf("\n\ttarget id %v, apply result: %v", id, sucInfo)
-		if sucInfo != "success" || !ok {
-			continue
-		}
-		retConfigs = append(retConfigs, results[ip])
-	}
-
-	if len(retConfigs) == 0 {
-		return retSuccessInfo, retConfigs, fmt.Errorf("get target conf result is null")
-	}
-
-	if len(retConfigs) != len(conf.targetIP) {
-		return retSuccessInfo, retConfigs, fmt.Errorf("partial success")
-	}
-
-	return retSuccessInfo, retConfigs, nil
-}
-
-func (conf Configuration) assembleApplyRequestMap() (map[string]interface{}, error) {
-	domainMap := make(map[string][]map[string]interface{})
-	reqApplyMap := make(map[string]interface{})
-
-	//  step 1: assemble domainMap type:map[string][]map[string]interface{}
-	for _, param := range conf.Parameters {
-		paramMap, err := utils.Interface2Map(param)
-		if err != nil {
-			log.Warnf("", "StructToMap err:[%v]\n", err)
-			continue
-		}
-		/* delete `domain` field, not used in apply api request body */
-		delete(paramMap, "domain")
-		delete(paramMap, "step")
-		delete(paramMap, "base")
-		delete(paramMap, "range")
-		delete(paramMap, "options")
-
-		domainMap[param.DomainName] = append(domainMap[param.DomainName], paramMap)
-	}
-
-	// step 2: range the domainMap and change the []map[string]interface{} to map[string]interface{} by key
-	for domain, params := range domainMap {
-		var tempDomainMap = make(config.DBLMap)
-		for _, param := range params {
-			name, ok := param["name"].(string)
-			if !ok {
-				return nil, fmt.Errorf("%+v get name failed", param)
-			}
-
-			/* delete `name` field, not used in apply api request body */
-			delete(param, "name")
-			tempDomainMap[name] = param
-		}
-
-		reqApplyMap[domain] = tempDomainMap
-	}
-
-	retRequest := map[string]interface{}{}
-	retRequest["data"] = reqApplyMap
-	retRequest["resp_ip"] = config.RealLocalIP
-	retRequest["resp_port"] = config.KeenTune.Port
-
-	return retRequest, nil
-}
-
-func (conf Configuration) parseApplyResponse(body []byte, id int) (Configuration, error) {
-	_, paramCollection, err := GetApplyResult(body, id)
-	if err != nil {
-		return Configuration{}, err
-	}
-
-	for index := range conf.Parameters {
-		paramInfo, ok := paramCollection[conf.Parameters[index].ParaName]
-		if !ok {
-			log.Warnf("", "find [%v] value missing from target response", conf.Parameters[index].ParaName)
-			continue
-		}
-
-		conf.Parameters[index].Value = paramInfo.Value
-	}
-
-	return conf, nil
 }
 
 // collectParam collect param change map to struct map and state param success information
@@ -246,7 +105,8 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 
 func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	var applyShortRet struct {
-		Success bool `json:"suc"`
+		Success bool        `json:"suc"`
+		Msg     interface{} `json:"msg"`
 	}
 
 	err := json.Unmarshal(sucBytes, &applyShortRet)
@@ -255,7 +115,7 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	}
 
 	if !applyShortRet.Success {
-		return nil, fmt.Errorf("apply short return failed")
+		return nil, fmt.Errorf("apply short return failed, msg:%v", applyShortRet.Msg)
 	}
 
 	var applyResp struct {
@@ -264,7 +124,6 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 		Msg     interface{}   `json:"msg"`
 	}
 
-	config.IsInnerApplyRequests[id] = true
 	select {
 	case body := <-config.ApplyResultChan[id]:
 		log.Debugf(log.ParamTune, "target id: %v receive apply result :[%v]\n", id, string(body))

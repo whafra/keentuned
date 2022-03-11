@@ -39,7 +39,7 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 	start := time.Now()
 	var scores = map[string][]float32{}
 	var sumScore = map[string]float32{}
-
+	config.IsInnerBenchRequests[1] = true
 	defer func() { config.IsInnerBenchRequests[1] = false }()
 
 	var requestBody = map[string]interface{}{}
@@ -156,11 +156,10 @@ func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
 	}
 
 	if !benchResult.Success {
-		return nil, fmt.Errorf("parse score failed, benchmark result return :%v", benchResult.Success)
+		return nil, fmt.Errorf("parse score failed, msg :%v", benchResult.Message)
 	}
 
 	var resultMap = map[string]float32{}
-	config.IsInnerBenchRequests[1] = true
 	select {
 	case bytes := <-config.BenchmarkResultChan:
 		log.Debugf("", "get benchmark result:%s", bytes)

@@ -29,13 +29,17 @@ target_ip="localhost"
 bench_ip="localhost"
 
 # 调优开始前的基线benchmark打压执行次数
-base_round=5
+base_round=2
 # 每轮调优的benchmark打压执行次数
-tune_round=3
+tune_round=1
 # 最优配置的benchmark打压执行次数
-check_round=4
+check_round=1
 # sensitize collect 敏感参数采集的benchmark打压执行次数
-sensi_round=3
+sensi_round=2
+
+bench_conf="bench_wrk_nginx_long.json"
+param_conf="sysctl.json"
+bench_dest="localhost"
 
 #############################################手动配置部分结束############################################
 
@@ -71,16 +75,21 @@ fi
 
 
 # modify keentuned.conf
-sed -i "s#KEENTUNED_HOME = .*#KEENTUNED_HOME = "${keentuned_home}"#" $keentuned_home/conf/keentuned.conf
-sed -i "s/BRAIN_IP = .*/BRAIN_IP = "${brain_ip}"/" $keentuned_home/conf/keentuned.conf
-sed -i "s/BENCH_IP = .*/BENCH_IP = "${bench_ip}"/" $keentuned_home/conf/keentuned.conf
-sed -i "17s/ALGORITHM = .*/ALGORITHM = "${algorithm}"/" $keentuned_home/conf/keentuned.conf
-sed -i "51s/ALGORITHM = .*/ALGORITHM = "${sensitive_algorithm}"/" $keentuned_home/conf/keentuned.conf
-#sed -i "s/TARGET_IP = .*/TARGET_IP = "${target_ip}"/" $keentuned_home/conf/keentuned.conf
-sed -i "s/BASELINE_BENCH_ROUND = .*/BASELINE_BENCH_ROUND = "$base_round"/" $keentuned_home/conf/keentuned.conf
-sed -i "s/TUNING_BENCH_ROUND = .*/TUNING_BENCH_ROUND = "$tune_round"/" $keentuned_home/conf/keentuned.conf
-sed -i "s/RECHECK_BENCH_ROUND = .*/RECHECK_BENCH_ROUND = "$check_round"/" $keentuned_home/conf/keentuned.conf
-sed -i "54s/BENCH_ROUND = .*/BENCH_ROUND = "${sensi_round}"/" $keentuned_home/conf/keentuned.conf
+sed -i "s#KEENTUNED_HOME = .*#KEENTUNED_HOME = ${keentuned_home}#" $keentuned_home/conf/keentuned.conf
+sed -i "s/BRAIN_IP = .*/BRAIN_IP = ${brain_ip}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/BENCH_IP = .*/BENCH_IP = ${bench_ip}/" $keentuned_home/conf/keentuned.conf
+sed -i "17s/ALGORITHM = .*/ALGORITHM = ${algorithm}/" $keentuned_home/conf/keentuned.conf
+sed -i "59s/ALGORITHM = .*/ALGORITHM = ${sensitive_algorithm}/" $keentuned_home/conf/keentuned.conf
+sed -i "0,/TARGET_IP = .*/s//TARGET_IP = ${target_ip}/" $keentuned_home/conf/keentuned.conf
+
+sed -i "s/BASELINE_BENCH_ROUND = .*/BASELINE_BENCH_ROUND = ${base_round}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/TUNING_BENCH_ROUND = .*/TUNING_BENCH_ROUND = ${tune_round}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/RECHECK_BENCH_ROUND = .*/RECHECK_BENCH_ROUND = ${check_round}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/BENCH_DESTINATION = .*/BENCH_DESTINATION = ${bench_dest}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/^BENCH_ROUND = .*/BENCH_ROUND = ${sensi_round}/" $keentuned_home/conf/keentuned.conf
+
+sed -i "0,/PARAMETER = .*/s//PARAMETER = ${param_conf}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/BENCH_CONFIG = .*/BENCH_CONFIG = ${bench_conf}/" $keentuned_home/conf/keentuned.conf
 
 # modify bench_json_file
 sed -i "s%\"local_script_path\":[^,]*%\"local_script_path\": \"${local_script_path}\"%" $keentuned_home/$bench_json_file

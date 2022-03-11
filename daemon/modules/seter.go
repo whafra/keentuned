@@ -234,6 +234,7 @@ func (tuner *Tuner) analysisApplyResults(applyResult map[int]ResultProfileSet) (
 }
 
 func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int]ResultProfileSet, index int, ip string, port string) {
+	config.IsInnerApplyRequests[index] = true
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[index] = false

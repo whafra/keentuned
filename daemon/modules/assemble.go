@@ -75,7 +75,7 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 		if paramMap != nil {
 			params[index] = make(config.DBLMap)
 		}
-		
+
 		for domain, parameters := range paramMap {
 			var temp = make(map[string]interface{})
 			for name, value := range parameters {
@@ -116,10 +116,28 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 	return target, nil
 }
 
-func deepCopy(origin map[string]interface{}) map[string]interface{} {
+func deepCopy(origin interface{}) map[string]interface{} {
+	if origin == nil {
+		return nil
+	}
+
 	var newMap = make(map[string]interface{})
-	for key, value := range origin {
-		newMap[key] = value
+	copyMap, ok := origin.(map[string]interface{})
+	if ok {
+		for key, value := range copyMap {
+			newMap[key] = value
+		}
+
+		return newMap
+	}
+
+	copyDBLMap, ok := origin.(config.DBLMap)
+	if ok {
+		for key, value := range copyDBLMap {
+			newMap[key] = value
+		}
+
+		return newMap
 	}
 
 	return newMap
@@ -213,6 +231,12 @@ func (tuner *Tuner) parseBestParam() error {
 		tuner.Group[index].Dump.Round = tuner.bestInfo.Round
 		tuner.Group[index].Dump.Score = tuner.bestInfo.Score
 		tuner.Group[index].Dump.Parameters = bestParams[index]
+		for _, parameter := range bestParams[index] {
+			err := tuner.Group[index].updateValue(parameter)
+			if err != nil {
+				return fmt.Errorf("update best param %v", err)
+			}
+		}
 	}
 
 	return nil

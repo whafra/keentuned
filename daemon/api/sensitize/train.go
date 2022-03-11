@@ -108,7 +108,7 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 	}
 
 	config.IsInnerSensitizeRequests[1] = true
-
+	defer func() { config.IsInnerSensitizeRequests[1] = false }()
 	select {
 	case resultBytes := <-config.SensitizeResultChan:
 		log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
