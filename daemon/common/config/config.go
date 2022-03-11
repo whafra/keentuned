@@ -27,17 +27,20 @@ type KeentunedConf struct {
 }
 
 type Bench struct {
-	Bench_Src_IP    string
-	Bench_Src_Port  string
-	Bench_Dest_IP	string
-	Bench_Dest_Port	string
+	BenchGroup []BenchGroup
 	BaseRound  int
 	ExecRound  int
 	AfterRound int
 	BenchConf  string
 	BenchDest  string
-	Group      []Group
         IPMap      map[string]int
+}
+
+type BenchGroup struct {
+	SrcIPs []string
+	DestIPs []string
+	SrcPort string
+    DestPort string
 }
 
 type Group struct {
@@ -244,21 +247,28 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
         c.Bench.IPMap = make(map[string]int)
         for _, groupName := range groupNames {
                 bench := cfg.Section(groupName)
-                var group Group
-                ipString := bench.Key("BENCH_SRC_IP").MustString("")
-                group.IPs, err = changeStringToSlice(ipString)
+                var group BenchGroup
+                ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("")
+                group.SrcIPs, err = changeStringToSlice(ipStringSrc)
                 if err != nil {
                         return fmt.Errorf("keentune check bench ip %v", err)
                 }
 
-                group.Port = bench.Key("BENCH_SRC_PORT").MustString("9874")
+		ipStringDest := bench.Key("BENCH_DEST_IP").MustString("")
+		group.DestIPs, err = changeStringToSlice(ipStringDest)
+		if err != nil {
+                        return fmt.Errorf("keentune check bench ip %v", err)
+                }
+
+                group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
+                group.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
 
 		if err = checkIPRepeated(groupName, group.IPs, allGroupIPs); err != nil {
                         return fmt.Errorf("%v", err)
                 }
 
-                c.Bench.Group = append(c.Bench.Group, group)
-                c.addBenchIPMap(group.IPs, ipExist, id)
+                c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
+                c.addBenchIPMap(group.SrcIPs, ipExist, id)
         }
 
 		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
