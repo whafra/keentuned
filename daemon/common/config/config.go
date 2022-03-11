@@ -32,7 +32,6 @@ type Bench struct {
 	ExecRound  int
 	AfterRound int
 	BenchConf  string
-	BenchDest  string
         IPMap      map[string]int
 }
 
@@ -40,7 +39,7 @@ type BenchGroup struct {
 	SrcIPs []string
 	DestIPs []string
 	SrcPort string
-    DestPort string
+   	DestPort string
 }
 
 type Group struct {
@@ -144,14 +143,6 @@ func (c *KeentunedConf) Save() error {
 	c.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
 	c.Port = keentune.Key("PORT").MustString("9871")
 	c.HeartbeatTime = keentune.Key("HEARTBEAT_TIME").MustInt(30)
-
-	if c.BenchConf == "" {
-		fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
-	}
-
-	if err = checkBenchConf(&c.BenchConf); err != nil {
-		return err
-	}
 
 	if err = c.getTargetGroup(cfg); err != nil {
 		return err
@@ -274,8 +265,15 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
                 c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
                 c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
-                c.BenchDest = bench.Key("BENCH_DESTINATION").MustString("")
                 c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
+
+		if c.BenchConf == "" {
+			fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+		}
+
+        	if err = checkBenchConf(&c.BenchConf); err != nil {
+			return err
+		}
 
 		return nil
 }
