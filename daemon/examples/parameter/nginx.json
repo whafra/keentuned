@@ -1,5 +1,5 @@
 {
-    "nginx_conf": {
+    "nginx": {
         "worker_rlimit_nofile": {
             "desc": "默认值：500",
             "dtype": "int",
