@@ -29,7 +29,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		log.Errorf(log.ProfSet, "Check %v", err)
 		return fmt.Errorf("Check %v", err)
 	}
-	go runSeting(flag, reply)
+	runSeting(flag, reply)
 	return nil
 }
 

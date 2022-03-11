@@ -344,3 +344,33 @@ func isDataTypeOK(dtype string) bool {
 		return false
 	}
 }
+
+func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
+	//var err error
+	for domainName, domainMap := range userParamMap {
+		priID, ok := PriorityList[domainName]
+		if !ok {
+			priID = 1
+		}
+
+		if mergedParam[priID] == nil {
+			mergedParam[priID] = make(DBLMap)
+		}
+		_, ok = mergedParam[priID][domainName]
+		if !ok {
+			mergedParam[priID][domainName] = make(map[string]interface{})
+		}
+
+		for name, paramValue := range domainMap {
+			paramMap, ok := paramValue.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("parse param %v value [%+v] type to map failed", name, paramValue)
+			}
+
+			if _, ok = mergedParam[priID][domainName][name]; !ok {
+				mergedParam[priID][domainName][name] = paramMap
+			}
+		}
+	}
+	return nil
+}

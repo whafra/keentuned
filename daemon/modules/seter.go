@@ -78,6 +78,7 @@ func (tuner *Tuner) Set() {
 			fileSet = fileSet + file.GetPlainName(tuner.Seter.ConfFile[groupIndex]) + "\n"
 		}
 	}
+	fileSet = strings.TrimSuffix(fileSet, "\n")
 	if err := UpdateActiveFile(activeFile, []byte(fileSet)); err != nil {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return
@@ -117,9 +118,9 @@ func (tuner *Tuner) checkProfilePath() (map[int]string, error) {
 
 }
 
-func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int]map[string]interface{}) error {
+func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int][]map[string]interface{}) error {
 	// step1. rollback the target machine
-	err := tuner.rollback_profile_set()
+	err := tuner.rollbackProfileSet()
 	if err != nil {
 		return fmt.Errorf("rollback details:\n%v", err)
 	}
@@ -130,25 +131,34 @@ func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int]map[string]interface{
 		return fmt.Errorf("update active file failed, err:%v", err)
 	}
 
-	for _, configInfo := range configInfoAll {
-		backupReq := utils.Parse2Map("data", configInfo)
-		//if backupReq == nil || len(backupReq) == 0 {
-		if len(backupReq) == 0 {
-			return fmt.Errorf("backup info is null")
+	var backupFlag int = 0
+	for _, configInfo_priority := range configInfoAll {
+		for _, configInfo := range configInfo_priority {
+			if configInfo == nil {
+				continue
+			}
+			backupReq := utils.Parse2Map("data", configInfo)
+			if backupReq == nil {
+				return fmt.Errorf("backup info is null")
+			}
+			backupFlag = 1
 		}
 	}
+	if backupFlag == 0 {
+		return fmt.Errorf("backup info is null")
+	}
 	// step3. backup the target machine
-	err = tuner.backup_profile_set()
+	err = tuner.backupProfileSet()
 	if err != nil {
 		return fmt.Errorf("backup details:\n%v", err)
 	}
 	return nil
 }
 
-func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int]map[string]interface{}, error) {
+func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]map[string]interface{}, error) {
 
-	retRequestAll := map[int]map[string]interface{}{}
-	retRequest := map[string]interface{}{}
+	retRequestAll := map[int][]map[string]interface{}{}
+	retRequest := make([]map[string]interface{}, config.PRILevel)
 	for groupIndex, configFile := range configFileALL {
 
 		resultMap, err := file.ConvertConfFileToJson(configFile)
@@ -156,38 +166,44 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int]ma
 			return nil, fmt.Errorf("convert file :%v err:%v", configFile, err)
 		}
 
-		respIP, err := utils.GetExternalIP()
-		if err != nil {
-			return nil, fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
-		}
+		var mergedParam = make([]config.DBLMap, config.PRILevel)
+		config.ReadProfileParams(resultMap, mergedParam)
 
-		retRequest["data"] = resultMap
-		retRequest["resp_ip"] = respIP
-		retRequest["resp_port"] = config.KeenTune.Port
+		for index, paramMap := range mergedParam {
+			if paramMap == nil {
+				continue
+			}
+			if retRequest[index] == nil {
+				retRequest[index] = make(map[string]interface{})
+			}
+			retRequest[index]["data"] = paramMap
+			retRequest[index]["resp_ip"] = config.RealLocalIP
+			retRequest[index]["resp_port"] = config.KeenTune.Port
+		}
 		retRequestAll[groupIndex] = retRequest
 
 	}
 	return retRequestAll, nil
 }
 
-func (tuner *Tuner) setConfiguration(requestAll map[int]map[string]interface{}) ([]string, string, error) {
+func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}) ([]string, string, error) {
 	wg := sync.WaitGroup{}
 	var applyResult = make(map[int]ResultProfileSet)
 
 	//groupIndex为target-group-x   x= groupIndex + 1
-	var index = 0
-	for groupIndex, request := range requestAll {
-		for _, target := range tuner.Group {
-			if target.GroupNo == groupIndex+1 {
-				for _, ip := range target.IPs {
-					wg.Add(1)
-					go tuner.set(request, &wg, applyResult, index+1, ip, target.Port)
-					index++
+	for groupIndex, requestAllPriority := range requestAll {
+		for _, request := range requestAllPriority {
+			for _, target := range tuner.Group {
+				if target.GroupNo == groupIndex+1 {
+					for _, ip := range target.IPs {
+						index := config.KeenTune.IPMap[ip]
+						wg.Add(1)
+						go tuner.set(request, &wg, applyResult, index, ip, target.Port)
+					}
 				}
 			}
 		}
 	}
-
 	wg.Wait()
 
 	return tuner.analysisApplyResults(applyResult)
@@ -196,15 +212,6 @@ func (tuner *Tuner) setConfiguration(requestAll map[int]map[string]interface{}) 
 func (tuner *Tuner) analysisApplyResults(applyResult map[int]ResultProfileSet) ([]string, string, error) {
 	var failedInfo string
 	var successInfo []string
-	// add detail info in order
-	// for index, _ := range config.KeenTune.TargetIP {
-	// 	id := index + 1
-	// 	if !applyResult[id].Success {
-	// 		failedInfo += applyResult[id].Info
-	// 		continue
-	// 	}
-	// 	successInfo = append(successInfo, applyResult[id].Info)
-	// }
 
 	for result := range applyResult {
 		if !applyResult[result].Success {
@@ -254,50 +261,6 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 		Info:    fmt.Sprintf("target %v apply result: %v", index, setResult),
 		Success: true,
 	}
-}
-
-// 判断所给路径文件/文件夹是否存在
-func Exists(path string) bool {
-	_, err := os.Stat(path) //os.Stat获取文件信息
-	if err != nil {
-		if os.IsExist(err) {
-			return true
-		}
-		return false
-	}
-	return true
-}
-
-func appendActiveFile(fileName string, info []byte) error {
-	// if err := ioutil.WriteFile(fileName, info, os.ModePerm); err != nil {
-	// 	return err
-	// }
-	var file *os.File
-	var err error
-	if Exists(fileName) {
-		//使用追加模式打开文件
-		file, err = os.OpenFile(fileName, os.O_APPEND, os.ModePerm|os.ModeAppend)
-		if err != nil {
-			fmt.Println("Open file err =", err)
-			return err
-		}
-	} else {
-		file, err = os.Create(fileName) //创建文件
-		if err != nil {
-			fmt.Println("file create fail")
-			return err
-		}
-	}
-	defer file.Close()
-
-	//n, err := file.WriteString(string(info))
-	n, err := file.WriteString("hello yuxj")
-	if err != nil {
-		fmt.Println("Write file err =", err)
-		return err
-	}
-	fmt.Println("Write file success, n =", n)
-	return nil
 }
 
 func UpdateActiveFile(fileName string, info []byte) error {

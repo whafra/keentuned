@@ -188,15 +188,15 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	return nil
 }
 
-func (tuner *Tuner) rollback_profile_set() error {
-	return tuner.concurrent_profile_set("rollback", false)
+func (tuner *Tuner) rollbackProfileSet() error {
+	return tuner.concurrentProfileSet("rollback", false)
 }
 
-func (tuner *Tuner) backup_profile_set() error {
-	return tuner.concurrent_profile_set("backup", true)
+func (tuner *Tuner) backupProfileSet() error {
+	return tuner.concurrentProfileSet("backup", true)
 }
 
-func (tuner *Tuner) concurrent_profile_set(uri string, needReq bool) error {
+func (tuner *Tuner) concurrentProfileSet(uri string, needReq bool) error {
 	var sucCount = new(int)
 	var retResult = new(string)
 	wg := sync.WaitGroup{}
