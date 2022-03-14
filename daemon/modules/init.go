@@ -188,6 +188,7 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	return nil
 }
 
+/*
 func (tuner *Tuner) rollbackProfileSet() error {
 	return tuner.concurrentProfileSet("rollback", false)
 }
@@ -233,3 +234,4 @@ func (tuner *Tuner) concurrentProfileSet(uri string, needReq bool) error {
 
 	return nil
 }
+*/

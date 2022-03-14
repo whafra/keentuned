@@ -339,6 +339,11 @@ func (tuner *Tuner) initProfiles() error {
 		target.GroupName = group.GroupName
 		target.GroupNo = group.GroupNo
 		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target)
+
+		if !target.ProfileSetFlag {
+			continue
+		}
+
 		target.mergeParam()
 
 		var updateIP = make(map[string]bool)

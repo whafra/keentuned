@@ -120,7 +120,7 @@ func (tuner *Tuner) checkProfilePath() (map[int]string, error) {
 
 func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int][]map[string]interface{}) error {
 	// step1. rollback the target machine
-	err := tuner.rollbackProfileSet()
+	err := tuner.rollback()
 	if err != nil {
 		return fmt.Errorf("rollback details:\n%v", err)
 	}
@@ -148,7 +148,7 @@ func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int][]map[string]interfac
 		return fmt.Errorf("backup info is null")
 	}
 	// step3. backup the target machine
-	err = tuner.backupProfileSet()
+	err = tuner.backup()
 	if err != nil {
 		return fmt.Errorf("backup details:\n%v", err)
 	}
@@ -191,16 +191,16 @@ func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}
 	var applyResult = make(map[int]ResultProfileSet)
 
 	//groupIndex为target-group-x   x= groupIndex + 1
-	for groupIndex, requestAllPriority := range requestAll {
+	for _, requestAllPriority := range requestAll {
 		for _, request := range requestAllPriority {
 			for _, target := range tuner.Group {
-				if target.GroupNo == groupIndex+1 {
-					for _, ip := range target.IPs {
-						index := config.KeenTune.IPMap[ip]
-						wg.Add(1)
-						go tuner.set(request, &wg, applyResult, index, ip, target.Port)
-					}
+				//if target.GroupNo == groupIndex+1 {
+				for _, ip := range target.IPs {
+					index := config.KeenTune.IPMap[ip]
+					wg.Add(1)
+					go tuner.set(request, &wg, applyResult, index, ip, target.Port)
 				}
+				//}
 			}
 		}
 	}
