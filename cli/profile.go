@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"github.com/spf13/cobra"
-	"os"
+	com "keentune/daemon/api/common"
 	m "keentune/daemon/modules"
+	"os"
+	"strings"
 )
 
 const (
@@ -105,6 +106,14 @@ func setCmd() *cobra.Command {
 			}
 
 			setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
+			var targetMsg = new(string)
+			if com.IsTargetOffline(targetMsg) {
+				fmt.Printf("%v Found %v offline, please get them (it) ready before use\n",
+					ColorString("red", "[ERROR]"),
+					strings.TrimSuffix(*targetMsg, ", "))
+				os.Exit(1)
+			}
+
 			RunSetRemote(cmd.Context(), setFlag)
 			return
 		},
@@ -162,19 +171,19 @@ func generateCmd() *cobra.Command {
 			}
 
 			//Determine whether json file already exists
-                        ParamPath := m.GetGenerateWorkPath(genFlag.Output)
-                        _, err := os.Stat(ParamPath)
-                        if err == nil {
-                                fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
-                                genFlag.Force = confirm()
-                                if !genFlag.Force {
-                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
-                                    os.Exit(1)
-                                }
-                                RunGenerateRemote(cmd.Context(), genFlag)
-                        } else {
-                                RunGenerateRemote(cmd.Context(), genFlag)
-                        }
+			ParamPath := m.GetGenerateWorkPath(genFlag.Output)
+			_, err := os.Stat(ParamPath)
+			if err == nil {
+				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
+				genFlag.Force = confirm()
+				if !genFlag.Force {
+					fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+					os.Exit(1)
+				}
+				RunGenerateRemote(cmd.Context(), genFlag)
+			} else {
+				RunGenerateRemote(cmd.Context(), genFlag)
+			}
 
 			return
 		},

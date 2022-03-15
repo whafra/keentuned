@@ -30,16 +30,9 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	}
 
 	defer func() {
-		config.ProgramNeedExit <- true
-		<-config.ServeFinish
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
 	}()
-
-	if err := com.HeartbeatCheck(); err != nil {
-		log.Errorf(log.ProfSet, "Check %v", err)
-		return fmt.Errorf("Check %v", err)
-	}
 
 	configFile, err := checkProfilePath(flag.Name)
 	if err != nil {
@@ -53,7 +46,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		return fmt.Errorf("Get request info from specified file [%v] err:%v", flag.Name, err)
 	}
 
-	if err := prepareBeforeSet(requestInfo); err != nil {
+	if err = prepareBeforeSet(requestInfo); err != nil {
 		log.Errorf(log.ProfSet, "Prepare for Set err:%v", err)
 		return fmt.Errorf("Prepare for Set err:%v", err)
 	}

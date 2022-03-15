@@ -8,6 +8,7 @@ import (
 	"keentune/daemon/common/utils/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -73,26 +74,41 @@ func monitorClientStatus(clientName *string) {
 }
 
 func IsClientOffline(clientName *string) bool {
-	for index, ip := range config.KeenTune.TargetIP {
-		targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.TargetPort)
-		if checkOffline(targetURI) {
-			*clientName = fmt.Sprintf("target %v", index+1)
-			return true
-		}
-	}
+	var offline = false
+	offline = IsTargetOffline(clientName)
 
 	benchURI := config.KeenTune.BenchIP + ":" + config.KeenTune.BenchPort + "/status"
 	if checkOffline(benchURI) {
-		*clientName = fmt.Sprintf("bench")
-		return true
+		*clientName += fmt.Sprintf("bench client, ")
+		offline = true
 	}
-	return false
+
+	// check brain
+	if isBrainOffline() {
+		*clientName += fmt.Sprintf("brain client")
+		offline = true
+	}
+
+	*clientName = strings.TrimSuffix(*clientName, ", ")
+	return offline
+}
+
+func IsTargetOffline(clientName *string) bool {
+	var offline bool
+	for index, ip := range config.KeenTune.TargetIP {
+		targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.TargetPort)
+		if checkOffline(targetURI) {
+			*clientName += fmt.Sprintf("target %v, ", index+1)
+			offline = true
+		}
+	}
+
+	return offline
 }
 
 func checkOffline(uri string) bool {
 	bytes, err := http.RemoteCall("GET", uri, nil)
 	if err != nil {
-		log.Errorf("", "remotcall return err: %v", err)
 		return true
 	}
 
@@ -104,3 +120,23 @@ func checkOffline(uri string) bool {
 
 	return clientState.Status != "alive"
 }
+
+func StartCheck() error {
+	var clientName = new(string)
+	if IsClientOffline(clientName) {
+		return fmt.Errorf("Found %v offline, please get them (it) ready before use", *clientName)
+	}
+
+	return nil
+}
+
+func isBrainOffline() bool {
+	url := fmt.Sprintf("%v:%v/sensitize_list", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+	_, err := http.RemoteCall("GET", url, nil)
+	if err != nil {
+		return true
+	}
+
+	return false
+}
+

@@ -10,6 +10,7 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	m "keentune/daemon/modules"
 	"net"
 	"net/rpc"
@@ -68,6 +69,10 @@ func showStart() {
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
 	for index, ip := range config.KeenTune.TargetIP {
 		fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, index+1)
+	}
+
+	if err := com.StartCheck(); err != nil {
+		fmt.Printf("[%v] %v\n", utils.ColorString("YELLOW", "Warning"), err)
 	}
 
 	fmt.Println("KeenTune daemon running...")
