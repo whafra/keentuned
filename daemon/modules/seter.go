@@ -189,7 +189,6 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]
 }
 
 func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}) ([]string, string, error) {
-	wg := sync.WaitGroup{}
 	var applyResult = make(map[int]ResultProfileSet)
 
 	//groupIndex为target-group-x   x= groupIndex + 1
@@ -198,6 +197,7 @@ func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}
 			if request == nil {
 				continue
 			}
+			wg := sync.WaitGroup{}
 			for _, target := range tuner.Group {
 				if target.GroupNo == groupIndex+1 {
 					for _, ip := range target.IPs {
@@ -207,10 +207,9 @@ func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}
 					}
 				}
 			}
+			wg.Wait()
 		}
 	}
-	wg.Wait()
-
 	return tuner.analysisApplyResults(applyResult)
 }
 
@@ -245,7 +244,6 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 		config.IsInnerApplyRequests[index] = false
 	}()
 	uri := fmt.Sprintf("%s:%s/configure", ip, port)
-	fmt.Println(uri)
 	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
 	if err != nil {
 		applyResult[index] = ResultProfileSet{
