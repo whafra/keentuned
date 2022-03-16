@@ -88,10 +88,12 @@ func (tuner *Tuner) Set() {
 	// 	return
 	// }
 
+	sucInfosIndex := 0
 	for groupIndex, v := range tuner.Seter.Group {
-		if v {
-			log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex], strings.TrimPrefix(sucInfos[groupIndex], "target 1 apply result: "))
+		if v && sucInfosIndex < len(sucInfos) {
+			log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex], strings.TrimPrefix(sucInfos[sucInfosIndex], "target 1 apply result: "))
 			log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex])
+			sucInfosIndex++
 		}
 	}
 
@@ -193,6 +195,9 @@ func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}
 	//groupIndex为target-group-x   x= groupIndex + 1
 	for _, requestAllPriority := range requestAll {
 		for _, request := range requestAllPriority {
+			if request == nil {
+				continue
+			}
 			for _, target := range tuner.Group {
 				//if target.GroupNo == groupIndex+1 {
 				for _, ip := range target.IPs {
