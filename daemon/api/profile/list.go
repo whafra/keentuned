@@ -26,18 +26,24 @@ func (s *Service) List(flag string, reply *string) error {
 	var fileListInfo string
 	activeFileName := config.GetProfileWorkPath("active.conf")
 	activeNameBytes, _ := ioutil.ReadFile(activeFileName)
+	activeNames := strings.Split(string(activeNameBytes), "\n")
 
 	for _, value := range proFileList {
-		if string(activeNameBytes) == value {
-			fileListInfo += fmt.Sprintf("%s\t%v\n", utils.ColorString("GREEN", "[active]"), value)
-			continue
+		activeFlag := false
+		for _, activeFile := range activeNames {
+			if activeFile == value {
+				activeFlag = true
+				fileListInfo += fmt.Sprintf("%s\t%v\n", utils.ColorString("GREEN", "[active]"), value)
+				continue
+			}
+			if value == "active.conf" {
+				activeFlag = true
+				continue
+			}
 		}
-
-		if value == "active.conf" {
-			continue
+		if !activeFlag {
+			fileListInfo += fmt.Sprintf("[available]\t%v\n", value)
 		}
-
-		fileListInfo += fmt.Sprintf("[available]\t%v\n", value)
 	}
 
 	if len(fileListInfo) == 0 {
