@@ -262,9 +262,13 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 		return
 	}
 
-	applyResult[index] = ResultProfileSet{
-		Info:    fmt.Sprintf("target %v apply result: %v", index, setResult),
-		Success: true,
+
+	//如果已经有错误信息，那就不将后续的设置成功信息填入；
+	if !(applyResult[index].Success == false && strings.Contains(applyResult[index].Info, "apply result")) {
+		applyResult[index] = ResultProfileSet{
+			Info:    fmt.Sprintf("target %v apply result: %v", index, setResult),
+			Success: true,
+		}
 	}
 }
 
