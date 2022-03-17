@@ -118,7 +118,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 
 	inst := benchmarks[0]
 	inst.Cmd = strings.Replace(strings.Replace(inst.Cmd, "{remote_script_path}", inst.FilePath, 1), "{target_ip}", tuneIP[0], 1)
-	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.BenchIP, config.KeenTune.BenchPort)
+//	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.SrcIPs, config.KeenTune.SrcPort)
 	inst.SortedItems = sortBenchItemNames(inst.Items)
 	return &inst, nil
 }
