@@ -36,50 +36,67 @@ type Result struct {
 }
 
 // RunBenchmark : run benchmark script or command in client
-func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {
-	wg := sync.WaitGroup{}
+func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {	
 	start := time.Now()
-	var scores = map[string][]float32{}
-	var sumScore = map[string]float32{}
+	var scores = make([]map[string][]float32, len(config.KeenTune.BenchGroup))
+	var sumScore = make([]map[string]float32, len(config.KeenTune.BenchGroup))
 
+	config.IsInnerBenchRequests[1] = true
 	defer func() { config.IsInnerBenchRequests[1] = false }()
 
-	var requestBody = map[string]interface{}{}
-	requestBody["benchmark_cmd"] = tuner.Benchmark.Cmd
-	requestBody["resp_ip"] = config.RealLocalIP
-	requestBody["resp_port"] = config.KeenTune.Port
-
+	var groupsScores = make([][]map[string]float32, num)
 	for i := 1; i <= num; i++ {
-		for _, benchip := range config.KeenTune.SrcIPs {
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, benchip string) {
-				tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchip, config.KeenTune.SrcPort)
-				resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", requestBody)
-				if err != nil {
-					return scores, nil, "", fmt.Errorf("%vth benchmark remote call return err:%v", i, err)
-				}
-			}(&wg, benchip)
+		wg := sync.WaitGroup{}
+		for groupID, group := range config.KeenTune.BenchGroup {
+			groupsScores[groupID] = make([]map[string]float32, len(group.SrcIPs))
+			scores[groupID] = make(map[string][]float32)
+			sumScore[groupID] = make(map[string]float32)
+			for index, benchIP := range group.SrcIPs {
+				wg.Add(1)
+				go func(wg *sync.WaitGroup, benchIP string, index int) {
+					tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchIP, group.SrcPort)
+					resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", getBenchReq(tuner.Benchmark.Cmd, benchIP))
+					if err != nil {
+						return
+					}
+
+					groupsScores[groupID][index], err = tuner.parseScore(resp)
+					if err != nil {
+						return
+					}
+
+				}(&wg, benchIP, index)
+			}
 		}
 
 		wg.Wait()
+	}
 
-		score, err := tuner.parseScore(resp)
-		if err != nil {
-			return scores, nil, "", fmt.Errorf("%vth benchmark parse score err:%v", i, err)
+	//  collect score of each group
+	for groupID, groupScores := range groupsScores {
+		for _, results := range groupScores {
+			for name, value := range results {
+				scores[groupID][name] = append(scores[groupID][name], value)
+				sumScore[groupID][name] += value
+			}
 		}
-
-		for name, value := range score {
-			scores[name] = append(scores[name], value)
-			sumScore[name] += value
-		}
-
 	}
 
 	tuner.Benchmark.round = num
 	tuner.Benchmark.verbose = tuner.Verbose
-	benchScoreResult, resultString, err := tuner.Benchmark.getScore(scores, sumScore, start, &tuner.timeSpend.benchmark)
-	return scores, benchScoreResult, resultString, err
+	benchScoreResult, resultString, err := tuner.Benchmark.getScore(scores[0], sumScore[0], start, &tuner.timeSpend.benchmark)
+	return scores[0], benchScoreResult, resultString, err
 }
+
+func getBenchReq(cmd, ip string) interface{} {
+	var requestBody = map[string]interface{}{}
+	requestBody["benchmark_cmd"] = cmd
+	requestBody["resp_ip"] = config.RealLocalIP
+	requestBody["resp_port"] = config.KeenTune.Port
+	requestBody["bench_id"] = config.KeenTune.Bench.IPMap[ip]
+	return requestBody
+}
+
 
 func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[string]float32, start time.Time, benchTime *time.Duration) (map[string]ItemDetail, string, error) {
 	benchScoreResult := map[string]ItemDetail{}
