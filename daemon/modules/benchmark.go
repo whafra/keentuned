@@ -93,7 +93,7 @@ func getBenchReq(cmd, ip string) interface{} {
 	requestBody["benchmark_cmd"] = cmd
 	requestBody["resp_ip"] = config.RealLocalIP
 	requestBody["resp_port"] = config.KeenTune.Port
-	requestBody["bench_id"] = config.KeenTune.Bench.IPMap[ip]
+	requestBody["bench_id"] = config.KeenTune.Bench.BenchIPMap[ip]
 	return requestBody
 }
 

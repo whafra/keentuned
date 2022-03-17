@@ -32,7 +32,7 @@ type Bench struct {
 	ExecRound  int
 	AfterRound int
 	BenchConf  string
-        IPMap      map[string]int
+	BenchIPMap map[string]int
 }
 
 type BenchGroup struct {
@@ -87,7 +87,7 @@ var (
 	//  ApplyResultChan receive apply result
 	ApplyResultChan     []chan []byte
 	ServeFinish         = make(chan bool, 1)
-	BenchmarkResultChan = make(chan []byte, 1)
+	BenchmarkResultChan   []chan []byte
 	SensitizeResultChan = make(chan []byte, 1)
 )
 
@@ -130,6 +130,11 @@ func initChanAndIPMap() {
 
 	for _, index := range KeenTune.IPMap {
 		ApplyResultChan[index] = make(chan []byte, 1)
+	}
+
+	BenchmarkResultChan = make([]chan []byte, len(KeenTune.BenchIPMap)+2)
+	for _, benchIP := range KeenTune.BenchIPMap {
+		BenchmarkResultChan[benchIP] = make(chan []byte, 1)
 	}
 }
 
@@ -235,7 +240,7 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
         var allGroupIPs = make(map[string]string)
         var ipExist = make(map[string]bool)
         var id = new(int)
-        c.Bench.IPMap = make(map[string]int)
+        c.Bench.BenchIPMap = make(map[string]int)
         for _, groupName := range groupNames {
                 bench := cfg.Section(groupName)
                 var group BenchGroup
@@ -254,26 +259,26 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
                 group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
                 group.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
 
-		if err = checkIPRepeated(groupName, group.IPs, allGroupIPs); err != nil {
+		if err = checkIPRepeated(groupName, group.SrcIPs, allGroupIPs); err != nil {
                         return fmt.Errorf("%v", err)
                 }
 
                 c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
                 c.addBenchIPMap(group.SrcIPs, ipExist, id)
-        }
 
 		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
                 c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
                 c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
                 c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
 
-		if c.BenchConf == "" {
-			fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
-		}
+                if c.BenchConf == "" {
+                        fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+                }
 
-        	if err = checkBenchConf(&c.BenchConf); err != nil {
-			return err
-		}
+                if err = checkBenchConf(&c.BenchConf); err != nil {
+                        return err
+                }
+	}
 
 		return nil
 }
@@ -316,7 +321,7 @@ func (c *KeentunedConf) addBenchIPMap(ips []string, ipExist map[string]bool, id 
                 if !ipExist[ip] {
                         *id++
                         ipExist[ip] = true
-                        c.Bench.IPMap[ip] = *id
+                        c.Bench.BenchIPMap[ip] = *id
                 }
         }
 }

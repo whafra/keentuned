@@ -85,10 +85,10 @@ func IsClientOffline(clientName *string) bool {
 
 	}
 
-	for _, benchgroup := range config.Keentune.BenchGroup {
+	for _, benchgroup := range config.KeenTune.BenchGroup {
 		for _, benchip := range benchgroup.SrcIPs {
 			benchURI := fmt.Sprintf("%v:%v/status",benchip,benchgroup.SrcPort)
-			id := config.KeenTune.Bench.IPMap[ip]
+			id := config.KeenTune.Bench.BenchIPMap[benchip]
 			if checkOffline(benchURI) {
 				*clientName = fmt.Sprintf("bench %v", id)
 				return true
