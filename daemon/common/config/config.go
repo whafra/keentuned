@@ -43,7 +43,6 @@ type Sensitize struct {
 }
 
 type LogConf struct {
-	ConsoLvl    string
 	LogFileLvl  string
 	FileName    string
 	Interval    int
@@ -146,7 +145,6 @@ func (c *KeentunedConf) Save() error {
 
 func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
 	logInst := cfg.Section("log")
-	c.LogConf.ConsoLvl = logInst.Key("CONSOLE_LEVEL").MustString("INFO")
 	c.LogConf.LogFileLvl = logInst.Key("LOGFILE_LEVEL").MustString("DEBUG")
 	c.LogConf.FileName = logInst.Key("LOGFILE_NAME").MustString("keentuned.log")
 	c.LogConf.Interval = logInst.Key("LOGFILE_INTERVAL").MustInt(2)

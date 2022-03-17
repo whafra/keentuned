@@ -13,8 +13,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const ConsoleLevel = "ERROR"
+
 var fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogConf.LogFileLvl)}
-var cLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogConf.ConsoLvl)}
+var cLogger = &logrus.Logger{Level: getLevel(ConsoleLevel)}
 
 // fLogInst file log instance
 var fLogInst = Logger{entry: logrus.NewEntry(fLogger)}
@@ -35,6 +37,7 @@ type logFormater struct {
 	file            string
 	funcName        string
 	line            int
+	cmd             string
 }
 
 // consoleLogFormater console log custom format
@@ -43,7 +46,6 @@ type consoleLogFormater struct {
 	file      string
 	funcName  string
 	line      int
-	cmd       string
 }
 
 // command name
@@ -107,8 +109,27 @@ func init() {
 
 //  Format define the file log detail
 func (s *logFormater) Format(entry *logrus.Entry) ([]byte, error) {
-	msg := fmt.Sprintf(s.LogFormat, strings.ToUpper(entry.Level.String()), s.TimestampFormat, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
+	level := strings.ToUpper(entry.Level.String())
+	msg := fmt.Sprintf(s.LogFormat, level, s.TimestampFormat, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
+
+	s.setClient(entry)
+
 	return []byte(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(msg, "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", "")), nil
+}
+
+func (s *logFormater) setClient(entry *logrus.Entry) {
+	level := strings.ToUpper(entry.Level.String())
+	msg := ""
+	switch level {
+	case "ERROR", "WARNING":
+		msg = fmt.Sprintf("[%s] %s ...[%s, %d]\n", level, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
+	default:
+		msg = fmt.Sprintf("%s\n", entry.Message)
+	}
+
+	if s.cmd != "" {
+		updateClientLog(s.cmd, msg)
+	}
 }
 
 //  Format define the console log detail
@@ -120,10 +141,6 @@ func (s *consoleLogFormater) Format(entry *logrus.Entry) ([]byte, error) {
 		msg = fmt.Sprintf(s.LogFormat, level, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
 	default:
 		msg = fmt.Sprintf(s.LogFormat, entry.Message)
-	}
-
-	if s.cmd != "" {
-		updateClientLog(s.cmd, msg)
 	}
 
 	return []byte(msg), nil
@@ -198,6 +215,7 @@ func (logger *Logger) setFormatter(mode string, level ...string) *logrus.Entry {
 				file:            file,
 				funcName:        funcName,
 				line:            line,
+				cmd:             logger.cmd,
 			})
 	}
 
@@ -230,97 +248,95 @@ func (logger *Logger) getFormater(file, funcName string, line int, level string)
 			file:      file,
 			funcName:  funcName,
 			line:      line,
-			cmd:       logger.cmd,
 		}
 	default:
 		return &consoleLogFormater{
 			LogFormat: "%s\n",
-			cmd:       logger.cmd,
 		}
 	}
 }
 
 // Info method log info level args
 func Info(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Info(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "info").Info(args...)
 }
 
 // Infoln method log info level args
 func Infoln(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Infoln(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "info").Infoln(args...)
 }
 
 // Infof method log info level message with format string
 func Infof(cmd string, format string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Infof(format, args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "info").Infof(format, args...)
 }
 
 // Warn method log warn args
 func Warn(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Warn(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "warning").Warn(args...)
 }
 
 // Warnln method log warn args
 func Warnln(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Warnln(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "warning").Warnln(args...)
 }
 
 // Warnf method log warn level message with format string
 func Warnf(cmd string, format string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Warnf(format, args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "warning").Warnf(format, args...)
 }
 
 // Error method log error args
 func Error(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Error(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "error").Error(args...)
 }
 
 // Errorln method log error args
 func Errorln(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Errorln(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "error").Errorln(args...)
 }
 
 // Errorf method log error level message with format string
 func Errorf(cmd string, format string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Errorf(format, args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "error").Errorf(format, args...)
 }
 
 // Debug method log debug args
 func Debug(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Debug(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "debug").Debug(args...)
 }
 
 // Debugln method log debug args
 func Debugln(cmd string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Debugln(args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "debug").Debugln(args...)
 }
 
 // Debugf method log debug level message with format string
 func Debugf(cmd string, format string, args ...interface{}) {
+	fLogInst.cmd = cmd
 	fLogInst.setFormatter("file").Debugf(format, args...)
-	cLogInst.cmd = cmd
 	cLogInst.setFormatter("console", "debug").Debugf(format, args...)
 }
 
