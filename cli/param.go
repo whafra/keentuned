@@ -155,7 +155,7 @@ func dumpCmd() *cobra.Command {
 
 			err := checkDumpParam(&dump)
 			if err != nil {
-				fmt.Printf("%v Check dump param failed, err:%v\n", ColorString("red", "[ERROR]"), err)
+				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
 			}
 
@@ -176,12 +176,30 @@ func checkDumpParam(dump *DumpFlag) error {
 		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
 	}
 
+	const bestSuffix = "_best.json"
+	bestFiles, err := file.WalkFilePath(job, bestSuffix, false)
+	if err != nil {
+		return fmt.Errorf("find the job '%v' best json err: %v ", strings.Split(job, "/")[len(strings.Split(job, "/"))-1], err)
+	}
+
+	if len(bestFiles) == 0 {
+		return fmt.Errorf("find the job '%v' best json doesn't exist", strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+	}
+
 	var fileExist bool
-	for i := range config.KeenTune.Group {
-		id := i + 1
-		fileName := fmt.Sprintf("%v/%v_group%v.conf", workPath, dump.Name, id)
-		dump.Output = append(dump.Output, fileName)
-		fileExist = fileExist || file.IsPathExist(fileName)
+	for _, bestJson := range bestFiles {
+		parts := strings.Split(bestJson, bestSuffix)
+		if len(parts) != 2 {
+			return fmt.Errorf("best json name '%v' doesn't match 'jobName_group+id_best.josn'", bestJson)
+		}
+
+		combination := fmt.Sprintf("%s/%s,%s/%s.conf", job, bestJson, workPath, parts[0])
+		dump.Output = append(dump.Output, combination)
+
+		if !fileExist {
+			fileName := fmt.Sprintf("%s/%s.conf", workPath, parts[0])
+			fileExist = fileExist || file.IsPathExist(fileName)
+		}
 	}
 
 	outputTips := "Dump %v has already operated, overwrite? Y(yes)/N(no)"
