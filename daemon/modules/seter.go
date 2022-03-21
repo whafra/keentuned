@@ -83,23 +83,15 @@ func (tuner *Tuner) Set() {
 		log.Errorf(log.ProfSet, "Update active file err:%v", err)
 		return
 	}
-	// if err := appendActiveFile(activeFile, []byte(file.GetPlainName(tuner.Seter.ConfFile[groupIndex]))); err != nil {
-	// 	log.Errorf(log.ProfSet, "Update active file err:%v", err)
-	// 	return
-	// }
 
 	sucInfosIndex := 0
 	for groupIndex, v := range tuner.Seter.Group {
 		if v && sucInfosIndex < len(sucInfos) {
 			log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex], strings.TrimPrefix(sucInfos[sucInfosIndex], "target 1 apply result: "))
-			log.Infof(log.ProfSet, "%v Set %v successfully. ", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex])
 			sucInfosIndex++
 		}
 	}
 
-	for _, detail := range sucInfos {
-		log.Infof(log.ProfSet, "\n\t%v", detail)
-	}
 	return
 }
 
