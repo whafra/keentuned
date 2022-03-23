@@ -36,15 +36,6 @@
             ],
             "step":4096
         },
-        "fs.nr_open":{
-            "desc":"Maximum number of file handles that can be concurrently opened by a process",
-            "dtype":"int",
-            "range":[
-                65535,
-                1024000
-            ],
-            "step":1024
-        },
         "fs.suid_dumpable":{
             "desc":"This value can be used to query and set the core dump mode for setuid or otherwise protected/tainted binaries. 0: default 1: debug 2: suidsafe",
             "dtype":"int",
