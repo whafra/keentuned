@@ -4,6 +4,7 @@ import (
 	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/log"
+	"strings"
 )
 
 // List run sensitize list service
@@ -15,6 +16,9 @@ func (s *Service) List(flag string, reply *string) error {
 
 	_, _, sensiList, err := com.GetDataList()
 	if err != nil {
+		if find := strings.Contains(err.Error(), "connection refused"); find {
+                        return fmt.Errorf("brain access denied")
+                }
 		log.Errorf(log.SensitizeList, "Get sensitize Data List err:%v", err)
 		return fmt.Errorf("Get sensitize Data List err:%v", err)
 	}

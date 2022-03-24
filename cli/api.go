@@ -86,8 +86,6 @@ func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 }
 
 func RunDumpRemote(ctx context.Context, flag DumpFlag) {
-	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
-	flag.Force = confirm()
 	remoteImpl("param.Dump", flag)
 }
 
@@ -118,8 +116,6 @@ func RunSetRemote(ctx context.Context, flag SetFlag) {
 }
 
 func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
-	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
-	flag.Force = confirm()
 	remoteImpl("profile.Generate", flag)
 }
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	m "keentune/daemon/modules"
 )
 
 const (
@@ -157,7 +158,20 @@ func dumpCmd() *cobra.Command {
 				dump.Output = strings.TrimSuffix(dump.Output, ".conf") + ".conf"
 			}
 
-			RunDumpRemote(cmd.Context(), dump)
+			//Determine whether conf file already exists
+                        ProfilePath := m.GetProfileWorkPath(dump.Output)
+                        _, err := os.Stat(ProfilePath)
+                        if err == nil {
+				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
+                                dump.Force = confirm()
+                                if !dump.Force {
+                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+                                    os.Exit(1)
+                                }
+                                RunDumpRemote(cmd.Context(), dump)
+                        } else {
+				RunDumpRemote(cmd.Context(), dump)
+			}
 			return
 		},
 	}
