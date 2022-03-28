@@ -65,6 +65,9 @@ func (tuner *Tuner) Set() {
 	sucInfos, failedInfo, err := tuner.setConfiguration(requestInfoAll)
 	if err != nil {
 		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
+		for index := range failedInfo {
+			log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo[index])
+		}
 		return
 	}
 	activeFile := config.GetProfileWorkPath("active.conf")
@@ -73,8 +76,6 @@ func (tuner *Tuner) Set() {
 	var fileSet string
 	for groupIndex, v := range tuner.Seter.Group {
 		if v {
-			// fileName := file.GetPlainName(tuner.Seter.ConfFile[groupIndex]) + "\n"
-			// fileSet = fileSet + fileName
 			fileSet = fileSet + file.GetPlainName(tuner.Seter.ConfFile[groupIndex]) + "\n"
 		}
 	}
@@ -84,11 +85,13 @@ func (tuner *Tuner) Set() {
 		return
 	}
 
-	sucInfosIndex := 0
 	for groupIndex, v := range tuner.Seter.Group {
-		if v && sucInfosIndex < len(sucInfos) {
-			log.Infof(log.ProfSet, "%v Set %v successfully: %v", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex], strings.TrimPrefix(sucInfos[sucInfosIndex], "target 1 apply result: "))
-			sucInfosIndex++
+		successInfoArray, ok := sucInfos[groupIndex+1]
+		if v && ok {
+			for _, successInfo := range successInfoArray {
+				prefix := fmt.Sprintf("target %d apply result: ", groupIndex+1)
+				log.Infof(log.ProfSet, "%v Set %v successfully: %v ", utils.ColorString("green", "[OK]"), tuner.Seter.ConfFile[groupIndex], strings.TrimPrefix(successInfo, prefix))
+			}
 		}
 	}
 
@@ -180,8 +183,8 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]
 	return retRequestAll, nil
 }
 
-func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}) ([]string, string, error) {
-	var applyResult = make(map[int]ResultProfileSet)
+func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}) (map[int][]string, map[int]string, error) {
+	var applyResult = make(map[int]map[string]ResultProfileSet)
 
 	//groupIndex为target-group-x   x= groupIndex + 1
 	for groupIndex, requestAllPriority := range requestAll {
@@ -205,61 +208,73 @@ func (tuner *Tuner) setConfiguration(requestAll map[int][]map[string]interface{}
 	return tuner.analysisApplyResults(applyResult)
 }
 
-func (tuner *Tuner) analysisApplyResults(applyResult map[int]ResultProfileSet) ([]string, string, error) {
-	var failedInfo string
-	var successInfo []string
+func (tuner *Tuner) analysisApplyResults(applyResultAll map[int]map[string]ResultProfileSet) (map[int][]string, map[int]string, error) {
+	var failedInfo map[int]string
+	var successInfo map[int][]string
+	var failFlag = false
 
-	for result := range applyResult {
-		if !applyResult[result].Success {
-			failedInfo += applyResult[result].Info
-			continue
+	failedInfo = make(map[int]string)
+	successInfo = make(map[int][]string)
+
+	for applyResultIndex := range applyResultAll {
+		for result := range applyResultAll[applyResultIndex] {
+			if !applyResultAll[applyResultIndex][result].Success {
+				failedInfo[applyResultIndex] += applyResultAll[applyResultIndex][result].Info
+				failFlag = true
+				continue
+			}
+			successInfo[applyResultIndex] = append(successInfo[applyResultIndex], applyResultAll[applyResultIndex][result].Info)
 		}
-		successInfo = append(successInfo, applyResult[result].Info)
+		failedInfo[applyResultIndex] = strings.TrimSuffix(failedInfo[applyResultIndex], ";")
 	}
-
-	failedInfo = strings.TrimSuffix(failedInfo, ";")
-
 	if len(successInfo) == 0 {
 		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
 	}
-	//判断待修改
-	if len(successInfo) != len(applyResult) {
+	if failFlag {
 		return successInfo, failedInfo, fmt.Errorf("partial failed")
 	}
-	return successInfo, "", nil
+	return successInfo, nil, nil
 }
 
-func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int]ResultProfileSet, index int, ip string, port string) {
+func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, applyResultAll map[int]map[string]ResultProfileSet, index int, ip string, port string) {
 	config.IsInnerApplyRequests[index] = true
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[index] = false
 	}()
-	uri := fmt.Sprintf("%s:%s/configure", ip, port)
-	resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
-	if err != nil {
-		applyResult[index] = ResultProfileSet{
-			Info:    fmt.Sprintf("target %v apply remote call: %v;", index, err),
-			Success: false,
-		}
-		return
-	}
+	var applyResult = make(map[string]ResultProfileSet)
+	requestPriority, ok := request["data"]
+	if ok {
+		for priorityDomain := range requestPriority.(map[string]map[string]interface{}) {
+			uri := fmt.Sprintf("%s:%s/configure", ip, port)
+			resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
+			if err != nil {
+				applyResult[priorityDomain] = ResultProfileSet{
+					Info:    fmt.Sprintf("target %v apply remote call: [%v] %v;", index, priorityDomain, err),
+					Success: false,
+				}
+				return
+			}
 
-	setResult, _, err := GetApplyResult(resp, index)
-	if err != nil {
-		applyResult[index] = ResultProfileSet{
-			Info:    fmt.Sprintf("target %v get apply result: %v;", index, err),
-			Success: false,
-		}
-		return
-	}
-
-
-	//如果已经有错误信息，那就不将后续的设置成功信息填入；
-	if !(applyResult[index].Success == false && strings.Contains(applyResult[index].Info, "apply result")) {
-		applyResult[index] = ResultProfileSet{
-			Info:    fmt.Sprintf("target %v apply result: %v", index, setResult),
-			Success: true,
+			setResult, _, err := GetApplyResult(resp, index)
+			if err != nil {
+				applyResult[priorityDomain] = ResultProfileSet{
+					Info:    fmt.Sprintf("target %v get apply result: [%v] %v;", index, priorityDomain, err),
+					Success: false,
+				}
+			} else {
+				applyResult[priorityDomain] = ResultProfileSet{
+					Info:    fmt.Sprintf("target %v apply result: [%v] %v", index, priorityDomain, setResult),
+					Success: true,
+				}
+			}
+			//applyResultAll[index] = applyResult
+			resultSave, ok := applyResultAll[index]
+			if !ok {
+				resultSave = make(map[string]ResultProfileSet)
+				applyResultAll[index] = resultSave
+			}
+			resultSave[priorityDomain] = applyResult[priorityDomain]
 		}
 	}
 }
