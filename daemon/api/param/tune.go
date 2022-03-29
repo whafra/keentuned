@@ -111,7 +111,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 		return nil, fmt.Errorf("benchmark json is null")
 	}
 
-	tuneIP := strings.Split(config.KeenTune.Bench.BenchGroup.DestIPs, ",")
+	tuneIP := strings.Split(config.KeenTune.Bench.DestIP, ",")
 	if len(tuneIP) == 0 {
 		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
 	}

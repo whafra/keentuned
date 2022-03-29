@@ -60,7 +60,7 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 						return
 					}
 
-					groupsScores[groupID][index], err = tuner.parseScore(resp)
+					groupsScores[groupID][index], err = tuner.parseScore(resp, benchIP)
 					if err != nil {
 						return
 					}
@@ -70,14 +70,14 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 		}
 
 		wg.Wait()
-	}
 
-	//  collect score of each group
-	for groupID, groupScores := range groupsScores {
-		for _, results := range groupScores {
-			for name, value := range results {
-				scores[groupID][name] = append(scores[groupID][name], value)
-				sumScore[groupID][name] += value
+		//  collect score of each group
+		for groupID, groupScores := range groupsScores {
+			for _, results := range groupScores {
+				for name, value := range results {
+					scores[groupID][name] = append(scores[groupID][name], value)
+					sumScore[groupID][name] += value
+				}
 			}
 		}
 	}
@@ -175,7 +175,7 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 	return true, timeCost.Desc, nil
 }
 
-func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
+func (tuner *Tuner) parseScore(body []byte, ip string) (map[string]float32, error) {
 	var benchResult BenchResult
 	err := json.Unmarshal(body, &benchResult)
 	if err != nil {
@@ -187,9 +187,9 @@ func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
 	}
 
 	var resultMap = map[string]float32{}
-	config.IsInnerBenchRequests[1] = true
+	id := config.KeenTune.Bench.BenchIPMap[ip]
 	select {
-	case bytes := <-config.BenchmarkResultChan:
+	case bytes := <-config.BenchmarkResultChan[id]:
 		log.Debugf("", "get benchmark result:%s", bytes)
 		if err = json.Unmarshal(bytes, &benchResult); err != nil {
 			return nil, fmt.Errorf("unmarshal request info err:%v", err)

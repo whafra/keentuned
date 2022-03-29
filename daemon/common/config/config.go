@@ -28,6 +28,8 @@ type KeentunedConf struct {
 
 type Bench struct {
 	BenchGroup []BenchGroup
+	DestIP     string
+	DestPort   string
 	BaseRound  int
 	ExecRound  int
 	AfterRound int
@@ -37,9 +39,7 @@ type Bench struct {
 
 type BenchGroup struct {
 	SrcIPs []string
-	DestIPs []string
 	SrcPort string
-   	DestPort string
 }
 
 type Group struct {
@@ -250,14 +250,7 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
                         return fmt.Errorf("keentune check bench ip %v", err)
                 }
 
-		ipStringDest := bench.Key("BENCH_DEST_IP").MustString("")
-		group.DestIPs, err = changeStringToSlice(ipStringDest)
-		if err != nil {
-                        return fmt.Errorf("keentune check bench ip %v", err)
-                }
-
                 group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
-                group.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
 
 		if err = checkIPRepeated(groupName, group.SrcIPs, allGroupIPs); err != nil {
                         return fmt.Errorf("%v", err)
@@ -266,6 +259,8 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
                 c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
                 c.addBenchIPMap(group.SrcIPs, ipExist, id)
 
+		c.DestIP = bench.Key("BENCH_DEST_IP").MustString("")
+                c.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
 		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
                 c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
                 c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
