@@ -91,11 +91,17 @@ func (tuner *Tuner) baseline() error {
 		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:", tuner.IncreaseStep())
 	}
 
-	success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send)
-	if err != nil || !success {
-		return fmt.Errorf("send script file  result: %v, details:%v", success, err)
-	}
+        for _, benchgroup := range config.KeenTune.BenchGroup {
+                for _, benchip := range benchgroup.SrcIPs {
+                        Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
+                        success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send, Host)
+                        if err != nil || !success {
+                                return fmt.Errorf("send script file  result: %v, details:%v", success, err)
+                        }
+                }
+        }
 
+        var err error
 	_, tuner.benchScore, tuner.benchSummary, err = tuner.RunBenchmark(config.KeenTune.BaseRound)
 	if err != nil {
 		if err.Error() == "get benchmark is interrupted" {

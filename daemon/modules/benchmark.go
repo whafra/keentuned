@@ -151,7 +151,7 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 }
 
 // SendScript : send script file to client
-func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, error) {
+func (benchmark Benchmark) SendScript(sendTime *time.Duration, Host string) (bool, string, error) {
 	start := time.Now()
 	benchBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", config.KeenTune.Home, benchmark.FilePath))
 	if err != nil {
@@ -164,7 +164,7 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 		"encode_type": "utf-8",
 	}
 
-	err = http.ResponseSuccess("POST", benchmark.Host+"/sendfile", requestBody)
+	err = http.ResponseSuccess("POST", Host+"/sendfile", requestBody)
 	if err != nil {
 		return false, "", fmt.Errorf("SendScript remote call err:%v", err)
 	}

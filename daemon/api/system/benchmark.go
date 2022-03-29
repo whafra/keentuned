@@ -43,11 +43,16 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	log.Infof(log.Benchmark, "Step%v. Get benchmark instance successfully.\n", step)
 
 	var sendTimeSpend  time.Duration
-	success, _, err := inst.SendScript(&sendTimeSpend)
-	if err != nil || !success {
-		log.Errorf(log.Benchmark, "send script file  result: %v err:%v", success, err)
-		return fmt.Errorf("send file failed")
-	}
+        for _, benchgroup := range config.KeenTune.BenchGroup {
+                for _, benchip := range benchgroup.SrcIPs {
+                        Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
+                        success, _, err := inst.SendScript(&sendTimeSpend, Host)
+                        if err != nil || !success {
+                                log.Errorf(log.Benchmark, "send script file  result: %v err:%v", success, err)
+                                return fmt.Errorf("send file failed")
+                        }
+                }
+        }
 
 	step++
 	log.Infof(log.Benchmark, "Step%v. Send benchmark script successfully.\n", step)
