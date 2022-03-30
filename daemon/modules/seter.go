@@ -155,7 +155,6 @@ func (tuner *Tuner) prepareBeforeSet(configInfoAll map[int][]map[string]interfac
 func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]map[string]interface{}, error) {
 
 	retRequestAll := map[int][]map[string]interface{}{}
-	retRequest := make([]map[string]interface{}, config.PRILevel)
 	for groupIndex, configFile := range configFileALL {
 
 		resultMap, err := file.ConvertConfFileToJson(configFile)
@@ -166,6 +165,7 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]
 		var mergedParam = make([]config.DBLMap, config.PRILevel)
 		config.ReadProfileParams(resultMap, mergedParam)
 
+		retRequest := make([]map[string]interface{}, config.PRILevel)
 		for index, paramMap := range mergedParam {
 			if paramMap == nil {
 				continue
@@ -243,8 +243,7 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 		config.IsInnerApplyRequests[index] = false
 	}()
 	var applyResult = make(map[string]ResultProfileSet)
-	requestPriority, ok := request["data"]
-	if ok {
+	if requestPriority, ok := request["data"];ok {
 		for priorityDomain := range requestPriority.(map[string]map[string]interface{}) {
 			uri := fmt.Sprintf("%s:%s/configure", ip, port)
 			resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
