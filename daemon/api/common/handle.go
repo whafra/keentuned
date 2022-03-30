@@ -57,10 +57,8 @@ func report(url string, value []byte, err error) {
 			fmt.Printf("unmarshal bench id err: %v", err)
 			return
 		}
-		if config.IsInnerBenchRequests[benchResult.BenchID] && benchResult.BenchID > 0 {
-			config.IsInnerBenchRequests[benchResult.BenchID] = false
-			config.BenchmarkResultChan[benchResult.BenchID] <- value
-		}
+
+		config.BenchmarkResultChan[benchResult.BenchID] <- value
 
 		return
 	}

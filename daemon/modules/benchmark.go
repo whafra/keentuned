@@ -64,6 +64,7 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 					if err != nil {
 						return
 					}
+					wg.Done()
 
 				}(&wg, benchIP, index)
 			}
