@@ -75,8 +75,8 @@ func showStart() {
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
 	for _, group := range config.KeenTune.Group {
-		for _, ip := range group.IPs {
-			fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, config.KeenTune.IPMap[ip])
+		for index, ip := range group.IPs {
+			fmt.Printf("\ttarget [%v]\t<--> id: group-%v.target-%v\n", ip, group.GroupNo, index+1)
 		}
 	}
 

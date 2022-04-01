@@ -21,7 +21,7 @@ type Group struct {
 	MergedParam    map[string]interface{}
 	AllowUpdate    map[string]bool // prevent map concurrency security problems
 	GroupName      string          //target-group-x
-	GroupNo        int             //target-group-x
+	GroupNo        int             //No. x of target-group-x
 	ProfileSetFlag bool
 }
 
@@ -44,6 +44,7 @@ func (tuner *Tuner) initParams() error {
 		target.IPs = group.IPs
 		target.Port = group.Port
 		target.GroupName = group.GroupName
+		target.GroupNo = group.GroupNo
 		target.mergeParam()
 
 		var updateIP = make(map[string]bool)

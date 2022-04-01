@@ -14,8 +14,9 @@ import (
 type request struct {
 	params  []map[string]interface{}
 	ip      string
+	id      int // ip index in its' own group
 	groupID int
-	ipIndex int
+	ipIndex int // id of ip in total targets
 	body    interface{}
 }
 
@@ -36,8 +37,9 @@ func (tuner *Tuner) configure() error {
 	start := time.Now()
 	for groupID, group := range tuner.Group {
 		req := group.newRequester(groupID)
-		for _, ip := range group.IPs {
+		for index, ip := range group.IPs {
 			wg.Add(1)
+			req.id = index + 1
 			req.ip = ip
 			go func(req request) {
 				tuner.apply(&wg, targetFinishStatus, req)
@@ -48,15 +50,15 @@ func (tuner *Tuner) configure() error {
 	wg.Wait()
 
 	var errDetail string
-	for index, status := range targetFinishStatus {
-		applySummary += fmt.Sprintf("\ttarget %v, apply result: %v", index+1, status)
+	for _, status := range targetFinishStatus {
+		applySummary += fmt.Sprintf("\t%v", status)
 		if strings.Contains(status, "apply failed") {
-			errDetail += fmt.Sprintf("\t%v", status)
+			errDetail += fmt.Sprintf(" %v;", status)
 		}
 	}
 
 	if errDetail != "" {
-		return fmt.Errorf(errDetail)
+		return fmt.Errorf(strings.TrimSuffix(errDetail, ";"))
 	}
 
 	tuner.applySummary = applySummary
@@ -75,11 +77,12 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 	var errMsg error
 	req.ipIndex = config.KeenTune.IPMap[req.ip]
 	config.IsInnerApplyRequests[req.ipIndex] = true
+	identity := fmt.Sprintf("group-%v.target-%v", tuner.Group[req.groupID].GroupNo, req.id)
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[req.ipIndex] = false
 		if errMsg != nil {
-			targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("target [%v] apply failed, errmsg %v", req.ipIndex, errMsg)
+			targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("%v apply failed: %v", identity, errMsg)
 		}
 	}()
 
@@ -94,7 +97,7 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 		return
 	}
 
-	targetFinishStatus[req.ipIndex-1] = strings.TrimPrefix(applyResult, "\t")
+	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("%v apply result: %v", identity, strings.TrimPrefix(applyResult, " "))
 	tuner.timeSpend.apply += utils.Runtime(start).Count
 }
 
@@ -127,7 +130,7 @@ func (gp *Group) Configure(req request) (string, error) {
 
 	applyResult, paramInfo, err := GetApplyResult(body, req.ipIndex)
 	if err != nil {
-		return "", fmt.Errorf("apply response: %v", err)
+		return "", err
 	}
 
 	// pay attention to: the results in the same group are the same and only need to be updated once to prevent map concurrency security problems
@@ -140,7 +143,9 @@ func (gp *Group) Configure(req request) (string, error) {
 		gp.updateDump(paramInfo)
 	}
 
-	return applyResult, nil
+	retDetail := fmt.Sprintf(" %v", applyResult)
+
+	return retDetail, nil
 }
 
 func (gp *Group) Get(req request) (string, error) {

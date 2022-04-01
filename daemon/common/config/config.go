@@ -43,7 +43,7 @@ type Group struct {
 	IPs       []string
 	Port      string
 	GroupName string //target-group-x
-	GroupNo   int    //target-group-x
+	GroupNo   int    //No. x of target-group-x
 }
 
 type Target struct {
@@ -212,12 +212,8 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		group.Port = target.Key("TARGET_PORT").MustString("9873")
 
 		group.GroupName = groupName
-		//		fmt.Printf("groupName=%s\n", groupName)
 		groupName = groupName[13:] //截取“target-group-”后面的内容
-		//		fmt.Printf("groupName=%s\n", groupName)
 		groupNo, err := strconv.Atoi(groupName)
-
-		//		fmt.Printf("groupNo=%d\n", groupNo)
 		if err != nil || groupNo <= 0 {
 			return fmt.Errorf("target-group is error, please check configure first")
 		}
