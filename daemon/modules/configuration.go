@@ -89,12 +89,12 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 	var setResult string
 
 	if failedCount == 0 {
-		setResult = fmt.Sprintf("total param %v, successed %v, failed %v.", sucCount, sucCount, failedCount)
+		setResult = fmt.Sprintf("successed %v/%v", sucCount, sucCount)
 		return setResult, paramCollection, nil
 	}
 
 	failedDetail := utils.FormatInTable(failedInfoSlice)
-	setResult = fmt.Sprintf("total param %v, successed %v, failed %v; the failed details:%s", sucCount+failedCount, sucCount, failedCount, failedDetail)
+	setResult = fmt.Sprintf("successed %v/%v, failed %v; the failed details:%s", sucCount, sucCount+failedCount, failedCount, failedDetail)
 
 	if failedCount == len(paramCollection) {
 		return setResult, paramCollection, fmt.Errorf("return all failed: %v", failedDetail)
