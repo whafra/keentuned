@@ -9,6 +9,7 @@ import (
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
 	"time"
+	"sync"
 )
 
 // Benchmark define benchmark cmd and host to run
@@ -35,41 +36,68 @@ type Result struct {
 }
 
 // RunBenchmark : run benchmark script or command in client
-func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {
+func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {	
 	start := time.Now()
-	var scores = map[string][]float32{}
-	var sumScore = map[string]float32{}
+	var scores = make([]map[string][]float32, len(config.KeenTune.BenchGroup))
+	var sumScore = make([]map[string]float32, len(config.KeenTune.BenchGroup))
+
 	config.IsInnerBenchRequests[1] = true
 	defer func() { config.IsInnerBenchRequests[1] = false }()
 
-	var requestBody = map[string]interface{}{}
-	requestBody["benchmark_cmd"] = tuner.Benchmark.Cmd
-	requestBody["resp_ip"] = config.RealLocalIP
-	requestBody["resp_port"] = config.KeenTune.Port
-
+	var groupsScores = make([][]map[string]float32, num)
 	for i := 1; i <= num; i++ {
-		resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", requestBody)
-		if err != nil {
-			return scores, nil, "", fmt.Errorf("%vth benchmark remote call return err:%v", i, err)
+		wg := sync.WaitGroup{}
+		for groupID, group := range config.KeenTune.BenchGroup {
+			groupsScores[groupID] = make([]map[string]float32, len(group.SrcIPs))
+			scores[groupID] = make(map[string][]float32)
+			sumScore[groupID] = make(map[string]float32)
+			for index, benchIP := range group.SrcIPs {
+				wg.Add(1)
+				go func(wg *sync.WaitGroup, benchIP string, index int) {
+					tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchIP, group.SrcPort)
+					resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", getBenchReq(tuner.Benchmark.Cmd, benchIP))
+					if err != nil {
+						return
+					}
+
+					groupsScores[groupID][index], err = tuner.parseScore(resp, benchIP)
+					if err != nil {
+						return
+					}
+					wg.Done()
+
+				}(&wg, benchIP, index)
+			}
 		}
 
-		score, err := tuner.parseScore(resp)
-		if err != nil {
-			return scores, nil, "", fmt.Errorf("%vth benchmark parse score err:%v", i, err)
-		}
+		wg.Wait()
 
-		for name, value := range score {
-			scores[name] = append(scores[name], value)
-			sumScore[name] += value
+		//  collect score of each group
+		for groupID, groupScores := range groupsScores {
+			for _, results := range groupScores {
+				for name, value := range results {
+					scores[groupID][name] = append(scores[groupID][name], value)
+					sumScore[groupID][name] += value
+				}
+			}
 		}
-
 	}
 
 	tuner.Benchmark.round = num
 	tuner.Benchmark.verbose = tuner.Verbose
-	benchScoreResult, resultString, err := tuner.Benchmark.getScore(scores, sumScore, start, &tuner.timeSpend.benchmark)
-	return scores, benchScoreResult, resultString, err
+	benchScoreResult, resultString, err := tuner.Benchmark.getScore(scores[0], sumScore[0], start, &tuner.timeSpend.benchmark)
+	return scores[0], benchScoreResult, resultString, err
 }
+
+func getBenchReq(cmd, ip string) interface{} {
+	var requestBody = map[string]interface{}{}
+	requestBody["benchmark_cmd"] = cmd
+	requestBody["resp_ip"] = config.RealLocalIP
+	requestBody["resp_port"] = config.KeenTune.Port
+	requestBody["bench_id"] = config.KeenTune.Bench.BenchIPMap[ip]
+	return requestBody
+}
+
 
 func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[string]float32, start time.Time, benchTime *time.Duration) (map[string]ItemDetail, string, error) {
 	benchScoreResult := map[string]ItemDetail{}
@@ -124,7 +152,7 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 }
 
 // SendScript : send script file to client
-func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, error) {
+func (benchmark Benchmark) SendScript(sendTime *time.Duration, Host string) (bool, string, error) {
 	start := time.Now()
 	benchBytes, err := ioutil.ReadFile(fmt.Sprintf("%s/%s", config.KeenTune.Home, benchmark.FilePath))
 	if err != nil {
@@ -137,7 +165,7 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 		"encode_type": "utf-8",
 	}
 
-	err = http.ResponseSuccess("POST", benchmark.Host+"/sendfile", requestBody)
+	err = http.ResponseSuccess("POST", Host+"/sendfile", requestBody)
 	if err != nil {
 		return false, "", fmt.Errorf("SendScript remote call err:%v", err)
 	}
@@ -148,7 +176,7 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 	return true, timeCost.Desc, nil
 }
 
-func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
+func (tuner *Tuner) parseScore(body []byte, ip string) (map[string]float32, error) {
 	var benchResult BenchResult
 	err := json.Unmarshal(body, &benchResult)
 	if err != nil {
@@ -160,8 +188,9 @@ func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
 	}
 
 	var resultMap = map[string]float32{}
+	id := config.KeenTune.Bench.BenchIPMap[ip]
 	select {
-	case bytes := <-config.BenchmarkResultChan:
+	case bytes := <-config.BenchmarkResultChan[id]:
 		log.Debugf("", "get benchmark result:%s", bytes)
 		if err = json.Unmarshal(bytes, &benchResult); err != nil {
 			return nil, fmt.Errorf("unmarshal request info err:%v", err)

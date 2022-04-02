@@ -49,7 +49,17 @@ func report(url string, value []byte, err error) {
 	}
 
 	if strings.Contains(url, "benchmark_result") && config.IsInnerBenchRequests[1] {
-		config.BenchmarkResultChan <- value
+		var benchResult struct {
+			BenchID int `json:"bench_id"`
+		}
+		err := json.Unmarshal(value, &benchResult)
+		if err != nil {
+			fmt.Printf("unmarshal bench id err: %v", err)
+			return
+		}
+
+		config.BenchmarkResultChan[benchResult.BenchID] <- value
+
 		return
 	}
 

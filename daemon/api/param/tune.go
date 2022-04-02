@@ -111,14 +111,14 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 		return nil, fmt.Errorf("benchmark json is null")
 	}
 
-	tuneIP := strings.Split(config.KeenTune.BenchDest, ",")
+	tuneIP := strings.Split(config.KeenTune.Bench.DestIP, ",")
 	if len(tuneIP) == 0 {
 		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
 	}
 
 	inst := benchmarks[0]
 	inst.Cmd = strings.Replace(strings.Replace(inst.Cmd, "{remote_script_path}", inst.FilePath, 1), "{target_ip}", tuneIP[0], 1)
-	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.BenchIP, config.KeenTune.BenchPort)
+//	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.SrcIPs, config.KeenTune.SrcPort)
 	inst.SortedItems = sortBenchItemNames(inst.Items)
 	return &inst, nil
 }
