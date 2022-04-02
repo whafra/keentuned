@@ -98,12 +98,6 @@ func RunRollbackRemote(ctx context.Context, flag RollbackFlag) {
 }
 
 func RunDeleteRemote(ctx context.Context, flag DeleteFlag) {
-	fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-	if !confirm() {
-		fmt.Println("[-] Give Up Delete")
-		return
-	}
-
 	remoteImpl(fmt.Sprintf("%s.Delete", flag.Cmd), flag)
 }
 

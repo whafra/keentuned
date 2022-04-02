@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	m "keentune/daemon/modules"
+	com "keentune/daemon/api/common"
 )
 
 const (
@@ -127,8 +128,22 @@ func deleteParamJobCmd() *cobra.Command {
 				return
 			}
 
-			flag.Cmd = "param"
-			RunDeleteRemote(cmd.Context(), flag)
+			//Determine whether job already exists
+                        JobPath := com.GetParameterPath(flag.Name)
+                        _, err := os.Stat(JobPath)
+                        if err == nil {
+                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+                                if !confirm() {
+                                        fmt.Println("[-] Give Up Delete")
+                                        return
+                                }
+                                flag.Cmd = "param"
+                                RunDeleteRemote(cmd.Context(), flag)
+                        } else {
+                                flag.Cmd = "param"
+                                RunDeleteRemote(cmd.Context(), flag)
+                        }
+
 			return
 		},
 	}
