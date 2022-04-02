@@ -6,6 +6,7 @@ import (
 	"time"
 	"os"
 	"github.com/spf13/cobra"
+	com "keentune/daemon/api/common"
 )
 
 const (
@@ -146,9 +147,29 @@ func deleteSensitivityCmd() *cobra.Command {
 				return
 			}
 
-			flag.Cmd = "sensitize"
-			RunDeleteRemote(cmd.Context(), flag)
-			return
+			_, _, DataList, err := com.GetDataList()
+                        if err != nil {
+                                if find := strings.Contains(err.Error(), "connection refused"); find {
+                                        fmt.Println("brain access denied")
+                                        return
+                                }
+                                fmt.Println("Get sensitize Data List err:%v", err)
+                                return
+                        }
+                        if find := strings.Contains(DataList, flag.Name); find {
+                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+                                if !confirm() {
+                                        fmt.Println("[-] Give Up Delete")
+                                        return
+                                }
+                                flag.Cmd = "sensitize"
+                                RunDeleteRemote(cmd.Context(), flag)
+                        } else {
+                                flag.Cmd = "sensitize"
+                                RunDeleteRemote(cmd.Context(), flag)
+                        }
+
+                        return
 		},
 	}
 
