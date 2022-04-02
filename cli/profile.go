@@ -139,8 +139,21 @@ func deleteProfileCmd() *cobra.Command {
 
 			flag.Cmd = "profile"
 			flag.Name = strings.TrimSuffix(flag.Name, ".conf") + ".conf"
-			RunDeleteRemote(cmd.Context(), flag)
-			return
+
+			ProfilePath := m.GetProfileWorkPath(flag.Name)
+			_, err := os.Stat(ProfilePath)
+                        if err == nil {
+                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+                                if !confirm() {
+                                        fmt.Println("[-] Give Up Delete")
+                                        return
+                                }
+                                RunDeleteRemote(cmd.Context(), flag)
+                        } else {
+                                RunDeleteRemote(cmd.Context(), flag)
+                        }
+
+                        return
 		},
 	}
 
