@@ -165,8 +165,8 @@ func deleteSensitivityCmd() *cobra.Command {
                                 flag.Cmd = "sensitize"
                                 RunDeleteRemote(cmd.Context(), flag)
                         } else {
-                                flag.Cmd = "sensitize"
-                                RunDeleteRemote(cmd.Context(), flag)
+				err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
+				fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
                         }
 
                         return
