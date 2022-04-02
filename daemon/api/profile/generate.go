@@ -2,24 +2,30 @@ package profile
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
 )
 
+// GenFlag ...
+type GenFlag struct {
+	Name   string
+	Output string
+	Force  bool
+}
+
 // Generate run profile generate service
-func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
+func (s *Service) Generate(flag GenFlag, reply *string) error {
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfGenerate]
 		log.ClearCliLog(log.ProfGenerate)
 	}()
 
-	fullName := m.GetProfileWorkPath(flag.Name)
+	fullName := config.GetProfileWorkPath(flag.Name)
 	readMap, err := file.ConvertConfFileToJson(fullName)
 	if err != nil {
-                ResetValue(&fullName, m.GetProfileHomePath(flag.Name))
+                ResetValue(&fullName, config.GetProfileHomePath(flag.Name))
         }
         readMap, err = file.ConvertConfFileToJson(fullName)
 	if err != nil {
@@ -35,12 +41,12 @@ func (s *Service) Generate(flag com.DumpFlag, reply *string) error {
 
 	m.AssembleParams(readMap, totalParamMap)
 
-	if err := file.Dump2File(m.GetGenerateWorkPath(""), flag.Output, readMap); err != nil {
+	if err := file.Dump2File(config.GetGenerateWorkPath(""), flag.Output, readMap); err != nil {
 		log.Errorf(log.ProfGenerate, "Dump config info to json file [%v] err: %v", flag.Output, err)
 		return fmt.Errorf("Dump json file: %v, err: %v", flag.Output, err)
 	}
 
-	log.Infof(log.ProfGenerate, "[ok] %v generate successfully", m.GetGenerateWorkPath(flag.Output))
+	log.Infof(log.ProfGenerate, "[ok] %v generate successfully", config.GetGenerateWorkPath(flag.Output))
 	return nil
 }
 

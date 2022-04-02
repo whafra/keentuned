@@ -4,6 +4,7 @@ import (
 	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/api/param"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
@@ -41,7 +42,7 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	step++
 	log.Infof(log.Benchmark, "Step%v. Get benchmark instance successfully.\n", step)
 
-	var sendTimeSpend, benchTimeSpend time.Duration
+	var sendTimeSpend  time.Duration
 	success, _, err := inst.SendScript(&sendTimeSpend)
 	if err != nil || !success {
 		log.Errorf(log.Benchmark, "send script file  result: %v err:%v", success, err)
@@ -57,9 +58,11 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	var score map[string][]float32
 	var benchmarkResult string
 	scores := make(map[string][]float32)
+	tune := new(m.Tuner)
+	tune.Benchmark = *inst
 
 	for i := 1; i <= flag.Round; i++ {
-		if score, _, benchmarkResult, err = inst.RunBenchmark(1, &benchTimeSpend, false); err != nil {
+		if score, _, benchmarkResult, err = tune.RunBenchmark(1); err != nil {
 			if err.Error() == "get benchmark is interrupted" {
 				return fmt.Errorf("run [%v] round benchmark positive stopped", i)
 			}
@@ -75,11 +78,11 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 		}
 	}
 
-	if err = file.Save2CSV(m.GetDumpCSVPath(), flag.Name+".csv", scores); err != nil {
+	if err = file.Save2CSV(config.GetDumpCSVPath(), flag.Name+".csv", scores); err != nil {
 		log.Warnf(log.ParamTune, "Save  Baseline benchmark  to file %v failed, reason:[%v]", flag.Name, err)
 	}
 
 	step++
-	log.Infof(log.Benchmark, "\nStep%v. Benchmark result dump to %v susccessfully.", step, fmt.Sprintf("%v/%v.csv", m.GetDumpCSVPath(), flag.Name))
+	log.Infof(log.Benchmark, "\nStep%v. Benchmark result dump to %v susccessfully.", step, fmt.Sprintf("%v/%v.csv", config.GetDumpCSVPath(), flag.Name))
 	return nil
 }

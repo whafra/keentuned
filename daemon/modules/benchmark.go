@@ -35,29 +35,25 @@ type Result struct {
 }
 
 // RunBenchmark : run benchmark script or command in client
-func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbose bool) (map[string][]float32, map[string]ItemDetail, string, error) {
+func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {
 	start := time.Now()
 	var scores = map[string][]float32{}
 	var sumScore = map[string]float32{}
-
+	config.IsInnerBenchRequests[1] = true
 	defer func() { config.IsInnerBenchRequests[1] = false }()
-	respIP, err := utils.GetExternalIP()
-	if err != nil {
-		return scores, nil, "", fmt.Errorf("run benchmark get real keentuned ip err: %v", err)
-	}
 
 	var requestBody = map[string]interface{}{}
-	requestBody["benchmark_cmd"] = benchmark.Cmd
-	requestBody["resp_ip"] = respIP
+	requestBody["benchmark_cmd"] = tuner.Benchmark.Cmd
+	requestBody["resp_ip"] = config.RealLocalIP
 	requestBody["resp_port"] = config.KeenTune.Port
 
 	for i := 1; i <= num; i++ {
-		resp, err := http.RemoteCall("POST", benchmark.Host+"/benchmark", requestBody)
+		resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", requestBody)
 		if err != nil {
 			return scores, nil, "", fmt.Errorf("%vth benchmark remote call return err:%v", i, err)
 		}
 
-		score, err := parseScore(resp, benchmark.LogName)
+		score, err := tuner.parseScore(resp)
 		if err != nil {
 			return scores, nil, "", fmt.Errorf("%vth benchmark parse score err:%v", i, err)
 		}
@@ -69,9 +65,9 @@ func (benchmark Benchmark) RunBenchmark(num int, benchTime *time.Duration, verbo
 
 	}
 
-	benchmark.round = num
-	benchmark.verbose = verbose
-	benchScoreResult, resultString, err := benchmark.getScore(scores, sumScore, start, benchTime)
+	tuner.Benchmark.round = num
+	tuner.Benchmark.verbose = tuner.Verbose
+	benchScoreResult, resultString, err := tuner.Benchmark.getScore(scores, sumScore, start, &tuner.timeSpend.benchmark)
 	return scores, benchScoreResult, resultString, err
 }
 
@@ -101,18 +97,18 @@ func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[s
 		average = sumScores[name] / float32(len(scoreSlice))
 
 		if benchmark.verbose {
-			resultString += fmt.Sprintf("\n	[%v]\t(weight: %.1f)\tscores %v,\taverage = %.3f,\t%v", name, info.Weight, scoreSlice, average, utils.Fluctuation(scoreSlice, average))
+			resultString += fmt.Sprintf("\n\t[%v]\t(weight: %.1f)\tscores %v,\taverage = %.3f,\t%v", name, info.Weight, scoreSlice, average, utils.Fluctuation(scoreSlice, average))
 		}
 
 		if !benchmark.verbose && info.Weight > 0.0 {
-			resultString += fmt.Sprintf("\n	[%v]\t(weight: %.1f)\taverage scores = %.3f", name, info.Weight, average)
+			resultString += fmt.Sprintf("\n\t[%v]\t(weight: %.1f)\taverage scores = %.3f", name, info.Weight, average)
 		}
 
 		benchScoreResult[name] = ItemDetail{
 			Negative: info.Negative,
 			Weight:   info.Weight,
 			Strict:   info.Strict,
-			Baseline:   scoreSlice,
+			Baseline: scoreSlice,
 		}
 
 	}
@@ -152,7 +148,7 @@ func (benchmark Benchmark) SendScript(sendTime *time.Duration) (bool, string, er
 	return true, timeCost.Desc, nil
 }
 
-func parseScore(body []byte, logName string) (map[string]float32, error) {
+func (tuner *Tuner) parseScore(body []byte) (map[string]float32, error) {
 	var benchResult BenchResult
 	err := json.Unmarshal(body, &benchResult)
 	if err != nil {
@@ -160,11 +156,10 @@ func parseScore(body []byte, logName string) (map[string]float32, error) {
 	}
 
 	if !benchResult.Success {
-		return nil, fmt.Errorf("parse score failed, benchmark result return :%v", benchResult.Success)
+		return nil, fmt.Errorf("parse score failed, msg :%v", benchResult.Message)
 	}
 
 	var resultMap = map[string]float32{}
-	config.IsInnerBenchRequests[1] = true
 	select {
 	case bytes := <-config.BenchmarkResultChan:
 		log.Debugf("", "get benchmark result:%s", bytes)
@@ -182,7 +177,7 @@ func parseScore(body []byte, logName string) (map[string]float32, error) {
 
 		break
 	case <-StopSig:
-		Rollback(logName)
+		tuner.rollback()
 		return nil, fmt.Errorf("get benchmark is interrupted")
 	}
 
@@ -192,3 +187,4 @@ func parseScore(body []byte, logName string) (map[string]float32, error) {
 
 	return resultMap, nil
 }
+

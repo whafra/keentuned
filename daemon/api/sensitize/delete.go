@@ -7,7 +7,6 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
-	m "keentune/daemon/modules"
 	"os"
 )
 
@@ -24,7 +23,7 @@ func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete %v failed, err:%v", flag.Name, err)
 	}
 
-	path := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flag.Name)
+	path := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flag.Name)
 	if file.IsPathExist(path) {
 		os.Remove(path)
 	}

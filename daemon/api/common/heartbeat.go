@@ -95,12 +95,17 @@ func IsClientOffline(clientName *string) bool {
 
 func IsTargetOffline(clientName *string) bool {
 	var offline bool
-	for index, ip := range config.KeenTune.TargetIP {
-		targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.TargetPort)
-		if checkOffline(targetURI) {
-			*clientName += fmt.Sprintf("target %v, ", index+1)
-			offline = true
+	
+	for _, group := range config.KeenTune.Group {
+		for _, ip := range group.IPs {
+			targetURI := fmt.Sprintf("%v:%v/status", ip, group.Port)
+			id := config.KeenTune.IPMap[ip]
+			if checkOffline(targetURI) {
+				*clientName += fmt.Sprintf("target %v, ", id)
+				offline = true
+			}
 		}
+
 	}
 
 	return offline

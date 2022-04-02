@@ -3,16 +3,17 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"os"
 	"strings"
 	"time"
-	m "keentune/daemon/modules"
 	com "keentune/daemon/api/common"
 )
 
 const (
-	egTune          = "\tkeentune param tune --param sysctl.json --bench bench_wrk_nginx_long.json --job tune_test --iteration 10\n\tkeentune param tune --param sysctl.json --bench bench_wrk_nginx_long.json --job tune_test"
-	egDump          = "\tkeentune param dump --job tune_test --output tune_test.conf"
+	egTune          = "\tkeentune param tune --job tune_test --iteration 10\n\tkeentune param tune --job tune_test"
+	egDump          = "\tkeentune param dump --job tune_test"
 	egParamDel      = "\tkeentune param delete --job tune_test"
 	egParamList     = "\tkeentune param list"
 	egParamRollback = "\tkeentune param rollback"
@@ -68,7 +69,7 @@ func tuneCmd() *cobra.Command {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" || len(flag.ParamConf) == 0 {
+			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return
@@ -167,32 +168,63 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 
-			if strings.Trim(dump.Output, " ") == "" {
-				dump.Output = dump.Name + ".conf"
-			} else {
-				dump.Output = strings.TrimSuffix(dump.Output, ".conf") + ".conf"
+			err := checkDumpParam(&dump)
+			if err != nil {
+				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
 			}
 
-			//Determine whether conf file already exists
-                        ProfilePath := m.GetProfileWorkPath(dump.Output)
-                        _, err := os.Stat(ProfilePath)
-                        if err == nil {
-				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "profile"))
-                                dump.Force = confirm()
-                                if !dump.Force {
-                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
-                                    os.Exit(1)
-                                }
-                                RunDumpRemote(cmd.Context(), dump)
-                        } else {
-				RunDumpRemote(cmd.Context(), dump)
-			}
+			RunDumpRemote(cmd.Context(), dump)
 			return
 		},
 	}
 
 	flags := cmd.Flags()
 	flags.StringVarP(&dump.Name, "job", "j", "", "dynamic parameter tuning job name, query by command \"keentune param jobs\"")
-	flags.StringVarP(&dump.Output, "output", "o", "", "output profile file name, default with suffix \".conf\"")
 	return cmd
 }
+
+func checkDumpParam(dump *DumpFlag) error {
+	workPath := config.GetProfileWorkPath("")
+	job := config.GetTuningWorkPath(dump.Name)
+	if !file.IsPathExist(job) {
+		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+	}
+
+	const bestSuffix = "_best.json"
+	bestFiles, err := file.WalkFilePath(job, bestSuffix, false)
+	if err != nil {
+		return fmt.Errorf("find the job '%v' best json err: %v ", strings.Split(job, "/")[len(strings.Split(job, "/"))-1], err)
+	}
+
+	if len(bestFiles) == 0 {
+		return fmt.Errorf("find the job '%v' best json doesn't exist", strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+	}
+
+	var fileExist bool
+	for _, bestJson := range bestFiles {
+		parts := strings.Split(bestJson, bestSuffix)
+		if len(parts) != 2 {
+			return fmt.Errorf("best json name '%v' doesn't match 'jobName_group+id_best.josn'", bestJson)
+		}
+
+		combination := fmt.Sprintf("%s/%s,%s/%s.conf", job, bestJson, workPath, parts[0])
+		dump.Output = append(dump.Output, combination)
+
+		if !fileExist {
+			fileName := fmt.Sprintf("%s/%s.conf", workPath, parts[0])
+			fileExist = fileExist || file.IsPathExist(fileName)
+		}
+	}
+
+	outputTips := "Dump %v has already operated, overwrite? Y(yes)/N(no)"
+	if fileExist {
+		fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, dump.Name))
+		if !confirm() {
+			return fmt.Errorf("outputFile exist and you have given up to overwrite it")
+		}
+	}
+
+	return nil
+}
+
