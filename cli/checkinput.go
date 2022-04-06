@@ -377,6 +377,10 @@ func checkJob(cmd, name string) error {
 		return fmt.Errorf("the specified name [%v] already exists. Run [keentune param delete --job %v] or specify a new name and try again", name, name)
 	}
 
+	if cmd == "sensitize" && com.IsDataNameUsed(name) {
+                return fmt.Errorf("the specified name [%v] already exists. Run [keentune sensitize delete --data %v] or specify a new name and try again", name, name)
+        }
+
 	return nil
 }
 

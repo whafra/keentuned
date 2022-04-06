@@ -40,11 +40,6 @@ func runCollect(flag param.TuneFlag) {
 
 	log.Infof(log.SensitizeCollect, "Step1. Parameter auto Sensitize start, using algorithm = %v.", config.KeenTune.Sensitize.Algorithm)
 
-	if com.IsDataNameUsed(flag.Name) {
-		log.Errorf(log.SensitizeCollect, "Please check the data name specified, already exists")
-		return
-	}
-
 	if err := param.TuningImpl(flag, "collect"); err != nil {
 		log.Errorf(log.SensitizeCollect, "Sensitize Collect failed, msg:[%v]", err)
 		return
