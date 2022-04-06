@@ -140,8 +140,8 @@ func deleteParamJobCmd() *cobra.Command {
                                 flag.Cmd = "param"
                                 RunDeleteRemote(cmd.Context(), flag)
                         } else {
-                                flag.Cmd = "param"
-                                RunDeleteRemote(cmd.Context(), flag)
+				fmt.Printf("%v param.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+				os.Exit(1)
                         }
 
 			return

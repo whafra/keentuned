@@ -168,10 +168,6 @@ func (d *deleter) check(inputName string) error {
 		return fmt.Errorf("%v is not supported to delete", d.fileName)
 	}
 
-	if d.fileName == "" {
-		return fmt.Errorf("File %v is non-existent", inputName)
-	}
-
 	if d.cmd == "param" {
 		return nil
 	}

@@ -150,7 +150,8 @@ func deleteProfileCmd() *cobra.Command {
                                 }
                                 RunDeleteRemote(cmd.Context(), flag)
                         } else {
-                                RunDeleteRemote(cmd.Context(), flag)
+				fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+                                os.Exit(1)
                         }
 
                         return
