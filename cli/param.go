@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
 	"time"
-	com "keentune/daemon/api/common"
 )
 
 const (
@@ -129,21 +129,27 @@ func deleteParamJobCmd() *cobra.Command {
 				return
 			}
 
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%s Init work path %v", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
 			//Determine whether job already exists
-                        JobPath := com.GetParameterPath(flag.Name)
-                        _, err := os.Stat(JobPath)
-                        if err == nil {
-                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-                                if !confirm() {
-                                        fmt.Println("[-] Give Up Delete")
-                                        return
-                                }
-                                flag.Cmd = "param"
-                                RunDeleteRemote(cmd.Context(), flag)
-                        } else {
-                                flag.Cmd = "param"
-                                RunDeleteRemote(cmd.Context(), flag)
-                        }
+			JobPath := com.GetParameterPath(flag.Name)
+			_, err = os.Stat(JobPath)
+			if err == nil {
+				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+				if !confirm() {
+					fmt.Println("[-] Give Up Delete")
+					return
+				}
+				flag.Cmd = "param"
+				RunDeleteRemote(cmd.Context(), flag)
+			} else {
+				flag.Cmd = "param"
+				RunDeleteRemote(cmd.Context(), flag)
+			}
 
 			return
 		},
@@ -185,6 +191,11 @@ func dumpCmd() *cobra.Command {
 }
 
 func checkDumpParam(dump *DumpFlag) error {
+	err := config.InitWorkDir()
+	if err != nil {
+		return fmt.Errorf("init work path %v", err)
+	}
+
 	workPath := config.GetProfileWorkPath("")
 	job := config.GetTuningWorkPath(dump.Name)
 	if !file.IsPathExist(job) {

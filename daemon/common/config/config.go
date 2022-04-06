@@ -40,7 +40,7 @@ type Bench struct {
 }
 
 type BenchGroup struct {
-	SrcIPs []string
+	SrcIPs  []string
 	SrcPort string
 }
 
@@ -90,7 +90,7 @@ var (
 	//  ApplyResultChan receive apply result
 	ApplyResultChan     []chan []byte
 	ServeFinish         = make(chan bool, 1)
-	BenchmarkResultChan   []chan []byte
+	BenchmarkResultChan []chan []byte
 	SensitizeResultChan = make(chan []byte, 1)
 )
 
@@ -108,7 +108,7 @@ var (
 
 var RealLocalIP string
 
-func init() {
+func Init() {
 	KeenTune = new(KeentunedConf)
 	err := KeenTune.Save()
 	if err != nil {
@@ -233,58 +233,58 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 }
 
 func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
-        var groupNames []string
-        sections := cfg.SectionStrings()
-        for _, section := range sections {
-                if strings.Contains(section, "bench-group") {
-                        groupNames = append(groupNames, section)
-                }
-        }
-
-        if len(groupNames) == 0 {
-                return fmt.Errorf("bench-group is null, please configure first")
-        }
-
-        var err error
-        var allGroupIPs = make(map[string]string)
-        var ipExist = make(map[string]bool)
-        var id = new(int)
-        c.Bench.BenchIPMap = make(map[string]int)
-        for _, groupName := range groupNames {
-                bench := cfg.Section(groupName)
-                var group BenchGroup
-                ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("")
-                group.SrcIPs, err = changeStringToSlice(ipStringSrc)
-                if err != nil {
-                        return fmt.Errorf("keentune check bench ip %v", err)
-                }
-
-                group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
-
-		if err = checkIPRepeated(groupName, group.SrcIPs, allGroupIPs); err != nil {
-                        return fmt.Errorf("%v", err)
-                }
-
-                c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
-                c.addBenchIPMap(group.SrcIPs, ipExist, id)
-
-		c.DestIP = bench.Key("BENCH_DEST_IP").MustString("")
-                c.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
-		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
-                c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
-                c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
-                c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
-
-                if c.BenchConf == "" {
-                        fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
-                }
-
-                if err = checkBenchConf(&c.BenchConf); err != nil {
-                        return err
-                }
+	var groupNames []string
+	sections := cfg.SectionStrings()
+	for _, section := range sections {
+		if strings.Contains(section, "bench-group") {
+			groupNames = append(groupNames, section)
+		}
 	}
 
-		return nil
+	if len(groupNames) == 0 {
+		return fmt.Errorf("bench-group is null, please configure first")
+	}
+
+	var err error
+	var allGroupIPs = make(map[string]string)
+	var ipExist = make(map[string]bool)
+	var id = new(int)
+	c.Bench.BenchIPMap = make(map[string]int)
+	for _, groupName := range groupNames {
+		bench := cfg.Section(groupName)
+		var group BenchGroup
+		ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("")
+		group.SrcIPs, err = changeStringToSlice(ipStringSrc)
+		if err != nil {
+			return fmt.Errorf("keentune check bench ip %v", err)
+		}
+
+		group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
+
+		if err = checkIPRepeated(groupName, group.SrcIPs, allGroupIPs); err != nil {
+			return fmt.Errorf("%v", err)
+		}
+
+		c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
+		c.addBenchIPMap(group.SrcIPs, ipExist, id)
+
+		c.DestIP = bench.Key("BENCH_DEST_IP").MustString("")
+		c.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
+		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
+		c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
+		c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
+		c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
+
+		if c.BenchConf == "" {
+			fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+		}
+
+		if err = checkBenchConf(&c.BenchConf); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
@@ -320,13 +320,13 @@ func (c *KeentunedConf) addTargetIPMap(ips []string, ipExist map[string]bool, id
 }
 
 func (c *KeentunedConf) addBenchIPMap(ips []string, ipExist map[string]bool, id *int) {
-        for _, ip := range ips {
-                if !ipExist[ip] {
-                        *id++
-                        ipExist[ip] = true
-                        c.Bench.BenchIPMap[ip] = *id
-                }
-        }
+	for _, ip := range ips {
+		if !ipExist[ip] {
+			*id++
+			ipExist[ip] = true
+			c.Bench.BenchIPMap[ip] = *id
+		}
+	}
 }
 
 func changeStringToSlice(ipString string) ([]string, error) {
@@ -341,3 +341,36 @@ func changeStringToSlice(ipString string) ([]string, error) {
 
 	return validIPs, nil
 }
+
+func InitWorkDir() error {
+	cfg, err := ini.Load(keentuneConfigFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
+	}
+
+	KeenTune = new(KeentunedConf)
+
+	keentune := cfg.Section("keentuned")
+	KeenTune.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
+
+	dump := cfg.Section("dump")
+	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
+	return nil
+}
+
+func InitTargetGroup() error {
+	cfg, err := ini.Load(keentuneConfigFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
+	}
+
+	KeenTune = new(KeentunedConf)
+
+	err = KeenTune.getTargetGroup(cfg)
+	if err != nil {
+		return fmt.Errorf("get target group %v", err)
+	}
+
+	return nil
+}
+

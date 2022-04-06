@@ -92,49 +92,15 @@ func listProfileCmd() *cobra.Command {
 	return cmd
 }
 
-// func setCmd() *cobra.Command {
-// 	var setFlag SetFlag
-// 	cmd := &cobra.Command{
-// 		Use:     "set",
-// 		Short:   "Apply a profile to the target machine",
-// 		Long:    "Apply a profile to the target machine",
-// 		Example: egSet,
-// 		Run: func(cmd *cobra.Command, args []string) {
-// 			if strings.Trim(setFlag.Name, " ") == "" {
-// 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-// 				cmd.Help()
-// 				return
-// 			}
-
-// 			setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
-// 			RunSetRemote(cmd.Context(), setFlag)
-// 			return
-// 		},
-// 	}
-
-// 	cmd.Flags().StringVar(&setFlag.Name, "name", "", "profile name, query by command \"keentune profile list\"")
-// 	return cmd
-// }
-
 func setCmd() *cobra.Command {
 	var setFlag SetFlag
 	const GroupNum int = 20
-	conf := new(config.KeentunedConf)
 	cmd := &cobra.Command{
 		Use:     "set",
 		Short:   "Apply a profile to the target machine",
 		Long:    "Apply a profile to the target machine",
 		Example: egSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			/*
-				if strings.Trim(setFlag.Name, " ") == "" {
-					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-					cmd.Help()
-					return
-				}
-				setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
-			*/
-			//fmt.Println("args", args)
 			//判断若args有值且以.conf结尾，则认为是默认所有group下发统一配置
 			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
 				for i, _ := range setFlag.ConfFile {
@@ -166,7 +132,7 @@ func setCmd() *cobra.Command {
 	}
 
 	var group string = ""
-	if err := conf.Save(); err != nil {
+	if err := config.InitTargetGroup(); err != nil {
 		setFlag.Group = make([]bool, GroupNum)
 		setFlag.ConfFile = make([]string, GroupNum)
 		for index := 0; index < GroupNum; index++ {
@@ -174,12 +140,10 @@ func setCmd() *cobra.Command {
 			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
 		}
 	} else {
-		//fmt.Printf("len(conf.Target.Group)=%d\n", len(conf.Target.Group))
-		setFlag.Group = make([]bool, len(conf.Target.Group))
-		setFlag.ConfFile = make([]string, len(conf.Target.Group))
-		for index, _ := range conf.Target.Group {
+		setFlag.Group = make([]bool, len(config.KeenTune.Target.Group))
+		setFlag.ConfFile = make([]string, len(config.KeenTune.Target.Group))
+		for index, _ := range config.KeenTune.Target.Group {
 			group = fmt.Sprintf("group%d", index+1)
-			//fmt.Println(group)
 			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
 		}
 	}
@@ -234,9 +198,15 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
 			//Determine whether json file already exists
 			ParamPath := config.GetGenerateWorkPath(genFlag.Output)
-			_, err := os.Stat(ParamPath)
+			_, err = os.Stat(ParamPath)
 			if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
 				genFlag.Force = confirm()

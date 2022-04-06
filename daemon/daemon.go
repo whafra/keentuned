@@ -20,6 +20,9 @@ import (
 )
 
 func main() {
+	config.Init()
+	log.Init()
+	
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)

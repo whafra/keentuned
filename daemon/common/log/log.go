@@ -15,14 +15,14 @@ import (
 
 const ConsoleLevel = "ERROR"
 
-var fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogConf.LogFileLvl)}
-var cLogger = &logrus.Logger{Level: getLevel(ConsoleLevel)}
+var fLogger *logrus.Logger
+var cLogger *logrus.Logger
 
 // fLogInst file log instance
-var fLogInst = Logger{entry: logrus.NewEntry(fLogger)}
+var fLogInst Logger
 
 // cLogInst console log instance
-var cLogInst = Logger{entry: logrus.NewEntry(cLogger)}
+var cLogInst Logger
 
 // Logger log instance struct
 type Logger struct {
@@ -83,7 +83,12 @@ func getLevel(lvl string) logrus.Level {
 	return ret
 }
 
-func init() {
+func Init() {
+	fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogConf.LogFileLvl)}
+	cLogger = &logrus.Logger{Level: getLevel(ConsoleLevel)}
+	fLogInst = Logger{entry: logrus.NewEntry(fLogger)}
+	cLogInst = Logger{entry: logrus.NewEntry(cLogger)}
+
 	fileName := fmt.Sprintf("%v/log/keentune/%s", "/var", config.KeenTune.LogConf.FileName)
 
 	// 1 set log segmentation method

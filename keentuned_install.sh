@@ -79,13 +79,13 @@ sed -i "s#KEENTUNED_HOME = .*#KEENTUNED_HOME = ${keentuned_home}#" $keentuned_ho
 sed -i "s/BRAIN_IP = .*/BRAIN_IP = ${brain_ip}/" $keentuned_home/conf/keentuned.conf
 sed -i "s/BENCH_IP = .*/BENCH_IP = ${bench_ip}/" $keentuned_home/conf/keentuned.conf
 sed -i "17s/ALGORITHM = .*/ALGORITHM = ${algorithm}/" $keentuned_home/conf/keentuned.conf
-sed -i "59s/ALGORITHM = .*/ALGORITHM = ${sensitive_algorithm}/" $keentuned_home/conf/keentuned.conf
+sed -i "60s/ALGORITHM = .*/ALGORITHM = ${sensitive_algorithm}/" $keentuned_home/conf/keentuned.conf
 sed -i "0,/TARGET_IP = .*/s//TARGET_IP = ${target_ip}/" $keentuned_home/conf/keentuned.conf
 
 sed -i "s/BASELINE_BENCH_ROUND = .*/BASELINE_BENCH_ROUND = ${base_round}/" $keentuned_home/conf/keentuned.conf
 sed -i "s/TUNING_BENCH_ROUND = .*/TUNING_BENCH_ROUND = ${tune_round}/" $keentuned_home/conf/keentuned.conf
 sed -i "s/RECHECK_BENCH_ROUND = .*/RECHECK_BENCH_ROUND = ${check_round}/" $keentuned_home/conf/keentuned.conf
-sed -i "s/BENCH_DESTINATION = .*/BENCH_DESTINATION = ${bench_dest}/" $keentuned_home/conf/keentuned.conf
+sed -i "0,/BENCH_DEST_IP = .*/s//BENCH_DEST_IP = ${bench_dest}/" $keentuned_home/conf/keentuned.conf
 sed -i "s/^BENCH_ROUND = .*/BENCH_ROUND = ${sensi_round}/" $keentuned_home/conf/keentuned.conf
 
 sed -i "0,/PARAMETER = .*/s//PARAMETER = ${param_conf}/" $keentuned_home/conf/keentuned.conf

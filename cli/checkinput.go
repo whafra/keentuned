@@ -48,6 +48,11 @@ func checkJob(cmd, name string) error {
 }
 
 func isTuneNameRepeat(name string) bool {
+	err := config.InitWorkDir()
+	if err != nil {
+		return false
+	}
+
 	tuneList, err := file.WalkFilePath(config.GetTuningWorkPath("")+"/", "", true, "/generate/")
 	if err != nil {
 		return false
@@ -61,3 +66,4 @@ func isTuneNameRepeat(name string) bool {
 
 	return false
 }
+
