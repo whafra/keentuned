@@ -7,6 +7,7 @@ import (
 	"os"
 	"github.com/spf13/cobra"
 	com "keentune/daemon/api/common"
+	m "keentune/daemon/modules"
 )
 
 const (
@@ -106,7 +107,19 @@ func trainCmd() *cobra.Command {
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
-			RunTrainRemote(cmd.Context(), trainflags)
+			SensiName := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), trainflags.Output)
+                        _, err := os.Stat(SensiName)
+                        if err == nil {
+                                fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
+                                trainflags.Force = confirm()
+                                if !trainflags.Force {
+                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+                                    os.Exit(1)
+                                }
+                                RunTrainRemote(cmd.Context(), trainflags)
+                        } else {
+                                RunTrainRemote(cmd.Context(), trainflags)
+                        }
 		},
 	}
 

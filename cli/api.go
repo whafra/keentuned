@@ -123,8 +123,6 @@ func RunCollectRemote(ctx context.Context, flag TuneFlag) {
 }
 
 func RunTrainRemote(ctx context.Context, flag TrainFlag) {
-	fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
-	flag.Force = confirm()
 	remoteImpl("sensitize.Train", flag)
 
 	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
