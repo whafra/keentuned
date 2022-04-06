@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 MYSQL_PORT=3306
 MYSQL_USER='sysbench'
 MYSQL_PASSWORD = "password"
-DATABASE_NAME = "sysdb"
+DATABASE_NAME = "sysbenchdb"
 REPORT_INTERVAL = 0
 TIME=20
 PORT = 22
@@ -25,6 +25,51 @@ TEST_TYPE="/usr/local/share/sysbench/oltp_read_write.lua"
 
 DEFAULT = "--thread-stack-size=32768 --table-size=100000 --tables=3 --threads=1"
 
+script_file="setupmysql.sh"
+
+mysqlshell="""#!/bin/sh
+db_name=sysbenchdb
+db_password=password
+db_port=3306
+db_user=sysbench
+lib_dir=/var/lib/mysql/
+log_dir=/var/log/
+mysql_log=$log_dir/mysql/mysqld.log
+tmp_sql=/tmp/mysql_setup.sql
+
+systemctl stop mysqld
+
+rm -rf $lib_dir
+mkdir -p $log_dir/mysql
+chmod 777 -R $log_dir
+touch $mysql_log
+chown -R mysql:mysql $mysql_log
+
+#set the user mysql, permission and time zone
+cat > $tmp_sql << EOF
+use mysql;
+update user set user.Host='%' where user.User='root';
+FLUSH PRIVILEGES;
+CREATE DATABASE IF NOT EXISTS ${db_name};
+create user ${db_user}@'%' identified by '${db_password}';
+grant all privileges on ${db_name}.* to ${db_user}@'%';
+EOF
+
+#check mysql version
+mysql_version=$(mysql -V|awk '{print $3}')
+if [[ $mysql_version > \"8.0\" ]];then
+    mysqld --initialize --user=mysql --datadir=/var/lib/mysql
+    systemctl restart mysqld
+    raw_pswd=$(cat $mysql_log | grep 'temporary password' | tail -n 1 | awk '{print $NF}')
+    set_pswd=\"ALTER USER 'root'@'localhost' IDENTIFIED BY '${db_password}';\"
+    echo \"$set_pswd\"
+    mysql -uroot -p\"${raw_pswd}\" -Dmysql --connect-expired-password -e \"$set_pswd\"
+else
+    echo \"mysql version error,check yum source!\"
+    exit 1
+fi
+mysql -uroot -p\"${db_password}\" -Dmysql < $tmp_sql
+"""
 
 
 class Benchmark:
@@ -47,10 +92,16 @@ class Benchmark:
         self.CMD_RUN = ' '.join((CMD,'run'))
         self.CMD_CLEAN = ' '.join((CMD,'cleanup'))
         self.CMD_PREPARE = ' '.join((CMD,'prepare'))
-        
 
     def prepare(self):
-        cmd = self.CMD_CLEAN 
+        with open(script_file, "w", encoding='UTF-8') as f:
+            f.write(mysqlshell)
+        result = subprocess.run("sh {}".format(script_file), shell=True, close_fds=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        if result.returncode != 0:
+            logger.error("setup database failed")
+            return False
+
+        cmd = self.CMD_CLEAN
         result = subprocess.run(cmd, shell=True, close_fds=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         if result.returncode == 0:
             cmd = self.CMD_PREPARE
@@ -61,7 +112,6 @@ class Benchmark:
             else:
                 logger.error("prepare database failed")
                 return False
-
         else:
             logger.error("cleanup database failed")
             return False
@@ -71,7 +121,6 @@ class Benchmark:
 
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-
         if not self.prepare():
             logger.error("prepare database failed")
             return False, []
@@ -88,7 +137,6 @@ class Benchmark:
         self.error = result.stderr.decode('UTF-8', 'strict')
         if result.returncode == 0:
             logger.info(self.out)
-
             pattern_static_trans = re.compile(r'transactions:\s+[\d.]+\s+\(([\d.]+)')
             pattern_static_queries = re.compile(r'queries:\s+[\d.]+\s+\(([\d.]+)')
             pattern_through_eps = re.compile(r'events/s \(eps\):\s+([\d.]+)')
@@ -124,11 +172,9 @@ class Benchmark:
             result = subprocess.run(cmd, shell=True, close_fds=True, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
             return True, result_str
-
         else:
             logger.error(self.error)
             return False, []
-
 
 
 if __name__ == "__main__":
@@ -137,3 +183,4 @@ if __name__ == "__main__":
         exit(1)
     bench = Benchmark(sys.argv[1])
     suc, res = bench.run()
+
