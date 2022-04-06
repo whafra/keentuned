@@ -7,6 +7,7 @@ import (
 	m "keentune/daemon/modules"
 	"os"
 	"strings"
+	"io/ioutil"
 )
 
 const (
@@ -184,9 +185,20 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
+			workPathName := m.GetProfileWorkPath(genFlag.Name)
+                        homePathName := m.GetProfileHomePath(genFlag.Name)
+                        _, err := ioutil.ReadFile(workPathName)
+                        if err != nil {
+                                _, errinfo := ioutil.ReadFile(homePathName)
+                                if errinfo != nil {
+                                        fmt.Printf("%s profile.Generate failed, msg: Convert file: %v, read file :%v err:%v\n", ColorString("red", "[ERROR]"), genFlag.Name, homePathName, errinfo)
+                                        os.Exit(1)
+                                }
+                        }
+
 			//Determine whether json file already exists
 			ParamPath := m.GetGenerateWorkPath(genFlag.Output)
-			_, err := os.Stat(ParamPath)
+			_, err = os.Stat(ParamPath)
 			if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))
 				genFlag.Force = confirm()
