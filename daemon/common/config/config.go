@@ -349,13 +349,16 @@ func InitWorkDir() error {
 	}
 
 	KeenTune = new(KeentunedConf)
+	getWorkDir(cfg)
+	return nil
+}
 
+func getWorkDir(cfg *ini.File) {
 	keentune := cfg.Section("keentuned")
 	KeenTune.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
 
 	dump := cfg.Section("dump")
 	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
-	return nil
 }
 
 func InitTargetGroup() error {
@@ -365,6 +368,9 @@ func InitTargetGroup() error {
 	}
 
 	KeenTune = new(KeentunedConf)
+
+	getWorkDir(cfg)
+	KeenTune.GetLogConf(cfg)
 
 	err = KeenTune.getTargetGroup(cfg)
 	if err != nil {

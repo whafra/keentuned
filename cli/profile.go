@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"keentune/daemon/common/config"
-
 	"github.com/spf13/cobra"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/log"
 	"os"
 	"strings"
 )
@@ -132,7 +132,7 @@ func setCmd() *cobra.Command {
 	}
 
 	var group string = ""
-	if err := config.InitTargetGroup(); err != nil {
+	if err := initSet(); err != nil {
 		setFlag.Group = make([]bool, GroupNum)
 		setFlag.ConfFile = make([]string, GroupNum)
 		for index := 0; index < GroupNum; index++ {
@@ -149,6 +149,15 @@ func setCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func initSet() error {
+	if err := config.InitTargetGroup(); err != nil {
+		return err
+	}
+
+	log.Init()
+	return nil
 }
 
 func deleteProfileCmd() *cobra.Command {
