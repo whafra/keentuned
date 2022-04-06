@@ -49,11 +49,6 @@ func runTrain(flags TrainFlag) {
 
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
 
-	if !isTrainFlagsRightful(flags) {
-		log.Errorf(log.SensitizeTrain, "check train options failed")
-		return
-	}
-
 	if err := initiateSensitization(&flags); err != nil {
 		return
 	}
@@ -152,20 +147,6 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 	}
 
 	return utils.FormatInTable(resultSlice), resultMap, nil
-}
-
-func isTrainFlagsRightful(flag TrainFlag) bool {
-	if !com.IsDataNameUsed(flag.Data) {
-		log.Errorf(log.SensitizeTrain, "check data name [%v] not exists", flag.Data)
-		return false
-	}
-
-	fileName := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flag.Output)
-	if file.IsPathExist(fileName) && !flag.Force {
-		log.Errorf(log.SensitizeTrain, "output file [%v] exist and you have given up to overwrite it", flag.Output)
-		return false
-	}
-	return true
 }
 
 func dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {

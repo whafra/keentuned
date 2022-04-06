@@ -90,6 +90,11 @@ func trainCmd() *cobra.Command {
 		Long:    "Deploy and start a sensitivity identification job",
 		Example: egTrain,
 		Run: func(cmd *cobra.Command, args []string) {
+			if !com.IsDataNameUsed(trainflags.Data) {
+                                fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
+                                os.Exit(1)
+                        }
+
 			if strings.Trim(trainflags.Data, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
