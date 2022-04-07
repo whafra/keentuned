@@ -10,14 +10,23 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from common import deleteDependentData
 from common import checkServerStatus
+from common import getTuneTaskResult
+from common import getTaskLogPath
 from common import sysCommand
+
 
 logger = logging.getLogger(__name__)
 
 
 class TestMultiTarget(unittest.TestCase):
     def setUp(self) -> None:
-        self.code_path = "/tmp/keentune-cluster-tmp/acops-new/keentuned/daemon/examples"
+        self.target, self.bench, self.brain = self.get_server_ip()
+        self.port = "TARGET_PORT = 9873"
+        self.scene_1 = "PARAMETER = sysctl_target.json"
+        self.scene_2 = "PARAMETER = nginx.json, sysctl_target.json, nginx.json"
+        self.scene_3 = "PARAMETER = sysctl_target.json, nginx.json, sysctl_target.json"
+        self.code_path = "/etc/keentune"
+
         server_list = ["keentuned", "keentune-brain",
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
@@ -29,68 +38,101 @@ class TestMultiTarget(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
+
         deleteDependentData("test1")
+        os.remove("{}/parameter/sysctl_target.json".format(self.code_path))
+        os.remove("{}/benchmark/wrk/nginx_http_long_multi_target.py".format(self.code_path))
+        os.remove("{}/benchmark/wrk/bench_wrk_nginx_long_multi_target.json".format(self.code_path))
         logger.info('the test_multi_target testcase finished')
 
+    def get_server_ip(self):
+        with open("common.py", "r", encoding='UTF-8') as f:
+            data = f.read()
+        target = re.search(r"target_ip=\"(.*)\"", data).group(1)
+        bench = re.search(r"bench_ip=\"(.*)\"", data).group(1)
+        brain = re.search(r"brain_ip=\"(.*)\"", data).group(1)
+
+        return target, bench, brain
+        
     def run_param_tune(self):
-        cmd = 'keentune param tune --param parameter/sysctl_target.json -i 1 --bench benchmark/wrk/bench_wrk_nginx_long_multi_target.json --job test1'
-        self.status, self.out, _  = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-
-        path = re.search(r'\s+"(.*?)"', self.out).group(1)
-        time.sleep(3)
-        while True:
-            with open(path, 'r') as f:
-                res_data = f.read()
-            if '[BEST] Tuning improvement' in res_data:
-                break
-            time.sleep(8)
-
-        word_list = ["Step1", "Step2", "Step3", "Step4",
-                    "Step5", "Step6", "[BEST] Tuning improvement"]
-        result = all([word in res_data for word in word_list])
+        cmd = 'keentune param tune -i 1 --job test1'
+        path = getTaskLogPath(cmd)
+        result = getTuneTaskResult(path)
         self.assertTrue(result)
 
     def check_sysctl_params(self, server):
-        path = "/var/keentune/parameter/test1/test1_best.json"
+        path = "/var/keentune/parameter/test1/test1_group{}_best.json".format(str(server[1]))
         with open(path, "r", encoding='UTF-8') as f:
             params = json.load(f)
 
         for data in params["parameters"]:
-            param_name = data["name"]
-            param_value = str(data["value"])
-            cmd = "ssh {} 'sysctl -n {}'".format(server, param_name)
-            sys_value = str(sysCommand(cmd)[1].strip('\n')).replace("\t", " ")
-            if param_value != sys_value:
-                print("param_name is: %s" % param_name)
-                print("param_value is: %s" % param_value)
-                print("sys_value is: %s" % sys_value)
-                self.status = 1
-                break   
+            if data["domain"] == "sysctl":
+                param_name = data["name"]
+                param_value = str(data["value"])
+                cmd = "ssh {} 'sysctl -n {}'".format(server[0], param_name)
+                sys_value = str(sysCommand(cmd)[1].strip('\n')).replace("\t", " ")
+                if param_value != sys_value:
+                    print("param_name is: %s" % param_name)
+                    print("param_value is: %s" % param_value)
+                    print("sys_value is: %s" % sys_value)
+                    self.status = 1
+                    break   
         else:
             self.status = 0
 
         self.assertEqual(self.status, 0)
-        
-    def test_multi_target(self):
-        with open("common.py", "r", encoding='UTF-8') as f:
-            data = f.read()
-        target_ip = re.search(r"target_ip=\"(.*)\"", data).group(1)
-        bench_ip = re.search(r"bench_ip=\"(.*)\"", data).group(1)
 
-        if target_ip == "localhost":
+    def run_multi_target(self, scene_cmd, server_list):
+        if self.target == "localhost":
             logger.info("this is standalone mode, don't need to run this use case")
         else:
-            cmd = 'sh conf/restart_keentuned.sh {} {}'.format(target_ip, bench_ip)
+            cmd = 'sh conf/restart_keentuned.sh {} {} "{}"'.format(self.target, self.bench, scene_cmd)
             self.status, self.out, _  = sysCommand(cmd)
             self.assertEqual(self.status, 0)
-            self.assertTrue(self.out.__contains__('restart keentuned server successfully!'))
+            self.assertIn("restart keentuned server successfully!", self.out)
 
             self.run_param_tune()
-            self.check_sysctl_params(target_ip)
-            self.check_sysctl_params(bench_ip)
+            for server in server_list:
+                self.check_sysctl_params(server)
+    
+    def test_multi_target_01(self):
+        scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
+        self.run_multi_target(scene_cmd, [(self.target, 1)])
 
-            os.remove("{}/parameter/sysctl_target.json".format(self.code_path))
-            os.remove("{}/benchmark/wrk/nginx_http_long_multi_target.py".format(self.code_path))
-            os.remove("{}/benchmark/wrk/bench_wrk_nginx_long_multi_target.json".format(self.code_path))
+    def test_multi_target_02(self):
+        scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}, {}, {}, {}\n{}\n{}".format("localhost", self.target, self.bench, self.brain, self.port, self.scene_2)
+        self.run_multi_target(scene_cmd, [(self.target, 1), (self.bench, 1), (self.brain, 1)])
 
+    def test_multi_target_03(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_2)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}, {}, {}\n{}\n{}".format(self.target, self.bench, self.brain, self.port, self.scene_3)
+        scene_cmd = r"\n{}\n{}".format(group1_cmd, group2_cmd)
+        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 2), (self.brain, 2)])
+    
+    def test_multi_target_04(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}, {}\n{}\n{}".format(self.bench, self.brain, self.port, self.scene_3)
+        scene_cmd = r"\n{}\n{}".format(group1_cmd, group2_cmd)
+        self.run_multi_target(scene_cmd, [(self.target, 1), (self.bench, 2), (self.brain, 2)])
+
+    def test_multi_target_05(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
+        group3_cmd = r"[target-group-3]\nTARGET_IP = {}\n{}\n{}".format(self.bench, self.port, self.scene_3)
+        scene_cmd = r"\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd)
+        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3)])
+
+    def test_multi_target_06(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
+        group3_cmd = r"[target-group-3]\nTARGET_IP = {}, {}\n{}\n{}".format(self.bench, self.brain, self.port, self.scene_3)
+        scene_cmd = r"\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd)
+        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3), (self.brain, 3)])
+
+    def test_multi_target_07(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
+        group3_cmd = r"[target-group-3]\nTARGET_IP = {}\n{}\n{}".format(self.bench, self.port, self.scene_3)
+        group4_cmd = r"[target-group-4]\nTARGET_IP = {}\n{}\n{}".format(self.brain, self.port, self.scene_1)
+        scene_cmd = r"\n{}\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd, group4_cmd)
+        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3), (self.brain, 4)])

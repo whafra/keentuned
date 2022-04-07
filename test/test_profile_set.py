@@ -34,13 +34,13 @@ class TestProfileSet(unittest.TestCase):
         logger.info('the test_profile_set testcase finished')
 
     def test_profile_set(self):
-        cmd = 'keentune profile set --name test1.conf'
+        cmd = 'keentune profile set --group1 test1_group1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Set test1.conf successfully'))
+        self.assertTrue(self.out.__contains__('Set test1_group1.conf successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('active'))

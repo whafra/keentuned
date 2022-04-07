@@ -1,13 +1,17 @@
 #!/bin/bash
+
 keentune_code_dir=/tmp/keentune-cluster-tmp
+test_conf_dir=$keentune_code_dir/acops-new/test/conf
 target_server=$1
 bench_server=$2
+scene_cmd=$3
 
-keentuned_path=$keentune_code_dir/acops-new/keentuned
-install_conf=$keentuned_path/keentuned_install.sh
-benchmark_script=$keentune_code_dir/acops-new/test/conf/nginx_http_long_multi_target.py
-json_path=$keentune_code_dir/acops-new/test/conf/bench_wrk_nginx_long_multi_target.json
-sysctl_path=$keentune_code_dir/acops-new/test/conf/sysctl_target.json
+keentuned_path=/etc/keentune
+keentuned_conf_path=/etc/keentune/conf/keentuned.conf
+sysctl_path=$test_conf_dir/sysctl_target.json
+local_keentuned_conf=$test_conf_dir/keentuned.conf
+benchmark_script=$test_conf_dir/nginx_http_long_multi_target.py
+json_path=$test_conf_dir/bench_wrk_nginx_long_multi_target.json
 
 clear_keentune_env()
 {
@@ -16,16 +20,19 @@ clear_keentune_env()
 
 restart_keentuned()
 {
-    sed -i "s/target_ip=.*/target_ip=\"${target_server},${bench_server}\"/g" $install_conf
     sed -i "s/multi_target_ip=.*/multi_target_ip=\"${bench_server}\"/g" $benchmark_script
 
-    cp $sysctl_path $keentuned_path/daemon/examples/parameter
-    cp $json_path $keentuned_path/daemon/examples/benchmark/wrk/
-    cp $benchmark_script $keentuned_path/daemon/examples/benchmark/wrk/
-    
-    cd $keentuned_path
-    ./keentuned_install.sh || ret=1
+    cp $sysctl_path $keentuned_path/parameter
+    cp $json_path $keentuned_path/benchmark/wrk
+    cp $benchmark_script $keentuned_path/benchmark/wrk
+
+    echo y | cp $local_keentuned_conf $keentuned_conf_path
+    sed -i "s/BENCH_DEST_IP = .*/BENCH_DEST_IP = ${target_server}/g" $keentuned_conf_path
+    sed -i "s/BENCH_CONFIG = .*/BENCH_CONFIG = bench_wrk_nginx_long_multi_target.json/g" $keentuned_conf_path
+    echo -e $scene_cmd >> $keentuned_conf_path
+
     keentuned > keentuned-multi_target.log 2>&1 &
+    sleep 5
 }
 
 clear_keentune_env

@@ -77,7 +77,7 @@ fi
 # modify keentuned.conf
 sed -i "s#KEENTUNED_HOME = .*#KEENTUNED_HOME = ${keentuned_home}#" $keentuned_home/conf/keentuned.conf
 sed -i "s/BRAIN_IP = .*/BRAIN_IP = ${brain_ip}/" $keentuned_home/conf/keentuned.conf
-sed -i "s/BENCH_IP = .*/BENCH_IP = ${bench_ip}/" $keentuned_home/conf/keentuned.conf
+sed -i "s/BENCH_SRC_IP = .*/BENCH_SRC_IP = ${bench_ip}/" $keentuned_home/conf/keentuned.conf
 sed -i "17s/ALGORITHM = .*/ALGORITHM = ${algorithm}/" $keentuned_home/conf/keentuned.conf
 sed -i "60s/ALGORITHM = .*/ALGORITHM = ${sensitive_algorithm}/" $keentuned_home/conf/keentuned.conf
 sed -i "0,/TARGET_IP = .*/s//TARGET_IP = ${target_ip}/" $keentuned_home/conf/keentuned.conf

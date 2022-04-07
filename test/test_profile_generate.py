@@ -33,9 +33,8 @@ class TestProfileGenerate(unittest.TestCase):
         logger.info('the test_profile_generate testcase finished')
 
     def test_profile_generate(self):
-        cmd = 'echo y | keentune profile generate -n test1.conf -o test1'
+        cmd = 'echo y | keentune profile generate -n test1_group1.conf -o test1_group1'
         self.status, self.out, _ = sysCommand(cmd)
-
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('generate successfully'))
 
@@ -44,6 +43,6 @@ class TestProfileGenerate(unittest.TestCase):
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__("test1"))
 
-        path = "/var/keentune/parameter/generate/test1.json"
+        path = "/var/keentune/parameter/generate/test1_group1.json"
         res = os.path.exists(path)
         self.assertTrue(res)

@@ -33,12 +33,12 @@ class TestProfileDelete(unittest.TestCase):
         logger.info('the test_profile_delete testcase finished')
 
     def test_profile_delete(self):
-        cmd = 'echo y | keentune profile delete --name test1.conf'
+        cmd = 'echo y | keentune profile delete --name test1_group1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))
 
-        path = "/var/keentune/profile/test1.conf"
+        path = "/var/keentune/profile/test1_group1.conf"
         res = os.path.exists(path)
         self.assertFalse(res)
 

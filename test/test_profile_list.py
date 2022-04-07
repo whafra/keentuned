@@ -37,7 +37,7 @@ class TestProfileList(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
 
         file_list = ["cpu_high_load.conf",
-                     "net_high_throuput.conf", "test1.conf"]
+                     "net_high_throuput.conf", "test1_group1.conf"]
         result = all([file in self.out for file in file_list])
         self.assertEqual(self.status, 0)
         self.assertTrue(result)
