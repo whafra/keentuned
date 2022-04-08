@@ -88,13 +88,17 @@ func getInitParam(groupID int, paramMaps []config.DBLMap, brainParam *[]Paramete
 				param := deepCopy(origin)
 
 				var nameSaltedParam, originParam Parameter
-				if err := utils.Map2Struct(value, &nameSaltedParam); err != nil {
+				if err := utils.Map2Struct(param, &nameSaltedParam); err != nil {
 					return nil, fmt.Errorf("map to struct: %v", err)
 				}
 
 				paramSuffix := fmt.Sprintf("@%v%v", groupIDPrefix, groupID)
 				nameSaltedParam.ParaName = fmt.Sprintf("%v%v", name, paramSuffix)
 				nameSaltedParam.DomainName = domain
+
+				if err := detectParam(&nameSaltedParam); err != nil {
+					return nil, fmt.Errorf("detect macro defination param:%v", err)
+				}
 
 				originParam = nameSaltedParam
 				originParam.ParaName = name
@@ -257,7 +261,11 @@ func (gp *Group) updateParams(params map[string]Parameter) error {
 }
 
 func (gp *Group) updateValue(param Parameter) error {
-	index := config.PriorityList[param.DomainName]
+	index, ok := config.PriorityList[param.DomainName]
+	if !ok {
+		return fmt.Errorf("add '%v' priority white list first", param.DomainName)
+	}
+
 	if index < 0 || index >= config.PRILevel {
 		return fmt.Errorf("priority id %v is out of range [0, 1]", index)
 	}
@@ -309,13 +317,6 @@ func (gp *Group) updateDump(param map[string]Parameter) {
 }
 
 func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group) bool {
-
-	// if groupNo == 0 {
-	// 	return false
-	// } else if tuner.Seter.Group[groupNo-1] {
-	// 	return true
-	// }
-
 	for index, groupSetFlag := range tuner.Seter.Group {
 		if groupSetFlag && (groupNo == index+1) {
 			target.ProfileSetFlag = true

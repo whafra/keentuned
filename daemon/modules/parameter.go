@@ -8,7 +8,6 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"reflect"
 	"regexp"
 	"strings"
 )
@@ -149,17 +148,6 @@ func assembleParam(param map[string]interface{}, domainName, paramName string) (
 	//  delete `desc` field, not used in any request body
 	delete(param, "desc")
 
-	if paramName == "Parallel" {
-		param["name"] = paramName
-		param["domain"] = domainName
-		if err := detectParam(param, paramName); err != nil {
-			return Parameter{}, fmt.Errorf("detect macro defination param:%v", err)
-		}
-
-		delete(param, "name")
-		delete(param, "domain")
-	}
-
 	var initParam Parameter
 	initParamMap := make(map[string]interface{})
 	for name, value := range param {
@@ -176,37 +164,56 @@ func assembleParam(param map[string]interface{}, domainName, paramName string) (
 	return initParam, nil
 }
 
-func detectParam(param map[string]interface{}, paramName string) error {
-	if paramName != "Parallel" {
-		return nil
-	}
-	ranges, ok := param["range"].([]interface{})
-	if !ok {
-		return fmt.Errorf("assert range to slice interface failed, real type %v", reflect.TypeOf(param["range"]))
-	}
-	var range2Int []int
-	var detectedMacroValue = make(map[string]int)
-	for _, v := range ranges {
-		value, ok := v.(float64)
-		if ok {
-			range2Int = append(range2Int, int(value))
-			continue
+func detectParam(param *Parameter) error {
+	if len(param.Scope) > 0 {
+		var range2Int []interface{}
+		var detectedMacroValue = make(map[string]int)
+		for _, v := range param.Scope {
+			value, ok := v.(float64)
+			if ok {
+				range2Int = append(range2Int, int(value))
+				continue
+			}
+			macroString, ok := v.(string)
+			re, _ := regexp.Compile(defMarcoString)
+			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
+			if err := getMacroValue(macros, detectedMacroValue); err != nil {
+				return fmt.Errorf("get detect value failed: %v", err)
+			}
+			calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
+			if err != nil {
+				return fmt.Errorf("'%v' calculate range err: %v", param.ParaName, err)
+			}
+			range2Int = append(range2Int, int(calcResult))
 		}
-		macroString, ok := v.(string)
-		re, _ := regexp.Compile(defMarcoString)
-		macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
-		if err := getMacroValue(macros, detectedMacroValue); err != nil {
-			return fmt.Errorf("get detect value failed: %v", err)
-		}
-		calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
-		if err != nil {
-			return fmt.Errorf("calculate err: %v", err)
-		}
-		range2Int = append(range2Int, int(calcResult))
+		param.Scope = range2Int
 	}
-	param["range"] = range2Int
+
+	if len(param.Options) > 0 {
+		var newOptions []string
+		var detectedMacroValue = make(map[string]int)
+		for _, v := range param.Options {
+			re, _ := regexp.Compile(defMarcoString)
+			if !re.MatchString(v) {
+				newOptions = append(newOptions, v)
+				continue
+			}
+			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(v, " ", ""), -1))
+			if err := getMacroValue(macros, detectedMacroValue); err != nil {
+				return fmt.Errorf("get detect value failed: %v", err)
+			}
+			calcResult, err := utils.Calculate(convertString(v, detectedMacroValue))
+			if err != nil {
+				return fmt.Errorf("'%v' calculate option err: %v", param.ParaName, err)
+			}
+			newOptions = append(newOptions, fmt.Sprintf("%v", int(calcResult)))
+		}
+		param.Options = newOptions
+	}
+
 	return nil
 }
+
 func convertString(macroString string, macroMap map[string]int) string {
 	retStr := strings.ReplaceAll(macroString, " ", "")
 	for name, value := range macroMap {
@@ -254,17 +261,24 @@ func getMacroValue(macros []string, detectedMacroValue map[string]int) error {
 	}
 	return detect(macroMap, macroNames, detectedMacroValue)
 }
+
 func detect(macroMap map[string]string, macroNames []string, detectedMacroValue map[string]int) error {
 	requestMap := map[string]interface{}{
 		"data": macroMap,
 	}
-	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.TargetIP[0], config.KeenTune.TargetPort)
+
+	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.DestIP, config.KeenTune.Group[0].Port)
 	resp, err := http.RemoteCall("POST", url, requestMap)
+	if err != nil {
+		return fmt.Errorf("remote call err:%v", err)
+	}
+
 	var respMap map[string]DetectResult
 	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		return fmt.Errorf("unmarshal detect response err:%v", err)
 	}
+
 	for _, name := range macroNames {
 		result, ok := respMap[strings.ToLower(name)]
 		if !ok {
@@ -276,6 +290,7 @@ func detect(macroMap map[string]string, macroNames []string, detectedMacroValue 
 		macro := fmt.Sprintf("#!%v#", name)
 		detectedMacroValue[macro] = result.Value
 	}
+
 	return nil
 }
 
