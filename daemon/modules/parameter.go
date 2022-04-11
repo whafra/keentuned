@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
@@ -14,8 +15,8 @@ import (
 
 // Parameter define a os parameter value scope, operating command and value
 type Parameter struct {
-	DomainName string        `json:"domain"`
-	ParaName   string        `json:"name"`
+	DomainName string        `json:"domain,omitempty"`
+	ParaName   string        `json:"name,omitempty"`
 	SetCMD     string        `json:"cmd_set,omitempty"`
 	GetCMD     string        `json:"cmd_get,omitempty"`
 	Scope      []interface{} `json:"range,omitempty"`
@@ -69,18 +70,21 @@ func updateParameter(partial, total *Parameter) {
 	}
 }
 
-// AssembleParams assemble params for tune init, include init  and apply  API request params
-func AssembleParams(userParam config.DBLMap, totalParamMap ...config.DBLMap) *Configuration {
-	var initParams []Parameter
-	var initConfig = new(Configuration)
-
+// UpdateParams update params by total param
+func UpdateParams(userParam config.DBLMap) {
 	for domainName, domainMap := range userParam {
-		var compareMap map[string]interface{}
-		if len(totalParamMap) > 0 {
-			compareMap = utils.Parse2Map(domainName, totalParamMap[0])
-			if compareMap == nil {
-				log.Warnf("", "find param domain [%v] does not exist when modify user params by parsing local total param file", domainName)
-			}
+		fileName := fmt.Sprintf("%s/parameter/%s.json", config.KeenTune.Home, domainName)
+
+		totalParamMap, err := file.ReadFile2Map(fileName)
+		if err != nil {
+			log.Warnf("", "Read file: '%v' , err: %v\n", fileName, err)
+			continue
+		}
+
+		compareMap := utils.Parse2Map(domainName, totalParamMap)
+		if len(totalParamMap) == 0 || len(compareMap) == 0 {
+			log.Warnf("", "domain [%v] does not exist when update params by parsing '%v'", domainName, fileName)
+			continue
 		}
 
 		for name, paramValue := range domainMap {
@@ -90,78 +94,40 @@ func AssembleParams(userParam config.DBLMap, totalParamMap ...config.DBLMap) *Co
 				continue
 			}
 
-			initParam, err := doAssembleParam(param, compareMap, domainName, name)
+			err := modifyParam(&param, compareMap, name)
 			if err != nil {
-				log.Warnf("", "do assemble parameters err:%v", err)
+				log.Warnf("", "modify parameters err:%v", err)
 				continue
 			}
 
-			initParams = append(initParams, initParam)
 			domainMap[name] = param
 		}
 
 		userParam[domainName] = domainMap
 	}
 
-	initConfig.Parameters = initParams
-
-	return initConfig
+	return
 }
 
-func doAssembleParam(originMap, compareMap map[string]interface{}, domainName, paramName string) (Parameter, error) {
-	if compareMap == nil {
-		return assembleParam(originMap, domainName, paramName)
-	}
-
-	var compareParamResult map[string]interface{}
-	compareParamResult, err := modifyParam(originMap, compareMap, domainName, paramName)
-	if err != nil {
-		return Parameter{}, err
-	}
-
-	return assembleParam(compareParamResult, domainName, paramName)
-}
-
-func modifyParam(originMap, compareMap map[string]interface{}, domainName, paramName string) (map[string]interface{}, error) {
+func modifyParam(originMap *map[string]interface{}, compareMap map[string]interface{}, paramName string) error {
 	var userParam, totalParam Parameter
 	err := utils.Map2Struct(originMap, &userParam)
 	if err != nil {
-		return nil, fmt.Errorf("modifyParam map to struct err:%v", err)
+		return fmt.Errorf("modifyParam map to struct err:%v", err)
 	}
 
 	if err = utils.Parse2Struct(paramName, compareMap, &totalParam); err != nil {
-		return nil, fmt.Errorf("modifyParam parse compareMap %+v to struct err:%v", compareMap, err)
+		return fmt.Errorf("modifyParam parse compareMap %+v to struct err:%v", compareMap, err)
 	}
 
 	updateParameter(&userParam, &totalParam)
-	resultParamMap, err := utils.Struct2Map(userParam)
+	*originMap, err = utils.Struct2Map(userParam)
 	if err != nil {
-		return nil, fmt.Errorf("modifyParam struct %+v To map  err:%v", userParam, err)
+		return fmt.Errorf("modifyParam struct %+v To map  err:%v", userParam, err)
 
 	}
 
-	return resultParamMap, nil
-}
-
-//  assembleParam assemble return[0] for apply API baseline config
-func assembleParam(param map[string]interface{}, domainName, paramName string) (Parameter, error) {
-	//  delete `desc` field, not used in any request body
-	delete(param, "desc")
-
-	var initParam Parameter
-	initParamMap := make(map[string]interface{})
-	for name, value := range param {
-		initParamMap[name] = value
-	}
-
-	err := utils.Map2Struct(initParamMap, &initParam)
-	if err != nil {
-		return Parameter{}, fmt.Errorf("assembleReadParam map to struct err:%v", err)
-	}
-
-	initParam.DomainName = domainName
-	initParam.ParaName = paramName
-	return initParam, nil
+	return nil
 }
 
 func detectParam(param *Parameter) error {
