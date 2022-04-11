@@ -178,8 +178,8 @@ func deleteProfileCmd() *cobra.Command {
 			flag.Cmd = "profile"
 			flag.Name = strings.TrimSuffix(flag.Name, ".conf") + ".conf"
 
-			ProfilePath := m.GetProfileWorkPath(flag.Name)
-			_, err := os.Stat(ProfilePath)
+			WorkPath := m.GetProfileWorkPath(flag.Name)
+			_, err := os.Stat(WorkPath)
                         if err == nil {
                                 fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
                                 if !confirm() {
@@ -188,8 +188,14 @@ func deleteProfileCmd() *cobra.Command {
                                 }
                                 RunDeleteRemote(cmd.Context(), flag)
                         } else {
-				fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
-                                os.Exit(1)
+				HomePath := m.GetProfileHomePath(flag.Name)
+                                _, err = os.Stat(HomePath)
+                                if err == nil {
+                                        fmt.Printf("%v profile.Delete failed, msg: Check name failed: %v is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
+                                } else {
+                                        fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+                                        os.Exit(1)
+                                }
                         }
 
                         return
