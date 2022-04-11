@@ -9,7 +9,6 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	utilhttp "keentune/daemon/common/utils/http"
-	m "keentune/daemon/modules"
 	"net/http"
 	"os"
 	"strings"
@@ -39,7 +38,7 @@ type RollbackFlag struct {
 // DumpFlag ...
 type DumpFlag struct {
 	Name   string
-	Output string
+	Output []string
 	Force  bool
 }
 
@@ -172,7 +171,7 @@ func (d *deleter) check(inputName string) error {
 		return nil
 	}
 
-	activeFileName := m.GetProfileWorkPath("active.conf")
+	activeFileName := config.GetProfileWorkPath("active.conf")
 	if !file.IsPathExist(activeFileName) {
 		return nil
 	}
@@ -198,12 +197,12 @@ func GetProfilePath(fileName string) string {
 		return fileName
 	}
 
-	workPath := m.GetProfileWorkPath(fileName)
+	workPath := config.GetProfileWorkPath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}
 
-	homePath := m.GetProfileHomePath(fileName)
+	homePath := config.GetProfileHomePath(fileName)
 	if file.IsPathExist(homePath) {
 		return homePath
 	}
@@ -212,86 +211,22 @@ func GetProfilePath(fileName string) string {
 }
 
 func GetParameterPath(fileName string) string {
-	workPath := m.GetTuningWorkPath(fileName)
+	workPath := config.GetTuningWorkPath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}
 
-	homePath := m.GetParamHomePath() + fileName
+	homePath := config.GetParamHomePath() + fileName
 	if file.IsPathExist(homePath) {
 		return homePath
 	}
 
-	generatePath := m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(fileName, ".json"), ".json"))
+	generatePath := config.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(fileName, ".json"), ".json"))
 	if file.IsPathExist(generatePath) {
 		return generatePath
 	}
 
 	return ""
-}
-
-/* GetAbsolutePath  fileName support absolute path, relative path, file.
-e.g.
-	file: param.json
-	relative path: parameter/param.json
-	absolute path: /etc/keentune/parameter/param.json
-*/
-func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
-	if fileName == "" {
-		return fileName
-	}
-
-	// Absolute path, start with "/"
-	if string(fileName[0]) == "/" {
-		if strings.Contains(fileName, fileType) {
-			return fileName
-		}
-
-		parts := strings.Split(fileName, "/")
-		partLen := len(parts)
-
-		return fmt.Sprintf("%s/%s%s", fileName, parts[partLen-1], extraSufix)
-	}
-
-	// Relative path, start with "./" or other
-	var relativePath string
-	relativePath = strings.Trim(fileName, "./")
-	parts := strings.Split(relativePath, "/")
-	partLen := len(parts)
-
-	if file.IsPathExist(m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(parts[partLen-1], ".json"), ".json"))) && fileType == ".json" {
-		return m.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(parts[partLen-1], ".json"), ".json"))
-	}
-
-	var workPath string
-
-	switch partLen {
-	// Only a file name, work directory has priority
-	case 1:
-		if strings.Contains(parts[0], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", config.KeenTune.DumpConf.DumpHome, class, parts[0])
-			if file.IsPathExist(workPath) {
-				return workPath
-			}
-
-			return fmt.Sprintf("%s/%s/%s", config.KeenTune.Home, class, parts[0])
-		}
-
-		return fmt.Sprintf("%s/%s/%s/%s%s", config.KeenTune.DumpConf.DumpHome, class, parts[0], parts[0], extraSufix)
-	// File relative path, work directory has priority
-	default:
-		// If the first element of the split has the same name as the specified class, then it will Trim the class+"/"
-		if strings.Contains(parts[partLen-1], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", config.KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
-			if file.IsPathExist(workPath) {
-				return workPath
-			}
-
-			return fmt.Sprintf("%s/%s/%s", config.KeenTune.Home, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
-		}
-
-		return fmt.Sprintf("%s/%s/%s/%s%s", config.KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
-	}
 }
 
 func GetRunningTask() string {

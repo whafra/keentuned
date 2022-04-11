@@ -32,7 +32,7 @@ class TestParamDump(unittest.TestCase):
         logger.info('the test_param_dump testcase finished')
 
     def test_param_dump(self):
-        cmd = 'echo y | keentune param dump -j test1 -o test1.conf'
+        cmd = 'echo y | keentune param dump -j test1'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('dump successfully'))
@@ -40,8 +40,8 @@ class TestParamDump(unittest.TestCase):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__("test1.conf"))
+        self.assertTrue(self.out.__contains__("test1_group1.conf"))
 
-        self.path = "/var/keentune/profile/test1.conf"
+        self.path = "/var/keentune/profile/test1_group1.conf"
         res = os.path.exists(self.path)
         self.assertTrue(res)

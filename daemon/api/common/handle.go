@@ -49,8 +49,17 @@ func report(url string, value []byte, err error) {
 	}
 
 	if strings.Contains(url, "benchmark_result") && config.IsInnerBenchRequests[1] {
-		config.IsInnerBenchRequests[1] = false
-		config.BenchmarkResultChan <- value
+		var benchResult struct {
+			BenchID int `json:"bench_id"`
+		}
+		err := json.Unmarshal(value, &benchResult)
+		if err != nil {
+			fmt.Printf("unmarshal bench id err: %v", err)
+			return
+		}
+
+		config.BenchmarkResultChan[benchResult.BenchID] <- value
+
 		return
 	}
 
@@ -65,7 +74,6 @@ func report(url string, value []byte, err error) {
 		}
 
 		if config.IsInnerApplyRequests[applyResult.ID] && applyResult.ID > 0 {
-			config.IsInnerApplyRequests[applyResult.ID] = false
 			config.ApplyResultChan[applyResult.ID] <- value
 		}
 
@@ -73,7 +81,6 @@ func report(url string, value []byte, err error) {
 	}
 
 	if strings.Contains(url, "sensitize_result") && config.IsInnerSensitizeRequests[1] {
-		config.IsInnerSensitizeRequests[1] = false
 		config.SensitizeResultChan <- value
 		return
 	}

@@ -1,14 +1,15 @@
-package file 
+package file
+
 import (
-	"io/ioutil"
-	"encoding/json"
 	"encoding/csv"
-	"fmt"	
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
-	"sort"
 )
 
 // IsPathExist ...
@@ -32,7 +33,7 @@ func DecoratePath(path string) string {
 	if len(path) == 0 {
 		return path
 	}
-	
+
 	if string(path[len(path)-1]) == "/" {
 		return strings.TrimSuffix(path, "/")
 	}
@@ -41,13 +42,13 @@ func DecoratePath(path string) string {
 }
 
 // ReadFile2Map ...
-func ReadFile2Map(path string) (map[string]map[string]interface{}, error) {
+func ReadFile2Map(path string) (map[string]interface{}, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read [%v] file err:%v\n", path, err)
+		return nil, fmt.Errorf("read [%v] file:%v\n", path, err)
 	}
 
-	var retMap map[string]map[string]interface{}
+	var retMap map[string]interface{}
 	err = json.Unmarshal(bytes, &retMap)
 	if err != nil {
 		return nil, fmt.Errorf("Unmarshal err:%v\n", err)
@@ -65,16 +66,16 @@ func Dump2File(path, fileName string, info interface{}) error {
 		}
 	}
 
-	fullPath:= path + "/" + fileName	
-	
+	fullPath := path + "/" + fileName
+
 	resultBytes, err := json.Marshal(info)
 	if err != nil {
-		return  fmt.Errorf("marshal info to bytes err:[%v] ", fileName, err)
+		return fmt.Errorf("marshal info %v to bytes err:[%v]", info, err)
 	}
 
 	err = ioutil.WriteFile(fullPath, resultBytes, os.ModePerm)
 	if err != nil {
-		return fmt.Errorf("write to file [%v] err:[%v] ", fileName, err)
+		return fmt.Errorf("write to file [%v] err:[%v]", fileName, err)
 	}
 
 	return nil
@@ -82,45 +83,45 @@ func Dump2File(path, fileName string, info interface{}) error {
 
 //  WalkFilePath walk file path for file or path list by onlyDir
 // return file list  while onlyDir is false, else return path list.
-func WalkFilePath(folder , match string, onlyDir bool, separators ...string) ([]string, error) {
-    var result []string
+func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]string, error) {
+	var result []string
 	var separator string
 	if len(separators) != 0 {
 		separator = separators[0]
 	}
 
-    filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-		pathSections :=strings.Split(path, "/")
+		pathSections := strings.Split(path, "/")
 		if len(pathSections) == 0 {
 			return fmt.Errorf("get path [%v] Sections is null", path)
 		}
 
 		var fileName string
 
-		if fi.IsDir() && onlyDir {			
+		if fi.IsDir() && onlyDir {
 			fileName = pathSections[len(pathSections)-1]
 			if fileName != "" && !strings.Contains(fileName, strings.Trim(separator, "/")) {
 				result = append(result, fileName)
 			}
 		}
 
-        if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {
+		if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {
 			fileName = pathSections[len(pathSections)-1]
-            result = append(result, fileName)
-        }
+			result = append(result, fileName)
+		}
 
-        return nil
-    })
+		return nil
+	})
 
-    return result, nil
+	return result, nil
 }
 
 // ConvertConfFileToJson convert conf file to json
-func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, error){
+func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, error) {
 	paramBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("read file :%v err:%v\n", fileName, err)
@@ -160,7 +161,6 @@ func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, 
 			delete(paramInfo, "name")
 			paramMap[name] = paramInfo
 		}
-
 		resultMap[domain] = paramMap
 	}
 
@@ -174,9 +174,9 @@ func readLine(line string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("param slice %v length is less than 2", paramSlice)
 	}
 
-	paramName := strings.Trim(paramSlice[0]," ")
-	valueStr := strings.ReplaceAll(strings.Trim(paramSlice[1]," "), "\"", "")
-	
+	paramName := strings.Trim(paramSlice[0], " ")
+	valueStr := strings.ReplaceAll(strings.Trim(paramSlice[1], " "), "\"", "")
+
 	value, err := strconv.ParseInt(valueStr, 10, 64)
 	if err != nil {
 		param = map[string]interface{}{
@@ -210,30 +210,30 @@ func Save2CSV(path, fileName string, data map[string][]float32) error {
 		return nil
 	}
 
-	fullName:= fmt.Sprintf("%s/%s", path, fileName)
+	fullName := fmt.Sprintf("%s/%s", path, fileName)
 
-	newFile, err := os.Create(fullName)	
-    if err != nil {
+	newFile, err := os.Create(fullName)
+	if err != nil {
 		fmt.Printf("creat %v cvs file failed\n", fullName)
-        return fmt.Errorf("create [%v] failed", fullName)
-    }
+		return fmt.Errorf("create [%v] failed", fullName)
+	}
 
-    defer newFile.Close()        
-    
+	defer newFile.Close()
+
 	w := csv.NewWriter(newFile)
 	var headers []string
 	for name, _ := range data {
-		headers = append(headers, name)	
-	}	
+		headers = append(headers, name)
+	}
 
 	dataPair := make([][]string, len(data[headers[0]]))
-	
+
 	sort.Strings(headers)
-	contents := [][]string {
-	    headers,
+	contents := [][]string{
+		headers,
 	}
-	
-	for index:=0; index < len(headers); index ++ {				
+
+	for index := 0; index < len(headers); index++ {
 		for row, value := range data[headers[index]] {
 			dataPair[row] = append(dataPair[row], fmt.Sprintf("%v", value))
 		}
@@ -246,20 +246,20 @@ func Save2CSV(path, fileName string, data map[string][]float32) error {
 }
 
 func GetWalkPath(folder, match string) (string, error) {
-    var result string
-    filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+	var result string
+	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-        if !fi.IsDir() && strings.Contains(path, match) {
-            result = path
-        }
+		if !fi.IsDir() && strings.Contains(path, match) {
+			result = path
+		}
 
-        return nil
-    })
+		return nil
+	})
 
-    return result, nil
+	return result, nil
 }
 
 func GetPlainName(fileName string) string {
@@ -270,4 +270,3 @@ func GetPlainName(fileName string) string {
 	parts := strings.Split(fileName, "/")
 	return parts[len(parts)-1]
 }
-

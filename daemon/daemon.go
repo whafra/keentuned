@@ -20,6 +20,9 @@ import (
 )
 
 func main() {
+	config.Init()
+	log.Init()
+	
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -50,16 +53,24 @@ func main() {
 }
 
 func mkWorkDir() {
-	if !file.IsPathExist(m.GetProfileWorkPath("")) {
-		os.MkdirAll(m.GetProfileWorkPath(""), os.ModePerm)
+	if !file.IsPathExist(config.GetProfileWorkPath("")) {
+		os.MkdirAll(config.GetProfileWorkPath(""), os.ModePerm)
 	}
 
-	if !file.IsPathExist(m.GetTuningWorkPath("")) {
-		os.MkdirAll(m.GetTuningWorkPath(""), os.ModePerm)
+	if !file.IsPathExist(config.GetTuningWorkPath("")) {
+		os.MkdirAll(config.GetTuningWorkPath(""), os.ModePerm)
 	}
 
-	if !file.IsPathExist(m.GetSensitizePath()) {
-		os.MkdirAll(m.GetSensitizePath(), os.ModePerm)
+	if !file.IsPathExist(config.GetSensitizePath()) {
+		os.MkdirAll(config.GetSensitizePath(), os.ModePerm)
+	}
+
+	activeConf := config.GetProfileWorkPath("active.conf")
+	if !file.IsPathExist(activeConf) {
+		fp, _ := os.Create(activeConf)
+		if fp != nil {
+			fp.Close()
+		}
 	}
 }
 
@@ -67,8 +78,10 @@ func showStart() {
 	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
-	for index, ip := range config.KeenTune.TargetIP {
-		fmt.Printf("\ttarget [%v]\t<--> id: %v\n", ip, index+1)
+	for _, group := range config.KeenTune.Group {
+		for index, ip := range group.IPs {
+			fmt.Printf("\ttarget [%v]\t<--> id: group-%v.target-%v\n", ip, group.GroupNo, index+1)
+		}
 	}
 
 	if err := com.StartCheck(); err != nil {

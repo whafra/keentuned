@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	com "keentune/daemon/api/common"
-	m "keentune/daemon/modules"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/log"
 	"os"
 	"strings"
 	"io/ioutil"
@@ -12,7 +13,7 @@ import (
 
 const (
 	egInfo         = "\tkeentune profile info --name cpu_high_load.conf"
-	egSet          = "\tkeentune profile set --name cpu_high_load.conf"
+	egSet          = "\tkeentune profile set --group1 cpu_high_load.conf"
 	egGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
 	egProfDelete   = "\tkeentune profile delete --name tune_test.conf"
 	egProfList     = "\tkeentune profile list"
@@ -94,19 +95,30 @@ func listProfileCmd() *cobra.Command {
 
 func setCmd() *cobra.Command {
 	var setFlag SetFlag
+	const GroupNum int = 20
 	cmd := &cobra.Command{
 		Use:     "set",
 		Short:   "Apply a profile to the target machine",
 		Long:    "Apply a profile to the target machine",
 		Example: egSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(setFlag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+			//判断若args有值且以.conf结尾，则认为是默认所有group下发统一配置
+			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
+				for i, _ := range setFlag.ConfFile {
+					setFlag.Group[i] = true
+					setFlag.ConfFile[i] = args[0]
+				}
+			} else {
+				//若groupX已配置且以.conf结尾，则认为该配置有效
+				for i, v := range setFlag.ConfFile {
+					if len(v) != 0 && strings.HasSuffix(v, ".conf") {
+						setFlag.Group[i] = true
+					} else {
+						setFlag.Group[i] = false
+					}
+				}
 			}
 
-			setFlag.Name = strings.TrimSuffix(setFlag.Name, ".conf") + ".conf"
 			var targetMsg = new(string)
 			if com.IsTargetOffline(targetMsg) {
 				fmt.Printf("%v Found %v offline, please get them (it) ready before use\n",
@@ -120,8 +132,33 @@ func setCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&setFlag.Name, "name", "", "profile name, query by command \"keentune profile list\"")
+	var group string = ""
+	if err := initSet(); err != nil {
+		setFlag.Group = make([]bool, GroupNum)
+		setFlag.ConfFile = make([]string, GroupNum)
+		for index := 0; index < GroupNum; index++ {
+			group = fmt.Sprintf("group%d", index)
+			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
+		}
+	} else {
+		setFlag.Group = make([]bool, len(config.KeenTune.Target.Group))
+		setFlag.ConfFile = make([]string, len(config.KeenTune.Target.Group))
+		for index, _ := range config.KeenTune.Target.Group {
+			group = fmt.Sprintf("group%d", index+1)
+			cmd.Flags().StringVar(&setFlag.ConfFile[index], group, "", "profile name, query by command \"keentune profile list\"")
+		}
+	}
+
 	return cmd
+}
+
+func initSet() error {
+	if err := config.InitTargetGroup(); err != nil {
+		return err
+	}
+
+	log.Init()
+	return nil
 }
 
 func deleteProfileCmd() *cobra.Command {
@@ -165,7 +202,7 @@ func deleteProfileCmd() *cobra.Command {
 }
 
 func generateCmd() *cobra.Command {
-	var genFlag DumpFlag
+	var genFlag GenFlag
 	cmd := &cobra.Command{
 		Use:     "generate",
 		Short:   "Generate a parameter configuration file from profile",
@@ -185,19 +222,25 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
 			workPathName := m.GetProfileWorkPath(genFlag.Name)
-                        homePathName := m.GetProfileHomePath(genFlag.Name)
-                        _, err := ioutil.ReadFile(workPathName)
-                        if err != nil {
-                                _, errinfo := ioutil.ReadFile(homePathName)
-                                if errinfo != nil {
-                                        fmt.Printf("%s profile.Generate failed, msg: Convert file: %v, read file :%v err:%v\n", ColorString("red", "[ERROR]"), genFlag.Name, homePathName, errinfo)
-                                        os.Exit(1)
-                                }
-                        }
+			homePathName := m.GetProfileHomePath(genFlag.Name)
+			_, err := ioutil.ReadFile(workPathName)
+			if err != nil {
+				_, errinfo := ioutil.ReadFile(homePathName)
+				if errinfo != nil {
+					fmt.Printf("%s profile.Generate failed, msg: Convert file: %v, read file :%v err:%v\n", ColorString("red", "[ERROR]"), genFlag.Name, homePathName, errinfo)
+					os.Exit(1)
+				}
+			}
 
 			//Determine whether json file already exists
-			ParamPath := m.GetGenerateWorkPath(genFlag.Output)
+			ParamPath := config.GetGenerateWorkPath(genFlag.Output)
 			_, err = os.Stat(ParamPath)
 			if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "generated parameter"))

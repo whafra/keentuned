@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	egCollect       = "\tkeentune sensitize collect --param sysctl.json --bench bench_wrk_nginx_long.json --data collect_test --iteration 10"
+	egCollect       = "\tkeentune sensitize collect --data collect_test --iteration 10"
 	egTrain         = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
 	egDelete        = "\tkeentune sensitize delete --data collect_test"
 	egSensitiveList = "\tkeentune sensitize list"
@@ -66,7 +66,7 @@ func collectCmd() *cobra.Command {
 			}
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" || len(flag.ParamConf) == 0 {
+			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return

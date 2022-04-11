@@ -28,7 +28,7 @@ class TestSensitizeCollect(unittest.TestCase):
         logger.info('the test_sensitize_collect testcase finished')
 
     def test_sensitize_collect(self):
-        cmd = 'keentune sensitize collect -i 10 --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data test01'
+        cmd = 'keentune sensitize collect -i 10 --data test01'
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 

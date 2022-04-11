@@ -40,7 +40,7 @@ class TestProfileRollback(unittest.TestCase):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('active'))
 
         cmd = 'keentune profile rollback'
@@ -51,5 +51,5 @@ class TestProfileRollback(unittest.TestCase):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('available'))

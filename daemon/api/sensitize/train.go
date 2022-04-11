@@ -67,7 +67,7 @@ func runTrain(flags TrainFlag) {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), flags.Output))
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flags.Output))
 }
 
 func initiateSensitization(flags *TrainFlag) error {
@@ -103,7 +103,7 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 	}
 
 	config.IsInnerSensitizeRequests[1] = true
-
+	defer func() { config.IsInnerSensitizeRequests[1] = false }()
 	select {
 	case resultBytes := <-config.SensitizeResultChan:
 		log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
@@ -151,7 +151,7 @@ func getSensitivityResult() (string, map[string]interface{}, error) {
 
 func dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {
 	fileName := "sensi-" + recordName + ".json"
-	if err := file.Dump2File(m.GetSensitizePath(), fileName, resultMap); err != nil {
+	if err := file.Dump2File(config.GetSensitizePath(), fileName, resultMap); err != nil {
 		log.Errorf(log.SensitizeTrain, "dump sensitivity result to file [%v] err:[%v] ", fileName, err)
 		return err
 	}

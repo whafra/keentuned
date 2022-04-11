@@ -33,7 +33,7 @@ class TestProfileInfo(unittest.TestCase):
         logger.info('the test_profile_info testcase finished')
 
     def test_profile_info(self):
-        cmd = 'keentune profile info --name test1.conf'
+        cmd = 'keentune profile info --name test1_group1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('[sysctl]'))

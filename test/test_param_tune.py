@@ -31,7 +31,7 @@ class TestParamTune(unittest.TestCase):
         logger.info('the test_param_tune testcase finished')
 
     def test_param_tune(self):
-        cmd = 'keentune param tune --param parameter/sysctl.json -i 1 --bench benchmark/wrk/bench_wrk_nginx_long.json --job test1'
+        cmd = 'keentune param tune -i 1 --job test1'
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 

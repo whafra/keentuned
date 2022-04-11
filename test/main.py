@@ -47,7 +47,7 @@ def RunBasicCase():
     sensitize_suite.addTest(TestSensitizeDelete('test_sensitize_delete'))
 
     target_suite = unittest.TestSuite()
-    target_suite.addTest(TestMultiTarget('test_multi_target'))
+    target_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
 
     suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, target_suite])
     return suite

@@ -22,12 +22,21 @@ type TuneFlag struct {
 // DumpFlag ...
 type DumpFlag struct {
 	Name   string
+	Output []string
+	Force  bool
+}
+
+// GenFlag ...
+type GenFlag struct {
+	Name   string
 	Output string
 	Force  bool
 }
 
 type SetFlag struct {
-	Name string
+	Name     string
+	Group    []bool
+	ConfFile []string
 }
 
 type TrainFlag struct {
@@ -80,8 +89,8 @@ func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("param.Tune", flag)
 
 	fmt.Printf("%v Running Param Tune Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
-	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
+	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
 	return
 }
 
@@ -109,7 +118,7 @@ func RunSetRemote(ctx context.Context, flag SetFlag) {
 	remoteImpl("profile.Set", flag)
 }
 
-func RunGenerateRemote(ctx context.Context, flag DumpFlag) {
+func RunGenerateRemote(ctx context.Context, flag GenFlag) {
 	remoteImpl("profile.Generate", flag)
 }
 
@@ -117,8 +126,8 @@ func RunCollectRemote(ctx context.Context, flag TuneFlag) {
 	remoteImpl("sensitize.Collect", flag)
 
 	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n\tparam: %v\n\tbench: %v\n", flag.Round, flag.Name, flag.ParamConf, flag.BenchConf)
-	fmt.Printf("\n\tsee more details by log file:  \"%v\"\n", flag.Log)
+	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
+	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
 	return
 }
 
@@ -152,4 +161,3 @@ func RunJobsRemote(ctx context.Context) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
-

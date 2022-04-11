@@ -70,7 +70,7 @@ def deleteDependentData(param_name):
 
 
 def runParamTune(name, iteration=1):
-    cmd = 'keentune param tune --param parameter/sysctl.json -i {} --bench benchmark/wrk/bench_wrk_nginx_long.json --job {}'.format(iteration, name)
+    cmd = 'keentune param tune -i {} --job {}'.format(iteration, name)
     _, output, _ = sysCommand(cmd)
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
@@ -89,26 +89,26 @@ def runParamTune(name, iteration=1):
 
 
 def runParamDump(name):
-    cmd = 'echo y | keentune param dump -j {} -o {}'.format(name, name)
+    cmd = 'echo y | keentune param dump -j {}'.format(name)
     sysCommand(cmd)
-    path = "/var/keentune/profile/test1.conf"
+    path = "/var/keentune/profile/test1_group1.conf"
     res = os.path.exists(path)
     result = 0 if res else 1
     return result
 
 
 def runProfileSet():
-    cmd = 'keentune profile set --name test1.conf'
+    cmd = 'keentune profile set --group1 test1_group1.conf'
     sysCommand(cmd)
     cmd = 'keentune profile list'
     _, output, _ = sysCommand(cmd)
-    res = re.search(r'\[(.*?)\].+test1.conf', output).group(1)
+    res = re.search(r'\[(.*?)\].+test1_group1.conf', output).group(1)
     result = 0 if res.__contains__('active') else 1
     return result
 
 
 def runSensitizeCollect(name, iteration=10):
-    cmd = 'keentune sensitize collect -i {} --param parameter/sysctl.json --bench benchmark/wrk/bench_wrk_nginx_long.json --data {}'.format(iteration, name)
+    cmd = 'keentune sensitize collect -i {} --data {}'.format(iteration, name)
     _, output, _ = sysCommand(cmd)
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
