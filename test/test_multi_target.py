@@ -82,12 +82,12 @@ class TestMultiTarget(unittest.TestCase):
 
         self.assertEqual(self.status, 0)
 
-    def run_multi_target(self, scene_cmd, server_list):
+    def run_multi_target(self, scene_cmd, bench_ip, server_list):
         if self.target == "localhost":
             logger.info("this is standalone mode, don't need to run this use case")
         else:
-            cmd = 'sh conf/restart_keentuned.sh {} {} "{}"'.format(self.target, self.bench, scene_cmd)
-            self.status, self.out, _  = sysCommand(cmd)
+            cmd = 'sh conf/restart_keentuned.sh {} "{}" "{}"'.format(self.target, bench_ip, scene_cmd)
+            self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
             self.assertIn("restart keentuned server successfully!", self.out)
 
@@ -97,37 +97,42 @@ class TestMultiTarget(unittest.TestCase):
     
     def test_multi_target_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
-        self.run_multi_target(scene_cmd, [(self.target, 1)])
+        self.run_multi_target(scene_cmd, "localhost", [(self.target, 1)])
 
     def test_multi_target_02(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}, {}, {}, {}\n{}\n{}".format("localhost", self.target, self.bench, self.brain, self.port, self.scene_2)
-        self.run_multi_target(scene_cmd, [(self.target, 1), (self.bench, 1), (self.brain, 1)])
+        server_list = [(self.target, 1), (self.bench, 1), (self.brain, 1)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
 
     def test_multi_target_03(self):
         group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_2)
         group2_cmd = r"[target-group-2]\nTARGET_IP = {}, {}, {}\n{}\n{}".format(self.target, self.bench, self.brain, self.port, self.scene_3)
         scene_cmd = r"\n{}\n{}".format(group1_cmd, group2_cmd)
-        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 2), (self.brain, 2)])
+        server_list = [(self.target, 2), (self.bench, 2), (self.brain, 2)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
     
     def test_multi_target_04(self):
         group1_cmd = r"[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
         group2_cmd = r"[target-group-2]\nTARGET_IP = {}, {}\n{}\n{}".format(self.bench, self.brain, self.port, self.scene_3)
         scene_cmd = r"\n{}\n{}".format(group1_cmd, group2_cmd)
-        self.run_multi_target(scene_cmd, [(self.target, 1), (self.bench, 2), (self.brain, 2)])
+        server_list = [(self.target, 1), (self.bench, 2), (self.brain, 2)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
 
     def test_multi_target_05(self):
         group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
         group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
         group3_cmd = r"[target-group-3]\nTARGET_IP = {}\n{}\n{}".format(self.bench, self.port, self.scene_3)
         scene_cmd = r"\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd)
-        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3)])
+        server_list = [(self.target, 2), (self.bench, 3)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
 
     def test_multi_target_06(self):
         group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
         group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
         group3_cmd = r"[target-group-3]\nTARGET_IP = {}, {}\n{}\n{}".format(self.bench, self.brain, self.port, self.scene_3)
         scene_cmd = r"\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd)
-        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3), (self.brain, 3)])
+        server_list = [(self.target, 2), (self.bench, 3), (self.brain, 3)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
 
     def test_multi_target_07(self):
         group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
@@ -135,4 +140,44 @@ class TestMultiTarget(unittest.TestCase):
         group3_cmd = r"[target-group-3]\nTARGET_IP = {}\n{}\n{}".format(self.bench, self.port, self.scene_3)
         group4_cmd = r"[target-group-4]\nTARGET_IP = {}\n{}\n{}".format(self.brain, self.port, self.scene_1)
         scene_cmd = r"\n{}\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd, group4_cmd)
-        self.run_multi_target(scene_cmd, [(self.target, 2), (self.bench, 3), (self.brain, 4)])
+        server_list = [(self.target, 2), (self.bench, 3), (self.brain, 4)]
+        self.run_multi_target(scene_cmd, "localhost", server_list)
+
+        cmd = "keentune param dump --job test1"
+        self.status, self.out, _ = sysCommand(cmd)
+        self.assertEqual(self.status, 0)
+        cmd = "keentune profile set --group1 test1_group1.conf --group2 test1_group2.conf --group3 test1_group3.conf --group4 test1_group4.conf"
+        self.status, self.out, _ = sysCommand(cmd)
+        self.assertEqual(self.status, 0)
+        self.assertIn("Set test1_group1.conf successfully", self.out)
+        self.assertIn("Set test1_group2.conf successfully", self.out)
+        self.assertIn("Set test1_group3.conf successfully", self.out)
+        self.assertIn("Set test1_group4.conf successfully", self.out)
+
+    def test_multi_bench_01(self):
+        scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)
+        bench_ip = "localhost, {}".format(self.bench)
+        self.run_multi_target(scene_cmd, bench_ip, [(self.target, 1)])
+
+    def test_multi_bench_02(self):
+        scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)
+        bench_ip = "localhost, {}, {}, {}".format(self.target, self.bench, self.brain)
+        self.run_multi_target(scene_cmd, bench_ip, [(self.target, 1)])
+
+    def test_multi_target_bench_01(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}, {}\n{}\n{}".format(self.bench, self.brain, self.port, self.scene_3)
+        scene_cmd = r"\n{}\n{}".format(group1_cmd, group2_cmd)
+        bench_ip = "localhost, {}".format(self.bench)
+        server_list = [(self.target, 1), (self.bench, 2), (self.brain, 2)]
+        self.run_multi_target(scene_cmd, bench_ip, server_list)
+
+    def test_multi_target_bench_02(self):
+        group1_cmd = r"[target-group-1]\nTARGET_IP = {}\n{}\n{}".format("localhost", self.port, self.scene_1)
+        group2_cmd = r"[target-group-2]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_2)
+        group3_cmd = r"[target-group-3]\nTARGET_IP = {}\n{}\n{}".format(self.bench, self.port, self.scene_3)
+        group4_cmd = r"[target-group-4]\nTARGET_IP = {}\n{}\n{}".format(self.brain, self.port, self.scene_1)
+        scene_cmd = r"\n{}\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd, group4_cmd)
+        bench_ip = "localhost, {}, {}, {}".format(self.target, self.bench, self.brain)
+        server_list = [(self.target, 2), (self.bench, 3), (self.brain, 4)]
+        self.run_multi_target(scene_cmd, bench_ip, server_list)

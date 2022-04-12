@@ -75,21 +75,6 @@ class Benchmark():
         
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        multi_target_ip=""
-        cmd = 'wrk -t {} -c {} -d {} --latency http://{}'.format(
-                self.threads,self.connections,self.duration,multi_target_ip)
-        logger.info(cmd)
-        result = subprocess.run(
-                    cmd, 
-                    shell=True,
-                    close_fds=True,
-                    stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE
-                )
-        self.out = result.stdout.decode('UTF-8','strict')
-        if not (result.returncode==0 and self.out):
-            return False, []
-        
         cmd = 'wrk -t {} -c {} -d {} --latency http://{}'.format(
                 self.threads,self.connections,self.duration,self.url)
         logger.info(cmd)
