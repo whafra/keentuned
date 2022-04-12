@@ -2,7 +2,7 @@
     "fio": {
       "size": {
         "desc": "默认值：110g, 单位1M， 最大值：为环境内存/2",
-        "dtype": "int",
+        "dtype": "string",
         "options": [
             "128",
             "112640",
