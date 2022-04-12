@@ -380,3 +380,22 @@ func InitTargetGroup() error {
 	return nil
 }
 
+func InitBrainConf() error {
+	cfg, err := ini.Load(keentuneConfigFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
+	}
+
+	KeenTune = new(KeentunedConf)
+
+	brain := cfg.Section("brain")
+	KeenTune.BrainIP = brain.Key("BRAIN_IP").MustString("")
+	KeenTune.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
+	KeenTune.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
+
+	getWorkDir(cfg)
+	KeenTune.GetLogConf(cfg)
+	return nil
+
+}
+

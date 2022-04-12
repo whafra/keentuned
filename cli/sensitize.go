@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"time"
-	"os"
 	"github.com/spf13/cobra"
 	com "keentune/daemon/api/common"
-	m "keentune/daemon/modules"
+	"keentune/daemon/common/config"
+	"keentune/daemon/common/log"
+	"os"
+	"strings"
+	"time"
 )
 
 const (
@@ -60,6 +61,12 @@ func collectCmd() *cobra.Command {
 		Long:    "Collecting parameter and benchmark score as sensitivity identification data randomly",
 		Example: egCollect,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			err := initSensitizeConf()
+			if err != nil {
+				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
 			if err := checkTuningFlags("sensitize", &flag); err != nil {
 				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
@@ -90,15 +97,21 @@ func trainCmd() *cobra.Command {
 		Long:    "Deploy and start a sensitivity identification job",
 		Example: egTrain,
 		Run: func(cmd *cobra.Command, args []string) {
-			if !com.IsDataNameUsed(trainflags.Data) {
-                                fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
-                                os.Exit(1)
-                        }
+			err := initSensitizeConf()
+			if err != nil {
+				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
 
 			if strings.Trim(trainflags.Data, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return
+			}
+
+			if !com.IsDataNameUsed(trainflags.Data) {
+				fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
+				os.Exit(1)
 			}
 
 			if strings.Trim(trainflags.Output, " ") == "" {
@@ -112,19 +125,19 @@ func trainCmd() *cobra.Command {
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
-			SensiName := fmt.Sprintf("%s/sensi-%s.json", m.GetSensitizePath(), trainflags.Output)
-                        _, err := os.Stat(SensiName)
-                        if err == nil {
-                                fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
-                                trainflags.Force = confirm()
-                                if !trainflags.Force {
-                                    fmt.Printf("outputFile exist and you have given up to overwrite it\n")
-                                    os.Exit(1)
-                                }
-                                RunTrainRemote(cmd.Context(), trainflags)
-                        } else {
-                                RunTrainRemote(cmd.Context(), trainflags)
-                        }
+			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainflags.Output)
+			_, err = os.Stat(SensiName)
+			if err == nil {
+				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
+				trainflags.Force = confirm()
+				if !trainflags.Force {
+					fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+					os.Exit(1)
+				}
+				RunTrainRemote(cmd.Context(), trainflags)
+			} else {
+				RunTrainRemote(cmd.Context(), trainflags)
+			}
 		},
 	}
 
@@ -165,29 +178,35 @@ func deleteSensitivityCmd() *cobra.Command {
 				return
 			}
 
+			err := initSensitizeConf()
+			if err != nil {
+				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
 			_, _, DataList, err := com.GetDataList()
-                        if err != nil {
-                                if find := strings.Contains(err.Error(), "connection refused"); find {
-                                        fmt.Println("brain access denied")
-                                        return
-                                }
-                                fmt.Println("Get sensitize Data List err:%v", err)
-                                return
-                        }
-                        if find := strings.Contains(DataList, flag.Name); find {
-                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-                                if !confirm() {
-                                        fmt.Println("[-] Give Up Delete")
-                                        return
-                                }
-                                flag.Cmd = "sensitize"
-                                RunDeleteRemote(cmd.Context(), flag)
-                        } else {
+			if err != nil {
+				if find := strings.Contains(err.Error(), "connection refused"); find {
+					fmt.Println("brain access denied")
+					return
+				}
+				fmt.Println("Get sensitize Data List err:%v", err)
+				return
+			}
+			if find := strings.Contains(DataList, flag.Name); find {
+				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+				if !confirm() {
+					fmt.Println("[-] Give Up Delete")
+					return
+				}
+				flag.Cmd = "sensitize"
+				RunDeleteRemote(cmd.Context(), flag)
+			} else {
 				err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
 				fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
-                        }
+			}
 
-                        return
+			return
 		},
 	}
 
@@ -195,3 +214,14 @@ func deleteSensitivityCmd() *cobra.Command {
 
 	return cmd
 }
+
+func initSensitizeConf() error {
+	err := config.InitBrainConf()
+	if err != nil {
+		return err
+	}
+
+	log.Init()
+	return nil
+}
+

@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"io/ioutil"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"os"
 	"strings"
-	"io/ioutil"
 )
 
 const (
@@ -178,27 +178,33 @@ func deleteProfileCmd() *cobra.Command {
 			flag.Cmd = "profile"
 			flag.Name = strings.TrimSuffix(flag.Name, ".conf") + ".conf"
 
-			WorkPath := m.GetProfileWorkPath(flag.Name)
-			_, err := os.Stat(WorkPath)
-                        if err == nil {
-                                fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-                                if !confirm() {
-                                        fmt.Println("[-] Give Up Delete")
-                                        return
-                                }
-                                RunDeleteRemote(cmd.Context(), flag)
-                        } else {
-				HomePath := m.GetProfileHomePath(flag.Name)
-                                _, err = os.Stat(HomePath)
-                                if err == nil {
-                                        fmt.Printf("%v profile.Delete failed, msg: Check name failed: %v is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
-                                } else {
-                                        fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
-                                        os.Exit(1)
-                                }
-                        }
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%v Init work directory error: %v .\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
 
-                        return
+			WorkPath := config.GetProfileWorkPath(flag.Name)
+			_, err = os.Stat(WorkPath)
+			if err == nil {
+				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+				if !confirm() {
+					fmt.Println("[-] Give Up Delete")
+					return
+				}
+				RunDeleteRemote(cmd.Context(), flag)
+			} else {
+				HomePath := config.GetProfileHomePath(flag.Name)
+				_, err = os.Stat(HomePath)
+				if err == nil {
+					fmt.Printf("%v profile.Delete failed, msg: Check name failed: %v is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
+				} else {
+					fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+					os.Exit(1)
+				}
+			}
+
+			return
 		},
 	}
 
@@ -234,9 +240,9 @@ func generateCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			workPathName := m.GetProfileWorkPath(genFlag.Name)
-			homePathName := m.GetProfileHomePath(genFlag.Name)
-			_, err := ioutil.ReadFile(workPathName)
+			workPathName := config.GetProfileWorkPath(genFlag.Name)
+			homePathName := config.GetProfileHomePath(genFlag.Name)
+			_, err = ioutil.ReadFile(workPathName)
 			if err != nil {
 				_, errinfo := ioutil.ReadFile(homePathName)
 				if errinfo != nil {
