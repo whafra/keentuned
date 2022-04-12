@@ -40,9 +40,7 @@ class TestMultiTarget(unittest.TestCase):
         self.assertEqual(status, 0)
 
         deleteDependentData("test1")
-        os.remove("{}/parameter/sysctl_target.json".format(self.code_path))
-        os.remove("{}/benchmark/wrk/nginx_http_long_multi_target.py".format(self.code_path))
-        os.remove("{}/benchmark/wrk/bench_wrk_nginx_long_multi_target.json".format(self.code_path))
+        self.delete_tmp_file()
         logger.info('the test_multi_target testcase finished')
 
     def get_server_ip(self):
@@ -53,6 +51,16 @@ class TestMultiTarget(unittest.TestCase):
         brain = re.search(r"brain_ip=\"(.*)\"", data).group(1)
 
         return target, bench, brain
+
+    def delete_tmp_file(self):
+        param_path = "{}/parameter/sysctl_target.json".format(self.code_path)
+        script_path = "{}/benchmark/wrk/nginx_http_long_multi_target.py".format(self.code_path)
+        bench_path = "{}/benchmark/wrk/bench_wrk_nginx_long_multi_target.json".format(self.code_path)
+        file_list = [param_path, script_path, bench_path]
+
+        for path in file_list:
+            if os.path.exists(path):
+                os.remove(path)
         
     def run_param_tune(self):
         cmd = 'keentune param tune -i 1 --job test1'
@@ -94,6 +102,7 @@ class TestMultiTarget(unittest.TestCase):
             self.run_param_tune()
             for server in server_list:
                 self.check_sysctl_params(server)
+            return True
     
     def test_multi_target_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}, {}\n{}\n{}".format("localhost", self.target, self.port, self.scene_2)
@@ -141,18 +150,19 @@ class TestMultiTarget(unittest.TestCase):
         group4_cmd = r"[target-group-4]\nTARGET_IP = {}\n{}\n{}".format(self.brain, self.port, self.scene_1)
         scene_cmd = r"\n{}\n{}\n{}\n{}".format(group1_cmd, group2_cmd, group3_cmd, group4_cmd)
         server_list = [(self.target, 2), (self.bench, 3), (self.brain, 4)]
-        self.run_multi_target(scene_cmd, "localhost", server_list)
+        status = self.run_multi_target(scene_cmd, "localhost", server_list)
 
-        cmd = "keentune param dump --job test1"
-        self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        cmd = "keentune profile set --group1 test1_group1.conf --group2 test1_group2.conf --group3 test1_group3.conf --group4 test1_group4.conf"
-        self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertIn("Set test1_group1.conf successfully", self.out)
-        self.assertIn("Set test1_group2.conf successfully", self.out)
-        self.assertIn("Set test1_group3.conf successfully", self.out)
-        self.assertIn("Set test1_group4.conf successfully", self.out)
+        if status:
+            cmd = "keentune param dump --job test1"
+            self.status, self.out, _ = sysCommand(cmd)
+            self.assertEqual(self.status, 0)
+            cmd = "keentune profile set --group1 test1_group1.conf --group2 test1_group2.conf --group3 test1_group3.conf --group4 test1_group4.conf"
+            self.status, self.out, _ = sysCommand(cmd)
+            self.assertEqual(self.status, 0)
+            self.assertIn("Set test1_group1.conf successfully", self.out)
+            self.assertIn("Set test1_group2.conf successfully", self.out)
+            self.assertIn("Set test1_group3.conf successfully", self.out)
+            self.assertIn("Set test1_group4.conf successfully", self.out)
 
     def test_multi_bench_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)
@@ -181,3 +191,4 @@ class TestMultiTarget(unittest.TestCase):
         bench_ip = "localhost, {}, {}, {}".format(self.target, self.bench, self.brain)
         server_list = [(self.target, 2), (self.bench, 3), (self.brain, 4)]
         self.run_multi_target(scene_cmd, bench_ip, server_list)
+
