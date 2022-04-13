@@ -78,7 +78,6 @@ class Benchmark():
         cmd = 'wrk -t {} -c {} -d {} --latency http://{}'.format(
                 self.threads,self.connections,self.duration,self.url)
         logger.info(cmd)
-        print(cmd)
         result = subprocess.run(
                     cmd, 
                     shell=True,
