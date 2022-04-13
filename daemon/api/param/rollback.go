@@ -14,11 +14,17 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ParamRollback)
 	}()
 
-	err := m.Rollback(log.ParamRollback, "param")
+	detail, err := m.Rollback(log.ParamRollback, "param")
 	if err != nil {
-		return fmt.Errorf("Rollback details:\n%v", err)
+		return fmt.Errorf("%v", detail)
+	}
+
+	if detail != "" {
+		log.Warn(log.ParamRollback, detail)
+		return nil
 	}
 
 	log.Infof(log.ParamRollback, fmt.Sprintf("[ok] %v rollback successfully", flag.Cmd))
 	return nil
 }
+

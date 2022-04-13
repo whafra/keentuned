@@ -22,7 +22,7 @@ import (
 func main() {
 	config.Init()
 	log.Init()
-	
+
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGQUIT, syscall.SIGTERM, syscall.SIGINT)
@@ -78,9 +78,16 @@ func showStart() {
 	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
+
 	for _, group := range config.KeenTune.Group {
 		for index, ip := range group.IPs {
-			fmt.Printf("\ttarget [%v]\t<--> id: group-%v.target-%v\n", ip, group.GroupNo, index+1)
+			fmt.Printf("\ttarget [%v]\t<--> id: %v-%v\n", ip, group.GroupNo, index+1)
+		}
+	}
+
+	for groupNo, group := range config.KeenTune.BenchGroup {
+		for index, ip := range group.SrcIPs {
+			fmt.Printf("\tbench_src [%v]\t<--> id: %v-%v\n", ip, groupNo+1, index+1)
 		}
 	}
 

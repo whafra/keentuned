@@ -92,12 +92,12 @@ func IsClientOffline(clientName *string) bool {
 
 func IsTargetOffline(clientName *string) bool {
 	var offline bool
-	
+
 	for _, group := range config.KeenTune.Group {
 		for index, ip := range group.IPs {
 			targetURI := fmt.Sprintf("%v:%v/status", ip, group.Port)
 			if checkOffline(targetURI) {
-				*clientName += fmt.Sprintf("group-%v.target-%v, ", group.GroupNo, index+1)
+				*clientName += fmt.Sprintf("target%v-%v, ", group.GroupNo, index+1)
 				offline = true
 			}
 		}
@@ -112,9 +112,9 @@ func IsBenchOffline(clientName *string) bool {
 
 	for groupID, benchgroup := range config.KeenTune.BenchGroup {
 		for ipIndex, benchip := range benchgroup.SrcIPs {
-			benchURI := fmt.Sprintf("%v:%v/status",benchip,benchgroup.SrcPort)
+			benchURI := fmt.Sprintf("%v:%v/status", benchip, benchgroup.SrcPort)
 			if checkOffline(benchURI) {
-				*clientName += fmt.Sprintf("group-%v.bench-%v, ", groupID+1, ipIndex+1)
+				*clientName += fmt.Sprintf("bench_src%v-%v, ", groupID+1, ipIndex+1)
 				offline = true
 			}
 		}
@@ -122,7 +122,6 @@ func IsBenchOffline(clientName *string) bool {
 
 	return offline
 }
-
 
 func checkOffline(uri string) bool {
 	bytes, err := http.RemoteCall("GET", uri, nil)

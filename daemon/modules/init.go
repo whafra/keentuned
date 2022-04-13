@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -35,7 +36,7 @@ func (tuner *Tuner) init() error {
 
 	err = tuner.backup()
 	if err != nil {
-		return fmt.Errorf("backup %v", tuner.backupDetail)
+		return fmt.Errorf("backup %v", tuner.backupFailure)
 	}
 
 	err = tuner.baseline()
@@ -91,17 +92,17 @@ func (tuner *Tuner) baseline() error {
 		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:", tuner.IncreaseStep())
 	}
 
-        for _, benchgroup := range config.KeenTune.BenchGroup {
-                for _, benchip := range benchgroup.SrcIPs {
-                        Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
-                        success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send, Host)
-                        if err != nil || !success {
-                                return fmt.Errorf("send script file  result: %v, details:%v", success, err)
-                        }
-                }
-        }
+	for _, benchgroup := range config.KeenTune.BenchGroup {
+		for _, benchip := range benchgroup.SrcIPs {
+			Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
+			success, _, err := tuner.Benchmark.SendScript(&tuner.timeSpend.send, Host)
+			if err != nil || !success {
+				return fmt.Errorf("send script file  result: %v, details:%v", success, err)
+			}
+		}
+	}
 
-        var err error
+	var err error
 	_, tuner.benchScore, tuner.benchSummary, err = tuner.RunBenchmark(config.KeenTune.BaseRound)
 	if err != nil {
 		if err.Error() == "get benchmark is interrupted" {
@@ -161,7 +162,9 @@ func (tuner *Tuner) backup() error {
 
 func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	var sucCount = new(int)
-	var retResult = new(string)
+	var warnCount = new(int)
+	var sucDetail = new(string)
+	var failedDetail = new(string)
 	wg := sync.WaitGroup{}
 	for i, target := range tuner.Group {
 		wg.Add(1)
@@ -171,20 +174,35 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 			if needReq {
 				request = target.MergedParam
 			}
+
 			result, allSuc := target.concurrentSuccess(uri, request)
-			*retResult += result
 			if allSuc {
 				*sucCount++
+				if result != "" {
+					*warnCount++
+				}
+				*sucDetail += result
+				return
 			}
+
+			*failedDetail += result
 		}(i, target, &wg)
 	}
 
 	wg.Wait()
+	retFailureInfo := strings.TrimSuffix(*failedDetail, "; ")
 	switch uri {
 	case "backup":
-		tuner.backupDetail = *retResult
+		tuner.backupFailure = retFailureInfo
 	case "rollback":
-		tuner.rollbackDetail = *retResult
+		tuner.rollbackFailure = retFailureInfo
+		if *sucDetail != "" {
+			if *warnCount == len(tuner.Group) {
+				tuner.rollbackDetail = fmt.Sprintf("All Targets No Need to Rollback")
+				break
+			}
+			tuner.rollbackDetail = fmt.Sprintf("Partial success: %v No Need to Rollback", *sucDetail)
+		}
 	}
 
 	if *sucCount != len(tuner.Group) {
@@ -193,51 +211,3 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 
 	return nil
 }
-
-/*
-func (tuner *Tuner) rollbackProfileSet() error {
-	return tuner.concurrentProfileSet("rollback", false)
-}
-
-func (tuner *Tuner) backupProfileSet() error {
-	return tuner.concurrentProfileSet("backup", true)
-}
-
-func (tuner *Tuner) concurrentProfileSet(uri string, needReq bool) error {
-	var sucCount = new(int)
-	var retResult = new(string)
-	wg := sync.WaitGroup{}
-	for i, target := range tuner.Group {
-		wg.Add(1)
-		go func(i int, target Group, wg *sync.WaitGroup) {
-			defer wg.Done()
-			//对于未进行profile set的group，不进行rollback、backup
-			if target.ProfileSetFlag {
-				var request interface{}
-				if needReq {
-					request = target.MergedParam
-				}
-				result, allSuc := target.concurrentSuccess(uri, request)
-				*retResult += result
-				if allSuc {
-					*sucCount++
-				}
-			}
-		}(i, target, &wg)
-	}
-
-	wg.Wait()
-	switch uri {
-	case "backup":
-		tuner.backupDetail = *retResult
-	case "rollback":
-		tuner.rollbackDetail = *retResult
-	}
-
-	if *sucCount != len(tuner.Group) {
-		return fmt.Errorf("failure occur")
-	}
-
-	return nil
-}
-*/

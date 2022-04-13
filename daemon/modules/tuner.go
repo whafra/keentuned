@@ -12,12 +12,13 @@ import (
 )
 
 type implyDetail struct {
-	useTime        string
-	applySummary   string
-	applyDetail    string
-	benchSummary   string
-	backupDetail   string
-	rollbackDetail string
+	useTime         string
+	applySummary    string
+	applyDetail     string
+	benchSummary    string
+	backupFailure   string
+	rollbackDetail  string
+	rollbackFailure string
 }
 
 // Tuner define a tuning job include Algorithm, Benchmark, Group
@@ -248,3 +249,4 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
 }
+

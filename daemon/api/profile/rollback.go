@@ -19,9 +19,9 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		log.ClearCliLog(log.ProfRollback)
 	}()
 
-	err := m.Rollback(log.ProfRollback, "profile")
+	detail, err := m.Rollback(log.ProfRollback, "profile")
 	if err != nil {
-		return fmt.Errorf("Rollback details:\n%v", err)
+		return fmt.Errorf("%v", detail)
 	}
 
 	fileName := config.GetProfileWorkPath("active.conf")
@@ -30,6 +30,12 @@ func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 		return fmt.Errorf("Update active file failed, err:%v", err)
 	}
 
+	if detail != "" {
+		log.Warn(log.ProfRollback, detail)
+		return nil
+	}
+
 	log.Infof(log.ProfRollback, fmt.Sprintf("[ok] %v rollback successfully", flag.Cmd))
 	return nil
 }
+
