@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"keentune/daemon/common/config"
 )
 
 func subCommands() []*cobra.Command {
@@ -13,6 +14,7 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(createParamCmds()))
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
+	subCmds = append(subCmds, decorateCmd(versionCmd()))
 
 	return subCmds
 }
@@ -93,6 +95,21 @@ func benchCmd() *cobra.Command {
 	flags.IntVarP(&flag.Round, "iteration", "i", 100, "benchmark execution iterations of pressure test")
 	flags.StringVar(&flag.BenchConf, "bench", "", "benchmark configure infomation")
 	return cmd
+}
+
+func versionCmd() *cobra.Command {
+        var flag VersionFlag
+        var cmd = &cobra.Command{
+                Use:     "version",
+                Short:   "Print the version number of keentune",
+                Long:    "Print the version number of keentune",
+                Example: egBenchmark,
+                Run: func(cmd *cobra.Command, args []string) {
+                        flag.VersionNum = config.KeenTune.VersionConf
+                        fmt.Printf("keentune version %v\n", flag.VersionNum)
+                },
+        }
+        return cmd
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.

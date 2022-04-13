@@ -23,6 +23,7 @@ type KeentunedConf struct {
 	BrainPort     string
 	Algorithm     string
 	HeartbeatTime int
+	VersionConf   string
 	DumpConf
 	Sensitize
 	LogConf
@@ -176,6 +177,10 @@ func (c *KeentunedConf) Save() error {
 	c.Sensitize.BenchRound = sensitize.Key("BENCH_ROUND").MustInt(2)
 
 	c.GetLogConf(cfg)
+
+	version := cfg.Section("version")
+	c.VersionConf = version.Key("VERSION_NUM").MustString("")
+
 	return nil
 }
 
