@@ -200,8 +200,8 @@ func deleteProfileCmd() *cobra.Command {
 					fmt.Printf("%v profile.Delete failed, msg: Check name failed: %v is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
 				} else {
 					fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
-					os.Exit(1)
 				}
+				os.Exit(1)
 			}
 
 			return
