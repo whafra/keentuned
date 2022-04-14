@@ -364,6 +364,9 @@ func getWorkDir(cfg *ini.File) {
 
 	dump := cfg.Section("dump")
 	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
+
+	version := cfg.Section("version")
+        KeenTune.VersionConf = version.Key("VERSION_NUM").MustString("")
 }
 
 func InitTargetGroup() error {

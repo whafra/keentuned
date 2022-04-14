@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
-
+	"os"
 	"github.com/spf13/cobra"
 	"keentune/daemon/common/config"
 )
@@ -20,6 +20,7 @@ func subCommands() []*cobra.Command {
 }
 
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
+var egVersion = "\tkeentune version"
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag
@@ -103,8 +104,14 @@ func versionCmd() *cobra.Command {
                 Use:     "version",
                 Short:   "Print the version number of keentune",
                 Long:    "Print the version number of keentune",
-                Example: egBenchmark,
+                Example: egVersion,
                 Run: func(cmd *cobra.Command, args []string) {
+			err := config.InitWorkDir()
+                        if err != nil {
+                                fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
+                                os.Exit(1)
+                        }
+
                         flag.VersionNum = config.KeenTune.VersionConf
                         fmt.Printf("keentune version %v\n", flag.VersionNum)
                 },
