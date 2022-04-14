@@ -19,7 +19,7 @@ const (
 )
 
 const (
-	BackupNotFound = "Can not find backup file "
+	BackupNotFound = "Can not find backup file"
 	FileNotExist   = "do not exists"
 )
 
@@ -112,11 +112,10 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 		return fmt.Sprintf("%v", response.Msg), FAILED
 	}
 
-	msg, ok := response.Msg.(string)
-	if ok && (strings.Contains(msg, BackupNotFound) || strings.Contains(msg, FileNotExist)) {
+	s := fmt.Sprintf("%v", response.Msg)
+	if strings.Contains(s, BackupNotFound) || strings.Contains(s, FileNotExist) {
 		return "", WARNING
 	}
 
 	return "", SUCCESS
 }
-
