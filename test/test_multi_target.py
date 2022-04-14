@@ -153,7 +153,7 @@ class TestMultiTarget(unittest.TestCase):
         status = self.run_multi_target(scene_cmd, "localhost", server_list)
 
         if status:
-            cmd = "keentune param dump --job test1"
+            cmd = "echo y | keentune param dump --job test1"
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
             cmd = "keentune profile set --group1 test1_group1.conf --group2 test1_group2.conf --group3 test1_group3.conf --group4 test1_group4.conf"
