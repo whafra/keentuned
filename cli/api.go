@@ -154,8 +154,8 @@ func StopRemote(ctx context.Context, flag string) {
 		job = "sensibility identification"
 	}
 
-	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
+	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 }
 
 func RunJobsRemote(ctx context.Context) {
