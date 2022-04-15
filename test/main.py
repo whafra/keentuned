@@ -3,6 +3,7 @@ import sys
 import unittest
 
 from test_help import TestHelp
+from test_version import TestVersion
 from test_param_tune import TestParamTune
 from test_param_list import TestParamList
 from test_param_dump import TestParamDump
@@ -26,6 +27,7 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 def RunBasicCase():
     param_suite = unittest.TestSuite()
     param_suite.addTest(TestHelp('test_help'))
+    param_suite.addTest(TestVersion('test_version'))
     param_suite.addTest(TestParamTune('test_param_tune'))
     param_suite.addTest(TestParamList('test_param_list'))
     param_suite.addTest(TestParamDump('test_param_dump'))
