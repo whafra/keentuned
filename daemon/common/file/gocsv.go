@@ -1,0 +1,235 @@
+package file
+
+import (
+	"encoding/csv"
+	"fmt"
+	"github.com/go-gota/gota/dataframe"
+	"github.com/go-gota/gota/series"
+	"github.com/pkg/errors"
+	"os"
+	"sync"
+	"syscall"
+)
+
+var (
+	Empty         = errors.New("record is empty")
+	NotExist      = errors.New("record not found")
+	HeaderIsEmpty = errors.New("header is empty")
+	AlreadyExist  = errors.New("job or record is already existence")
+)
+
+func loadCsv(fileName string) (dataframe.DataFrame, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return dataframe.DataFrame{}, err
+	}
+
+	defer f.Close()
+	df := dataframe.ReadCSV(f)
+	if df.Err != nil {
+		return dataframe.DataFrame{}, df.Err
+	}
+
+	return df, nil
+}
+
+// CreatCSV create csv file with header
+func CreatCSV(fileName string, header []string) error {
+	if len(header) == 0 {
+		return HeaderIsEmpty
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	return addRecord(fileName, header)
+
+}
+
+func addRecord(fileName string, header []string) error {
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	w := csv.NewWriter(f)
+	err = w.Write(header)
+	if err != nil {
+		return err
+	}
+
+	w.Flush()
+	return nil
+}
+
+func appendRecord(fileName string, header []string) error {
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+	w := csv.NewWriter(f)
+	err = w.Write(header)
+	if err != nil {
+		return err
+	}
+
+	w.Flush()
+	return nil
+}
+
+// Insert Null value must be assigned "-"
+func Insert(fileName string, record []string) error {
+	df, err := loadCsv(fileName)
+	if err == nil {
+		_, primaryName, err := getPrimaryName(df)
+		if err != nil {
+			return err
+		}
+
+		oldJobs := df.Col(primaryName).Records()
+		if IsInSlice(record[0], oldJobs) {
+			return fmt.Errorf("'%v' %v", record[0], AlreadyExist)
+		}
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	return appendRecord(fileName, record)
+}
+
+// getPrimaryName get name of COL.1 as the primary name
+func getPrimaryName(df dataframe.DataFrame) ([][]string, string, error) {
+	records := df.Records()
+	if len(records) < 2 || len(records[0]) == 0 {
+		return nil, "", NotExist
+	}
+
+	primaryName := df.Records()[0][0]
+	return records, primaryName, nil
+}
+
+func UpdateRow(fileName, jobName string, info map[int]interface{}) error {
+	df, err := loadCsv(fileName)
+	if err != nil {
+		if err.Error() == "load records: empty DataFrame" {
+			return Empty
+		}
+
+		return err
+	}
+
+	records, primaryName, err := getPrimaryName(df)
+	if err != nil {
+		return err
+	}
+
+	oldJobs := df.Col(primaryName).Records()
+	if !IsInSlice(jobName, oldJobs) {
+		return NotExist
+	}
+
+	rowIdx := 0
+	var flush []string
+	for index, row := range records {
+		if row[0] == jobName {
+			rowIdx = index
+			flush = row
+			break
+		}
+	}
+
+	if len(flush) == 0 || rowIdx < 1 {
+		return NotExist
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	for index, value := range info {
+		flush[index] = fmt.Sprintf("%v", value)
+	}
+
+	header := records[0]
+	newDF := df.Set(
+		series.Ints([]int{rowIdx - 1}),
+		dataframe.LoadRecords([][]string{header, flush}),
+	)
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	return newDF.WriteCSV(f)
+}
+
+func DeleteRow(fileName string, primaryKeys []string) error {
+	df, err := loadCsv(fileName)
+	if err != nil {
+		if err.Error() == "load records: empty DataFrame" {
+			return Empty
+		}
+		return err
+	}
+
+	records, primaryName, err := getPrimaryName(df)
+	if err != nil {
+		return err
+	}
+
+	var failedNames string
+	for _, key := range primaryKeys {
+		oldJobs := df.Col(primaryName).Records()
+		if !IsInSlice(key, oldJobs) {
+			failedNames += fmt.Sprintf("'%v' ", key)
+		}
+	}
+
+	if len(failedNames) != 0 {
+		return fmt.Errorf("record %v not found", failedNames)
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	var contents [][]string
+	for index, row := range records {
+		if index == 0 || !IsInSlice(row[0], primaryKeys) {
+			contents = append(contents, row)
+		}
+	}
+
+	f, err := os.OpenFile(fileName, os.O_WRONLY|syscall.O_TRUNC, 0666)
+	if err != nil {
+		return err
+	}
+
+	w := csv.NewWriter(f)
+	err = w.WriteAll(contents)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+	return nil
+}
+
+func IsInSlice(obj string, pond []string) bool {
+	for _, item := range pond {
+		if obj == item {
+			return true
+		}
+	}
+
+	return false
+}
+
