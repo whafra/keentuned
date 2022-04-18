@@ -8,7 +8,9 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"math"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -162,7 +164,7 @@ func assembleParam(param map[string]interface{}, domainName, paramName string) (
 
 	initParam.DomainName = domainName
 	initParam.ParaName = paramName
-	
+
 	err = detectParam(&initParam)
 	if err != nil {
 		return Parameter{}, fmt.Errorf("detectParam:%v", err)
@@ -184,10 +186,8 @@ func detectParam(param *Parameter) error {
 			macroString, ok := v.(string)
 			re, _ := regexp.Compile(defMarcoString)
 			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
-			if err := getMacroValue(macros, detectedMacroValue); err != nil {
-				return fmt.Errorf("get detect value failed: %v", err)
-			}
-			calcResult, err := utils.Calculate(convertString(macroString, detectedMacroValue))
+
+			calcResult, err := getExtremeValue(macros, detectedMacroValue, macroString)
 			if err != nil {
 				return fmt.Errorf("'%v' calculate range err: %v", param.ParaName, err)
 			}
@@ -206,10 +206,8 @@ func detectParam(param *Parameter) error {
 				continue
 			}
 			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(v, " ", ""), -1))
-			if err := getMacroValue(macros, detectedMacroValue); err != nil {
-				return fmt.Errorf("get detect value failed: %v", err)
-			}
-			calcResult, err := utils.Calculate(convertString(v, detectedMacroValue))
+
+			calcResult, err := getExtremeValue(macros, detectedMacroValue, v)
 			if err != nil {
 				return fmt.Errorf("'%v' calculate option err: %v", param.ParaName, err)
 			}
@@ -221,12 +219,66 @@ func detectParam(param *Parameter) error {
 	return nil
 }
 
-func convertString(macroString string, macroMap map[string]int) string {
+func getExtremeValue(macros []string, detectedMacroValue map[string]int, macroString string) (int64, error) {
+	if len(macros) == 0 {
+		return 0, fmt.Errorf("range type is '%v', but macros length is 0", macroString)
+	}
+
+	if err := getMacroValue(macros, detectedMacroValue); err != nil {
+		return 0, fmt.Errorf("get detect value failed: %v", err)
+	}
+
+	express, symbol, compareValue := convertString(macroString, detectedMacroValue)
+
+	calcResult, err := utils.Calculate(express)
+	if err != nil || len(compareValue) == 0 {
+		return calcResult, err
+	}
+
+	switch symbol {
+	case "MAX":
+		return int64(math.Max(float64(calcResult), compareValue[0])), nil
+	case "MIN":
+		return int64(math.Min(float64(calcResult), compareValue[0])), nil
+	}
+
+	return calcResult, nil
+}
+
+func convertString(macroString string, macroMap map[string]int) (string, string, []float64) {
 	retStr := strings.ReplaceAll(macroString, " ", "")
 	for name, value := range macroMap {
 		retStr = strings.ReplaceAll(retStr, name, fmt.Sprint(value))
 	}
-	return retStr
+
+	var symbol string
+	if len(retStr) > 4 {
+		switch strings.ToUpper(retStr)[0:4] {
+		case "MAX(", "MAX[":
+			symbol = "MAX"
+		case "MIN(", "MIN[":
+			symbol = "MIN"
+		default:
+			return retStr, "", nil
+		}
+
+		macroParts := strings.Split(retStr[4:len(retStr)-1], ",")
+		express := ""
+		var compareInt []float64
+		for _, part := range macroParts {
+			value, err := strconv.ParseFloat(part, 64)
+			if err != nil {
+				express = part
+			} else {
+				compareInt = append(compareInt, value)
+			}
+		}
+
+		return express, symbol, compareInt
+
+	}
+
+	return retStr, "", nil
 }
 
 func getMacroValue(macros []string, detectedMacroValue map[string]int) error {
