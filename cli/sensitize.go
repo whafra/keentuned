@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/csv"
 	"fmt"
-	"github.com/spf13/cobra"
+	"io"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -164,6 +167,34 @@ func listSensitivityCmd() *cobra.Command {
 	return cmd
 }
 
+func readCsv(fileName string, name string) bool {
+
+	fs, err := os.Open(fileName)
+	if err != nil {
+		fmt.Printf("%v can not open the file, err is  %v\n", ColorString("red", "[ERROR]"), err)
+		os.Exit(1)
+	}
+	defer fs.Close()
+	r := csv.NewReader(fs)
+	//针对大文件，一行一行的读取文件
+	for {
+		row, err := r.Read()
+		if err != nil && err != io.EOF {
+			fmt.Printf("%v can not read, err is  %v\n", ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
+		}
+		if err == io.EOF {
+			break
+		}
+		fmt.Println(row)
+
+		if (len(row) == 10) && (row[0] == name) && (row[5] == "running") {
+			return true
+		}
+	}
+	return false
+}
+
 func deleteSensitivityCmd() *cobra.Command {
 	var flag DeleteFlag
 	cmd := &cobra.Command{
@@ -181,6 +212,12 @@ func deleteSensitivityCmd() *cobra.Command {
 			err := initSensitizeConf()
 			if err != nil {
 				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
+			if !(readCsv("/var/keentune/sensitize_workspace.csv", flag.Name)) {
+				err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
+				fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
 			}
 
@@ -224,4 +261,3 @@ func initSensitizeConf() error {
 	log.Init()
 	return nil
 }
-
