@@ -22,6 +22,9 @@ func GetProfileWorkPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "profile", fileName)
 }
 
+func GetTuningPath() string {
+	return assembleFilePath(KeenTune.DumpConf.DumpHome, "tuning_workspace", "")
+}
 func GetSensitizePath() string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize", "")
 }
@@ -143,4 +146,3 @@ func GetBenchJsonPath(fileName string) string {
 
 	return fmt.Sprintf("%v/%v", GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
-
