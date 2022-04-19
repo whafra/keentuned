@@ -1,7 +1,9 @@
 package file
 
 import (
+	"bytes"
 	"encoding/csv"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -270,3 +272,14 @@ func GetPlainName(fileName string) string {
 	parts := strings.Split(fileName, "/")
 	return parts[len(parts)-1]
 }
+
+func DeepCopy(dst, src interface{}) error {
+	var buf bytes.Buffer
+	err := gob.NewEncoder(&buf).Encode(src)
+	if err != nil {
+		return err
+	}
+
+	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
+}
+

@@ -155,7 +155,7 @@ func execCmd(inputCmd string, result *string) error {
 
 	if err = cmd.Wait(); err != nil {
 		return fmt.Errorf("wait: %v, output %s\n", err.Error(), bytes)
-	}	
+	}
 
 	if strings.Contains(string(bytes), "Y(yes)/N(no)") {
 		msg := strings.Split(string(bytes), "Y(yes)/N(no)")
@@ -207,5 +207,95 @@ func getCmd(body io.ReadCloser) (string, error) {
 		return "echo y|" + reqInfo.Cmd, nil
 	}
 
+	if strings.Contains(reqInfo.Cmd, "param tune") {
+		return handleTuneCmd(reqInfo.Cmd)
+	}
+
 	return reqInfo.Cmd, nil
 }
+
+func handleTuneCmd(originCmd string) (string, error) {
+	if !strings.Contains(originCmd, "--config") {
+		return originCmd, nil
+	}
+
+	configName, err := parseFlag(originCmd, "--config")
+	if err != nil {
+		return "", err
+	}
+
+	jobPureName, err := parseFlag(originCmd, "--job", "-j")
+	if err != nil {
+		return originCmd, err
+	}
+
+	err = config.Update(configName, jobPureName)
+	if err != nil {
+		return originCmd, err
+	}
+
+	return getRetCmd(originCmd)
+}
+
+func getRetCmd(originCmd string) (string, error) {
+	configParts := strings.Split(originCmd, "--config")
+	if len(configParts) < 2 {
+		return originCmd, fmt.Errorf("'%v' format is not correct", originCmd)
+	}
+
+	suffixParts := strings.Split(configParts[1], " ")
+	index := 0
+	for i, part := range suffixParts {
+		if len(strings.Trim(part, " ")) != 0 {
+			index = i
+			break
+		}
+	}
+
+	var suffix string
+	if len(suffixParts) >= index+1 {
+		suffix = strings.Join(suffixParts[index+1:], " ")
+	}
+
+	return configParts[0] + suffix, nil
+}
+
+func parseFlag(originCmd, flagName string, short ...string) (string, error) {
+	var flagParts []string
+	if strings.Contains(originCmd, flagName) {
+		flagParts = strings.Split(originCmd, flagName)
+	}
+
+	if len(flagParts) == 0 && len(short) > 0 {
+		if strings.Contains(originCmd, short[0]) {
+			flagParts = strings.Split(originCmd, short[0])
+		}
+	}
+
+	if len(flagParts) < 2 {
+		return "", fmt.Errorf("%v is null", flagName)
+	}
+
+	values := strings.Split(flagParts[1], " ")
+	if len(values) == 0 {
+		return "", fmt.Errorf("--config is null")
+	}
+
+	var flagValue string
+	flagValue = strings.Trim(values[0], " ")
+	if flagValue != "" {
+		return flagValue, nil
+	}
+
+	if len(values) < 2 {
+		return "", fmt.Errorf("%v value is null", flagName)
+	}
+
+	flagValue = strings.Trim(values[1], " ")
+	if flagValue == "" {
+		return "", fmt.Errorf("%v value is empty", flagName)
+	}
+
+	return flagValue, nil
+}
+

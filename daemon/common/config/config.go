@@ -109,6 +109,11 @@ var (
 
 var RealLocalIP string
 
+const (
+	TargetSectionPrefix = "target-group"
+	BenchSectionPrefix  = "bench-group"
+)
+
 func Init() {
 	KeenTune = new(KeentunedConf)
 	err := KeenTune.Save()
@@ -157,7 +162,7 @@ func (c *KeentunedConf) Save() error {
 		return err
 	}
 
-	if err = c.getBenchGroup(cfg); err != nil {
+	if err = c.getBenchGroup(cfg, true); err != nil {
 		return err
 	}
 
@@ -186,14 +191,7 @@ func (c *KeentunedConf) Save() error {
 
 func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	var groupNames []string
-	sections := cfg.SectionStrings()
-	for _, section := range sections {
-		if strings.Contains(section, "target-group") {
-			groupNames = append(groupNames, section)
-		}
-	}
-
-	if len(groupNames) == 0 {
+	if !hasGroupSections(cfg, groupNames, TargetSectionPrefix) {
 		return fmt.Errorf("target-group is null, please configure first")
 	}
 
@@ -237,16 +235,20 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	return nil
 }
 
-func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
-	var groupNames []string
+func hasGroupSections(cfg *ini.File, groupNames []string, sectionPrefix string) bool {
 	sections := cfg.SectionStrings()
 	for _, section := range sections {
-		if strings.Contains(section, "bench-group") {
+		if strings.Contains(section, sectionPrefix) {
 			groupNames = append(groupNames, section)
 		}
 	}
 
-	if len(groupNames) == 0 {
+	return len(groupNames) != 0
+}
+
+func (c *KeentunedConf) getBenchGroup(cfg *ini.File, defaultConf bool) error {
+	var groupNames []string
+	if !hasGroupSections(cfg, groupNames, BenchSectionPrefix) {
 		return fmt.Errorf("bench-group is null, please configure first")
 	}
 
@@ -274,6 +276,10 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		c.addBenchIPMap(group.SrcIPs, ipExist, id)
 
 		c.DestIP = bench.Key("BENCH_DEST_IP").MustString("")
+		if c.DestIP == "" && defaultConf {
+			return fmt.Errorf("BENCH_DEST_IP in keentuned.conf is empty")
+		}
+
 		c.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
 		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
 		c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
@@ -281,7 +287,10 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
 
 		if c.BenchConf == "" {
-			fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+			if defaultConf {
+				return fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
+			}
+			return nil
 		}
 
 		if err = checkBenchConf(&c.BenchConf); err != nil {
