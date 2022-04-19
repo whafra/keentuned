@@ -21,6 +21,9 @@ func GetBenchHomePath() string {
 func GetProfileWorkPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "profile", fileName)
 }
+func GetDumpPath(fileName string) string {
+	return assembleFilePath(KeenTune.DumpConf.DumpHome, "", fileName)
+}
 
 func GetTuningPath() string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "tuning_workspace", "")
