@@ -74,7 +74,13 @@ func mkWorkDir() {
 			fp.Close()
 		}
 	}
-
+	sensitizeCsv := config.GetDumpPath("sensitize_jobs.csv")
+	if !file.IsPathExist(sensitizeCsv) {
+		fp, _ := os.Create(sensitizeCsv)
+		if fp != nil {
+			fp.Close()
+		}
+	}
 	activeConf := config.GetProfileWorkPath("active.conf")
 	if !file.IsPathExist(activeConf) {
 		fp, _ := os.Create(activeConf)
