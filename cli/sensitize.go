@@ -18,7 +18,7 @@ const (
 	egCollect       = "\tkeentune sensitize collect --data collect_test --iteration 10"
 	egTrain         = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
 	egDelete        = "\tkeentune sensitize delete --data collect_test"
-	egSensitiveList = "\tkeentune sensitize list"
+	egSensitiveJobs = "\tkeentune sensitize jobs"
 	egSensitiveStop = "\tkeentune sensitize stop"
 )
 
@@ -27,7 +27,7 @@ func createSensitizeCmds() *cobra.Command {
 		Use:     "sensitize [command]",
 		Short:   "Sensitive parameter identification and explanation with AI algorithms",
 		Long:    "Sensitive parameter identification and explanation with AI algorithms",
-		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveList, egSensitiveStop, egTrain),
+		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveJobs, egSensitiveStop, egTrain),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "list" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
@@ -46,7 +46,7 @@ func createSensitizeCmds() *cobra.Command {
 	var sesiCmds []*cobra.Command
 
 	sesiCmds = append(sesiCmds, decorateCmd(collectCmd()))
-	sesiCmds = append(sesiCmds, decorateCmd(listSensitivityCmd()))
+	sesiCmds = append(sesiCmds, decorateCmd(jobSensitivityCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(trainCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(deleteSensitivityCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(stopCmd("sensitize")))
@@ -152,14 +152,14 @@ func trainCmd() *cobra.Command {
 	return cmd
 }
 
-func listSensitivityCmd() *cobra.Command {
+func jobSensitivityCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List available sensitivity identification data",
-		Long:    "List available sensitivity identification data",
-		Example: egSensitiveList,
+		Use:     "jobs",
+		Short:   "List available sensitivity identification jobs",
+		Long:    "List available sensitivity identification jobs",
+		Example: egSensitiveJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunListRemote(cmd.Context(), "sensitize")
+			RunJobsRemote(cmd.Context(), "sensitize")
 			return
 		},
 	}

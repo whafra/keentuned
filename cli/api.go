@@ -158,8 +158,8 @@ func StopRemote(ctx context.Context, flag string) {
 	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 }
 
-func RunJobsRemote(ctx context.Context) {
-	remoteImpl("param.Jobs", "")
+func RunJobsRemote(ctx context.Context, flag string) {
+	remoteImpl(fmt.Sprintf("%s.Jobs", flag), flag)
 }
 
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {

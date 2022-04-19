@@ -62,7 +62,7 @@ const (
 	ProfRollback = "profile rollback"
 
 	SensitizeDel  = "sensitize delete"
-	SensitizeList = "sensitize list"
+	SensitizeJobs = "sensitize jobs"
 	Benchmark     = "benchmark"
 )
 

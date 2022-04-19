@@ -107,7 +107,7 @@ func jobCmd() *cobra.Command {
 		Long:    "List parameter optimizing jobs",
 		Example: egJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunJobsRemote(cmd.Context())
+			RunJobsRemote(cmd.Context(), "param")
 			return
 		},
 	}
