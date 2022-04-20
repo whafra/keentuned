@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-ini/ini"
 	"keentune/daemon/common/file"
+
+	"github.com/go-ini/ini"
 )
 
 var BackupConf *KeentunedConf
@@ -43,8 +44,7 @@ func Update(fileName, jobName string) error {
 		}
 	}
 
-	jobFile := fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(), jobName)
+	jobFile := fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)
 
 	return cfg.SaveTo(jobFile)
 }
-

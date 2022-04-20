@@ -3,12 +3,13 @@ package file
 import (
 	"encoding/csv"
 	"fmt"
-	"github.com/go-gota/gota/dataframe"
-	"github.com/go-gota/gota/series"
-	"github.com/pkg/errors"
 	"os"
 	"sync"
 	"syscall"
+
+	"github.com/go-gota/gota/dataframe"
+	"github.com/go-gota/gota/series"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -18,7 +19,7 @@ var (
 	AlreadyExist  = errors.New("job or record is already existence")
 )
 
-func loadCsv(fileName string) (dataframe.DataFrame, error) {
+func LoadCsv(fileName string) (dataframe.DataFrame, error) {
 	f, err := os.Open(fileName)
 	if err != nil {
 		return dataframe.DataFrame{}, err
@@ -83,9 +84,9 @@ func appendRecord(fileName string, header []string) error {
 
 // Insert Null value must be assigned "-"
 func Insert(fileName string, record []string) error {
-	df, err := loadCsv(fileName)
+	df, err := LoadCsv(fileName)
 	if err == nil {
-		_, primaryName, err := getPrimaryName(df)
+		_, primaryName, err := GetPrimaryName(df)
 		if err != nil {
 			return err
 		}
@@ -104,7 +105,7 @@ func Insert(fileName string, record []string) error {
 }
 
 // getPrimaryName get name of COL.1 as the primary name
-func getPrimaryName(df dataframe.DataFrame) ([][]string, string, error) {
+func GetPrimaryName(df dataframe.DataFrame) ([][]string, string, error) {
 	records := df.Records()
 	if len(records) < 2 || len(records[0]) == 0 {
 		return nil, "", NotExist
@@ -115,7 +116,7 @@ func getPrimaryName(df dataframe.DataFrame) ([][]string, string, error) {
 }
 
 func UpdateRow(fileName, jobName string, info map[int]interface{}) error {
-	df, err := loadCsv(fileName)
+	df, err := LoadCsv(fileName)
 	if err != nil {
 		if err.Error() == "load records: empty DataFrame" {
 			return Empty
@@ -124,7 +125,7 @@ func UpdateRow(fileName, jobName string, info map[int]interface{}) error {
 		return err
 	}
 
-	records, primaryName, err := getPrimaryName(df)
+	records, primaryName, err := GetPrimaryName(df)
 	if err != nil {
 		return err
 	}
@@ -173,7 +174,7 @@ func UpdateRow(fileName, jobName string, info map[int]interface{}) error {
 }
 
 func DeleteRow(fileName string, primaryKeys []string) error {
-	df, err := loadCsv(fileName)
+	df, err := LoadCsv(fileName)
 	if err != nil {
 		if err.Error() == "load records: empty DataFrame" {
 			return Empty
@@ -181,7 +182,7 @@ func DeleteRow(fileName string, primaryKeys []string) error {
 		return err
 	}
 
-	records, primaryName, err := getPrimaryName(df)
+	records, primaryName, err := GetPrimaryName(df)
 	if err != nil {
 		return err
 	}
@@ -232,4 +233,3 @@ func IsInSlice(obj string, pond []string) bool {
 
 	return false
 }
-

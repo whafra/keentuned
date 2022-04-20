@@ -25,8 +25,8 @@ func GetDumpPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "", fileName)
 }
 
-func GetTuningPath() string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "tuning_workspace", "")
+func GetTuningPath(jobName string) string {
+	return assembleFilePath(KeenTune.DumpConf.DumpHome, "tuning_workspace", jobName)
 }
 func GetSensitizePath() string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize_workspace", "")
