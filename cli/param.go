@@ -159,8 +159,7 @@ func deleteParamJobCmd() *cobra.Command {
 								fmt.Println("[-] Give Up Delete")
 								return
 							}
-							flag.Cmd = "param"
-							RunDeleteRemote(cmd.Context(), flag)
+							os.RemoveAll(JobPath)
 						}
 
 					}
