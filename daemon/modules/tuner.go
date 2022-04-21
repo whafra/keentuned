@@ -63,6 +63,11 @@ type TimeSpend struct {
 func (tuner *Tuner) Tune() {
 	var err error
 	tuner.logName = log.ParamTune
+	if err = tuner.CreateTuneJob(); err != nil {
+		log.Errorf(log.ParamTune, "create tune job failed: %v", err)
+		return
+	}
+
 	defer func() {
 		if err != nil {
 			tuner.end()
@@ -95,14 +100,18 @@ func (tuner *Tuner) Tune() {
 
 func (tuner *Tuner) parseTuningError(err error) {
 	if err == nil {
+		tuner.updateStatus(Finish)
 		return
 	}
 
 	tuner.rollback()
 	if strings.Contains(err.Error(), "interrupted") {
+		tuner.updateStatus(Stop)
 		log.Infof(tuner.logName, "parameter optimization job abort!")
 		return
 	}
+
+	tuner.updateStatus(Err)
 	log.Infof(tuner.logName, "%v", err)
 }
 
@@ -180,6 +189,32 @@ func (tuner *Tuner) end() {
 	}
 
 	tuner.setTimeSpentDetail(totalTime)
+
+	var endInfo = make(map[int]interface{})
+
+	if tuner.Flag == "tuning" {
+		endInfo[tuneEndIdx] = start.Format(Format)
+		endInfo[tuneCostIdx] = endTime(int64(totalTime))
+	}
+
+	tuner.updateJob(endInfo)
+}
+
+func endTime(cost int64) string {
+	h := cost / 3600
+	min := cost % 3600
+	m := min / 60
+	sec := min % 60
+
+	if h > 0 {
+		return fmt.Sprintf("%dh%dm%vs", h, m, sec)
+	}
+
+	if m > 0 {
+		return fmt.Sprintf("%dm%vs", m, sec)
+	}
+
+	return fmt.Sprintf("%vs", sec)
 }
 
 func (tuner *Tuner) setTimeSpentDetail(totalTime float64) {

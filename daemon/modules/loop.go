@@ -11,6 +11,7 @@ func (tuner *Tuner) loop() error {
 	var aheadStop bool
 	for i := 1; i <= tuner.MAXIteration; i++ {
 		tuner.Iteration = i
+		tuner.updateJob(map[int]interface{}{tuneCurRoundIdx: fmt.Sprint(tuner.Iteration)})
 		// 1. acquire
 		if aheadStop, err = tuner.acquire(); err != nil {
 			return err

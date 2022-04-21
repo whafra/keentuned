@@ -41,7 +41,7 @@ func checkJob(cmd, name string) error {
 	}
 
 	var reason = new(string)
-	if isNamePassed(cmd, name, reason) {
+	if !isNamePassed(cmd, name, reason) {
 		return fmt.Errorf("%v", *reason)
 	}
 
