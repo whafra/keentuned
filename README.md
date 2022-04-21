@@ -5,7 +5,7 @@
 ---
 KeenTune is a Linux full-stack intelligent optimization product with both AI algorithm and expert knowledge. It provides lightweight and cross-platform performance tuning service with easy operations, to provide a customized and optimized running environment for optimum performance of the application。
 
-KeenTuned is the management component of KeenTune, including CLI and Deamon. CLI provides command line interfaces to users, which includes three kinds of commands: basic commands, static tuning related commands, and dynamic tuning related commands. Keentuned，as the management and control module, is responsible for monitoring other components, receiving and parsing commands from CLI, and scheduling related components in workflows.
+KeenTuned is the management component of KeenTune, including CLI and Daemon. CLI provides command line interfaces to users, which includes three kinds of commands: basic commands, static tuning related commands, and dynamic tuning related commands. Keentuned，as the management and control module, is responsible for monitoring other components, receiving and parsing commands from CLI, and scheduling related components in workflows.
 
 ## Installation
 ---
