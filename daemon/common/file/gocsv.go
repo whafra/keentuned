@@ -104,7 +104,7 @@ func Insert(fileName string, record []string) error {
 	return appendRecord(fileName, record)
 }
 
-// getPrimaryName get name of COL.1 as the primary name
+// GetPrimaryName get name of COL.1 as the primary name
 func GetPrimaryName(df dataframe.DataFrame) ([][]string, string, error) {
 	records := df.Records()
 	if len(records) < 2 || len(records[0]) == 0 {
@@ -232,4 +232,63 @@ func IsInSlice(obj string, pond []string) bool {
 	}
 
 	return false
+}
+
+func HasRecord(fileName, header, match string) bool {
+	df, err := LoadCsv(fileName)
+	if err != nil {
+		return false
+	}
+
+	pond := df.Col(header).Records()
+
+	return IsInSlice(match, pond)
+}
+
+func IsJobRunning(fileName, jobName string) bool {
+	df, err := LoadCsv(fileName)
+	if err != nil {
+		return false
+	}
+
+	_, primaryName, err := GetPrimaryName(df)
+	if err != nil {
+		return false
+	}
+
+	status := getRecord(df, primaryName, jobName, "status")
+
+	return status == "running"
+
+}
+
+func getRecord(df dataframe.DataFrame, header1, value1, header2 string) (value2 string) {
+	record1 := df.Col(header1).Records()
+	record2 := df.Col(header2).Records()
+	if len(record1) != len(record2) {
+		return value2
+	}
+
+	var index int
+	for i, s := range record1 {
+		if s == value1 {
+			index = i
+			break
+		}
+	}
+
+	if index == 0 {
+		return value2
+	}
+
+	return record2[index]
+}
+
+func GetRecord(fileName, header, value, primaryName string) string {
+	df, err := LoadCsv(fileName)
+	if err != nil {
+		return ""
+	}
+
+	return getRecord(df, header, value, primaryName)
 }

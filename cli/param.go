@@ -6,7 +6,6 @@ import (
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -75,7 +74,7 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-param-tune", time.Now().Unix())
+			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
 			RunTuneRemote(cmd.Context(), flag)
 		},

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"regexp"
@@ -41,34 +40,49 @@ func checkJob(cmd, name string) error {
 		return fmt.Errorf("find unexpected characters %v. Only \"a-z\", \"A-Z\", \"0-9\" and \"_\" are supported", result)
 	}
 
-	if cmd == "tune" && isTuneNameRepeat(name) {
-		return fmt.Errorf("the specified name [%v] already exists. Run [keentune param delete --job %v] or specify a new name and try again", name, name)
-	}
-
-	if cmd == "sensitize" && com.IsDataNameUsed(name) {
-		return fmt.Errorf("the specified name [%v] already exists. Run [keentune sensitize delete --data %v] or specify a new name and try again", name, name)
+	var reason = new(string)
+	if isNamePassed(cmd, name, reason) {
+		return fmt.Errorf("%v", *reason)
 	}
 
 	return nil
 }
 
-func isTuneNameRepeat(name string) bool {
+func isNamePassed(cmd, name string, reason *string) bool {
 	err := config.InitWorkDir()
 	if err != nil {
+		*reason = err.Error()
 		return false
 	}
 
-	tuneList, err := file.WalkFilePath(config.GetTuningWorkPath("")+"/", "", true, "/generate/")
-	if err != nil {
+	command := ""
+	filePath := ""
+	if cmd == "tune" {
+		command = "keentune param delete --job"
+		filePath = config.GetDumpPath("tuning_jobs.csv")
+	}
+
+	if cmd == "sensitize" {
+		command = "keentune sensitize delete --data"
+		filePath = config.GetDumpPath("sensitize_jobs.csv")
+	}
+
+	if !file.IsPathExist(filePath) {
+		*reason = fmt.Sprintf("The file '%v' path does not exist", filePath)
 		return false
 	}
 
-	for _, has := range tuneList {
-		if has == name {
-			return true
-		}
+	if file.HasRecord(filePath, "name", name) {
+		* reason = fmt.Sprintf("the specified name '%v' already exists. Run [%v %v] or specify a new name and try again", name, command, name)
+		return false
 	}
 
-	return false
+	runningJob := file.GetRecord(filePath, "status", "running", "name")
+	if runningJob != "" {
+		*reason = fmt.Sprintf("Job %v is running, you can wait for finishing it or stop it.", runningJob)
+		return false
+	}
+
+	return true
 }
 
