@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
+	"strings"
 )
 
 func (tuner *Tuner) loop() error {
@@ -71,7 +72,7 @@ func (tuner *Tuner) benchmark() error {
 	tuner.Benchmark.LogName = tuner.logName
 	tuner.feedbackScore, tuner.benchScore, tuner.benchSummary, err = tuner.RunBenchmark(round)
 	if err != nil {
-		if err.Error() == "get benchmark is interrupted" {
+		if strings.Contains(err.Error(), "get benchmark is interrupted") {
 			log.Infof(tuner.logName, "Tuning interrupted after step%v, [run benchmark] round %v stopped.", tuner.Step, tuner.Iteration)
 			return fmt.Errorf("run benchmark interrupted")
 		}

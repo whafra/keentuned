@@ -10,6 +10,7 @@ import (
 	"keentune/daemon/common/utils/http"
 	"time"
 	"sync"
+	"strings"
 )
 
 // Benchmark define benchmark cmd and host to run
@@ -40,11 +41,9 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 	start := time.Now()
 	var scores = make([]map[string][]float32, len(config.KeenTune.BenchGroup))
 	var sumScore = make([]map[string]float32, len(config.KeenTune.BenchGroup))
-
-	config.IsInnerBenchRequests[1] = true
-	defer func() { config.IsInnerBenchRequests[1] = false }()
-
 	var groupsScores = make([][]map[string]float32, num)
+	var benchFinishStatus = make([]string, len(config.KeenTune.BenchIPMap))
+
 	for i := 1; i <= num; i++ {
 		wg := sync.WaitGroup{}
 		for groupID, group := range config.KeenTune.BenchGroup {
@@ -54,14 +53,22 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 			for index, benchIP := range group.SrcIPs {
 				wg.Add(1)
 				go func(wg *sync.WaitGroup, benchIP string, index int) {
+					config.IsInnerBenchRequests[1] = true
+                                        defer func() {
+                                                wg.Done()
+                                                config.IsInnerBenchRequests[1] = false
+                                        }()
+
 					tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchIP, group.SrcPort)
 					resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", getBenchReq(tuner.Benchmark.Cmd, benchIP))
 					if err != nil {
+						benchFinishStatus = append(benchFinishStatus, err.Error())
 						return
 					}
 
 					groupsScores[groupID][index], err = tuner.parseScore(resp, benchIP)
 					if err != nil {
+						benchFinishStatus = append(benchFinishStatus, err.Error())
 						return
 					}
 					wg.Done()
@@ -71,6 +78,16 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 		}
 
 		wg.Wait()
+
+		var errMsg string
+                for _, status := range benchFinishStatus {
+                        if strings.Contains(status, "get benchmark is interrupted") {
+                                errMsg += fmt.Sprintf("%v;", status)
+                        }
+                }
+                if errMsg != "" {
+                        return scores[0], nil, "", fmt.Errorf(strings.TrimSuffix(errMsg, ";"))
+                }
 
 		//  collect score of each group
 		for groupID, groupScores := range groupsScores {

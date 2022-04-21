@@ -105,7 +105,7 @@ func (tuner *Tuner) baseline() error {
 	var err error
 	_, tuner.benchScore, tuner.benchSummary, err = tuner.RunBenchmark(config.KeenTune.BaseRound)
 	if err != nil {
-		if err.Error() == "get benchmark is interrupted" {
+		if strings.Contains(err.Error(), "get benchmark is interrupted") {
 			log.Infof(tuner.logName, "Tuning interrupted after step%v, [baseline benchmark] stopped.", tuner.Step)
 			return fmt.Errorf("run benchmark interrupted")
 		}
