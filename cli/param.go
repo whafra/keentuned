@@ -160,6 +160,8 @@ func deleteParamJobCmd() *cobra.Command {
 								return
 							}
 							os.RemoveAll(JobPath)
+							primaryKeys := []string{flag.Name}
+							file.DeleteRow("/var/keentune/tuning_jobs.csv", primaryKeys)
 						}
 
 					}
