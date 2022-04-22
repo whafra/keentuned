@@ -112,10 +112,31 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 		return fmt.Sprintf("%v", response.Msg), FAILED
 	}
 
-	s := fmt.Sprintf("%v", response.Msg)
-	if strings.Contains(s, BackupNotFound) || strings.Contains(s, FileNotExist) {
-		return "", WARNING
+	return "", parseMsg(response.Msg)
+}
+
+func parseMsg(msg interface{}) int {
+	switch info := msg.(type) {
+	case map[string]interface{}:
+		var count int
+		for _, value := range info {
+			message := fmt.Sprint(value)
+			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) {
+				count++
+			}
+		}
+
+		if count == len(info) && count > 0 {
+			return WARNING
+		}
+		return SUCCESS
+	case string:
+		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) {
+			return WARNING
+		}
+		return SUCCESS
 	}
 
-	return "", SUCCESS
+	return SUCCESS
 }
+
