@@ -69,12 +69,10 @@ func mkWorkDir() {
 	}
 	tuningCsv := config.GetDumpPath("tuning_jobs.csv")
 	if !file.IsPathExist(tuningCsv) {
-		if !file.IsPathExist(tuningCsv) {
-			err := file.CreatCSV(tuningCsv, m.TuneJobHeader)
-			if err != nil {
-				fmt.Printf("%v create tuning jobs csv file: %v",utils.ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}	
+		err := file.CreatCSV(tuningCsv, m.TuneJobHeader)
+		if err != nil {
+			fmt.Printf("%v create tuning jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
 		}
 	}
 	sensitizeCsv := config.GetDumpPath("sensitize_jobs.csv")

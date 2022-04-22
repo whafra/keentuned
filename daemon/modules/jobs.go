@@ -27,9 +27,9 @@ var TuneJobHeader = []string{
 	TabStart, TabEnd, TabCost, TabWSP, TabCmd, TabLog,
 }
 
-var (
-	tuneJobFile = fmt.Sprint(config.GetDumpPath("tuning_jobs.csv"))
-)
+func getTuneJobFile() string {
+	return fmt.Sprint(config.GetDumpPath("tuning_jobs.csv"))
+}
 
 const (
 	NA     = "-"
@@ -67,13 +67,13 @@ func (tuner *Tuner) CreateTuneJob() error {
 		config.GetTuningWorkPath(tuner.Name), cmd, log,
 	}
 
-	return file.Insert(tuneJobFile, jobInfo)
+	return file.Insert(getTuneJobFile(), jobInfo)
 }
 
 func (tuner *Tuner) updateJob(info map[int]interface{}) {
 	var err error
 	if tuner.Flag == "tuning" {
-		err = file.UpdateRow(tuneJobFile, tuner.Name, info)
+		err = file.UpdateRow(getTuneJobFile(), tuner.Name, info)
 	}
 
 	if err != nil {
@@ -87,3 +87,4 @@ func (tuner *Tuner) updateStatus(info string) {
 		tuner.updateJob(map[int]interface{}{tuneStatusIdx: info})
 	}
 }
+
