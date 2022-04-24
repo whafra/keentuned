@@ -1,7 +1,9 @@
 package modules
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
@@ -135,6 +137,7 @@ func (tuner *Tuner) brainInit() error {
 	requireConf["parameters"] = tuner.BrainParam
 	requireConf["baseline_score"] = tuner.benchScore
 
+	tuner.saveBrainInit()
 	start := time.Now()
 
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/init"
@@ -211,3 +214,24 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 
 	return nil
 }
+
+func (tuner *Tuner) saveBrainInit() {
+	if tuner.Flag == "tuning" {
+		knobs, err := json.Marshal(tuner.BrainParam)
+		if err != nil {
+			log.Warnf("", "save to knobs.json %v", err)
+		} else {
+			knobsFile := fmt.Sprintf("%v/knobs.json", config.GetTuningPath(tuner.Name))
+			ioutil.WriteFile(knobsFile, knobs, 0666)
+		}
+
+		bench, err := json.Marshal(tuner.benchScore)
+		if err != nil {
+			log.Warnf("", "save to bench.json %v", err)
+		} else {
+			benchFile := fmt.Sprintf("%v/bench.json", config.GetTuningPath(tuner.Name))
+			ioutil.WriteFile(benchFile, bench, 0666)
+		}
+	}
+}
+

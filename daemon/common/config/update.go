@@ -21,15 +21,15 @@ func Update(fileName, jobName string) error {
 		return fmt.Errorf("failed to parse %s, %v", fileName, err)
 	}
 
-	var targetGroupNames, benchGroupNames []string
-	if hasGroupSections(cfg, targetGroupNames, TargetSectionPrefix) {
+	var targetGroupNames, benchGroupNames= make([]string, 0), make([]string, 0)
+	if hasGroupSections(cfg, &targetGroupNames, TargetSectionPrefix) {
 		KeenTune.Target = Target{}
 		if err = KeenTune.getTargetGroup(cfg); err != nil {
 			return err
 		}
 	}
 
-	if hasGroupSections(cfg, benchGroupNames, BenchSectionPrefix) {
+	if hasGroupSections(cfg, &benchGroupNames, BenchSectionPrefix) {
 		KeenTune.BenchGroup = []BenchGroup{}
 		if err = KeenTune.getBenchGroup(cfg, false); err != nil {
 			return err

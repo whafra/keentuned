@@ -132,7 +132,7 @@ func Init() {
 }
 
 func initChanAndIPMap() {
-	IsInnerBenchRequests = make([]bool, len(KeenTune.IPMap)+2)
+	IsInnerBenchRequests = make([]bool, len(KeenTune.BenchIPMap)+2)
 	IsInnerApplyRequests = make([]bool, len(KeenTune.IPMap)+2)
 	IsInnerSensitizeRequests = make([]bool, len(KeenTune.IPMap)+2)
 	ApplyResultChan = make([]chan []byte, len(KeenTune.IPMap)+2)
@@ -190,8 +190,8 @@ func (c *KeentunedConf) Save() error {
 }
 
 func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
-	var groupNames []string
-	if !hasGroupSections(cfg, groupNames, TargetSectionPrefix) {
+	var groupNames=make([]string, 0) 
+	if !hasGroupSections(cfg, &groupNames, TargetSectionPrefix) {
 		return fmt.Errorf("target-group is null, please configure first")
 	}
 
@@ -235,20 +235,20 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	return nil
 }
 
-func hasGroupSections(cfg *ini.File, groupNames []string, sectionPrefix string) bool {
+func hasGroupSections(cfg *ini.File, groupNames *[]string, sectionPrefix string) bool {
 	sections := cfg.SectionStrings()
 	for _, section := range sections {
 		if strings.Contains(section, sectionPrefix) {
-			groupNames = append(groupNames, section)
+			*groupNames = append(*groupNames, section)
 		}
 	}
 
-	return len(groupNames) != 0
+	return len(*groupNames) != 0
 }
 
 func (c *KeentunedConf) getBenchGroup(cfg *ini.File, defaultConf bool) error {
-	var groupNames []string
-	if !hasGroupSections(cfg, groupNames, BenchSectionPrefix) {
+	var groupNames=make([]string, 0)
+	if !hasGroupSections(cfg, &groupNames, BenchSectionPrefix) {
 		return fmt.Errorf("bench-group is null, please configure first")
 	}
 

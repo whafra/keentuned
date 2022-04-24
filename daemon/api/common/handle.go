@@ -50,7 +50,7 @@ func report(url string, value []byte, err error) {
 		log.Error("", "report value to chan err:%v", msg)
 	}
 
-	if strings.Contains(url, "benchmark_result") && config.IsInnerBenchRequests[1] {
+	if strings.Contains(url, "benchmark_result") {
 		var benchResult struct {
 			BenchID int `json:"bench_id"`
 		}
@@ -60,7 +60,9 @@ func report(url string, value []byte, err error) {
 			return
 		}
 
-		config.BenchmarkResultChan[benchResult.BenchID] <- value
+		if config.IsInnerBenchRequests[benchResult.BenchID] && benchResult.BenchID > 0 {
+			config.BenchmarkResultChan[benchResult.BenchID] <- value
+		}
 
 		return
 	}
