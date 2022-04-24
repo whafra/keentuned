@@ -7,6 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from common import checkServerStatus
 from common import sysCommand
+from common import runParamTune
+from common import deleteDependentData
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +19,8 @@ class TestParamRollback(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
         logger.info('start to run test_param_rollback testcase')
 
     def tearDown(self) -> None:
@@ -24,9 +28,10 @@ class TestParamRollback(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
+        deleteDependentData("param1")
         logger.info('the test_param_rollback testcase finished')
 
-    def test_param_rollback(self):
+    def test_param_rollback_FUN(self):
         cmd = 'keentune param rollback'
         self.status, self.out, _ = sysCommand(cmd)
 

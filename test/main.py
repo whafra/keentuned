@@ -2,13 +2,15 @@ import os
 import sys
 import unittest
 
-from test_help import TestHelp
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
+
+from CLI_basic.test_help import TestHelp
 from test_version import TestVersion
-from test_param_tune import TestParamTune
-from test_param_list import TestParamList
-from test_param_dump import TestParamDump
-from test_param_rollback import TestParamRollback
-from test_param_delete import TestParamDelete
+from CLI_basic.test_param_tune import TestParamTune
+from CLI_basic.test_param_list import TestParamList
+from CLI_basic.test_param_dump import TestParamDump
+from CLI_basic.test_param_rollback import TestParamRollback
+from CLI_basic.test_param_delete import TestParamDelete
 from test_profile_delete import TestProfileDelete
 from test_profile_generate import TestProfileGenerate
 from test_profile_info import TestProfileInfo
@@ -22,17 +24,16 @@ from test_sensitize_delete import TestSensitizeDelete
 from test_multi_target import TestMultiTarget
 from common import deleteDependentData
 
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 def RunBasicCase():
     param_suite = unittest.TestSuite()
-    param_suite.addTest(TestHelp('test_help'))
+    param_suite.addTest(TestHelp('test_help_FUN'))
     param_suite.addTest(TestVersion('test_version'))
-    param_suite.addTest(TestParamTune('test_param_tune'))
-    param_suite.addTest(TestParamList('test_param_list'))
-    param_suite.addTest(TestParamDump('test_param_dump'))
-    param_suite.addTest(TestParamRollback('test_param_rollback'))
-    param_suite.addTest(TestParamDelete('test_param_delete'))
+    param_suite.addTest(TestParamTune('test_param_tune_FUN'))
+    param_suite.addTest(TestParamList('test_param_list_FUN'))
+    param_suite.addTest(TestParamDump('test_param_dump_FUN'))
+    param_suite.addTest(TestParamRollback('test_param_rollback_FUN'))
+    param_suite.addTest(TestParamDelete('test_param_delete_FUN'))
 
     profile_suite = unittest.TestSuite()
     profile_suite.addTest(TestProfileList('test_profile_list'))

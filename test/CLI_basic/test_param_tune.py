@@ -27,11 +27,11 @@ class TestParamTune(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
+        deleteDependentData("param1")
         logger.info('the test_param_tune testcase finished')
 
-    def test_param_tune(self):
-        cmd = 'keentune param tune -i 1 --job test1'
+    def test_param_tune_FUN(self):
+        cmd = 'keentune param tune -i 1 --job param1'
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 

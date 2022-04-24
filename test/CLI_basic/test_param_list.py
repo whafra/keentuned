@@ -13,35 +13,36 @@ from common import sysCommand
 logger = logging.getLogger(__name__)
 
 
-class TestParamDump(unittest.TestCase):
+class TestParamList(unittest.TestCase):
     def setUp(self) -> None:
         server_list = ["keentuned", "keentune-brain",
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune("test1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        logger.info('start to run test_param_dump testcase')
+        logger.info('start to run test_param_list testcase')
 
     def tearDown(self) -> None:
         server_list = ["keentuned", "keentune-brain",
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
-        logger.info('the test_param_dump testcase finished')
+        deleteDependentData("param1")
+        logger.info('the test_param_list testcase finished')
 
-    def test_param_dump(self):
-        cmd = 'echo y | keentune param dump -j test1'
+    def test_param_list_FUN(self):
+        cmd = 'keentune param list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('dump successfully'))
+        self.assertTrue(self.out.__contains__('Parameter List'))
+        self.assertTrue(self.out.__contains__('Benchmark List'))
 
-        cmd = 'keentune profile list'
+        file_list = ["sysctl.json", "bench_wrk_nginx_long.json"]
+        result = all([file in self.out for file in file_list])
+        self.assertTrue(result)
+
+        cmd = 'keentune param jobs'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__("test1_group1.conf"))
-
-        self.path = "/var/keentune/profile/test1_group1.conf"
-        res = os.path.exists(self.path)
-        self.assertTrue(res)
+        self.assertTrue(self.out.__contains__('param1'))
