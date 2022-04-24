@@ -19,9 +19,9 @@ class TestProfileDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune("test1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        status = runParamDump("test1")
+        status = runParamDump("param1")
         self.assertEqual(status, 0)
         logger.info('start to run test_profile_delete testcase')
 
@@ -29,16 +29,16 @@ class TestProfileDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
+        deleteDependentData("param1")
         logger.info('the test_profile_delete testcase finished')
 
-    def test_profile_delete(self):
-        cmd = 'echo y | keentune profile delete --name test1_group1.conf'
+    def test_profile_delete_FUN(self):
+        cmd = 'echo y | keentune profile delete --name param1_group1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))
 
-        path = "/var/keentune/profile/test1_group1.conf"
+        path = "/var/keentune/profile/param1_group1.conf"
         res = os.path.exists(path)
         self.assertFalse(res)
 
