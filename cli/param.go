@@ -135,6 +135,11 @@ func deleteParamJobCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, flag.Name)) {
+                                fmt.Printf("tuning job %v is running, wait for it finishing\n", flag.Name)
+                                return
+                        }
+
 			//Determine whether job already exists
 			JobPath := com.GetParameterPath(flag.Name)
 			_, err = os.Stat(JobPath)
@@ -173,6 +178,11 @@ func dumpCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
+
+			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
+                                fmt.Printf("tuning job %v is running, wait for it finishing\n", dump.Name)
+                                return
+                        }
 
 			err := checkDumpParam(&dump)
 			if err != nil {

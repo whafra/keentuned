@@ -230,15 +230,17 @@ func GetParameterPath(fileName string) string {
 }
 
 func GetRunningTask() string {
-	return activeJob
+	file, _ := ioutil.ReadFile("/var/keentune/job.cnf")
+        return string(file)
 }
 
 func SetRunningTask(class, name string) {
 	activeJob = fmt.Sprintf("%s %s", class, name)
+        ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0777)
 }
 
 func ClearTask() {
-	activeJob = ""
+	os.Remove("/var/keentune/job.cnf")
 }
 
 func IsJobRunning(name string) bool {

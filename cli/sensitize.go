@@ -109,6 +109,11 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
+			if com.GetRunningTask() != "" {
+                                fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", com.GetRunningTask())
+                                return
+                        }
+
 			if !com.IsDataNameUsed(trainflags.Data) {
 				fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
 				os.Exit(1)
