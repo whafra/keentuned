@@ -30,7 +30,7 @@ func createSensitizeCmds() *cobra.Command {
 		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveJobs, egSensitiveStop, egTrain),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "list" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
+				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "jobs" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
 					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				}
 			}
@@ -145,7 +145,7 @@ func trainCmd() *cobra.Command {
 	}
 
 	flags := cmd.Flags()
-	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize list\"")
+	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials")
 	flags.StringVarP(&trainflags.Output, "output", "o", "", "output file of sensitive parameter identification and explanation")
 
@@ -247,7 +247,7 @@ func deleteSensitivityCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flag.Name, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize list\"")
+	cmd.Flags().StringVarP(&flag.Name, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 
 	return cmd
 }
