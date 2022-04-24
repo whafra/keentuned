@@ -13,10 +13,6 @@ import (
 
 // Dump run param dump service
 func (s *Service) Dump(dump com.DumpFlag, reply *string) error {
-	if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
-		return fmt.Errorf("tuning job %v is running, wait for it finishing", dump.Name)
-	}
-
 	defer func() {
 		*reply = log.ClientLogMap[log.ParamDump]
 		log.ClearCliLog(log.ParamDump)

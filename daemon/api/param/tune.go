@@ -27,11 +27,6 @@ type TuneFlag struct {
 
 // Tune run param tune service
 func (s *Service) Tune(flag TuneFlag, reply *string) error {
-	if com.GetRunningTask() != "" {
-		log.Errorf("", "Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-		return fmt.Errorf("Job %v is running, you can wait for finishing it or stop it.", com.GetRunningTask())
-	}
-
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}

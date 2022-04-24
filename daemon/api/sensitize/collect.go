@@ -15,11 +15,6 @@ type Service struct {
 
 // Collect run sensitize collect service
 func (s *Service) Collect(flag param.TuneFlag, reply *string) error {
-	if com.GetRunningTask() != "" {
-		log.Errorf("", "Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-		return fmt.Errorf("Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-	}
-
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}

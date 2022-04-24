@@ -79,6 +79,11 @@ func collectCmd() *cobra.Command {
 				return
 			}
 
+			if com.GetRunningTask() != "" {
+                                fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", com.GetRunningTask())
+                                return
+                        }
+
 			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-collect", time.Now().Unix())
 			RunCollectRemote(cmd.Context(), flag)
 			return
