@@ -127,6 +127,7 @@ func deleteParamJobCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
+			flag.Cmd = "param"
 
 			err := config.InitWorkDir()
 			if err != nil {
@@ -159,9 +160,7 @@ func deleteParamJobCmd() *cobra.Command {
 								fmt.Println("[-] Give Up Delete")
 								return
 							}
-							os.RemoveAll(JobPath)
-							primaryKeys := []string{flag.Name}
-							file.DeleteRow("/var/keentune/tuning_jobs.csv", primaryKeys)
+							RunDeleteRemote(cmd.Context(), flag)
 						}
 
 					}

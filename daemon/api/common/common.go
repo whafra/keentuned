@@ -157,6 +157,8 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
+	primaryKeys := []string{flag.Name}
+	file.DeleteRow("/var/keentune/tuning_jobs.csv", primaryKeys)
 
 	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
 	return nil
@@ -211,7 +213,7 @@ func GetProfilePath(fileName string) string {
 }
 
 func GetParameterPath(fileName string) string {
-	workPath := config.GetTuningWorkPath(fileName)
+	workPath := config.GetTuningPath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}
@@ -253,4 +255,3 @@ func IsApplying() bool {
 
 	return (strings.Split(job, " ")[0] == JobCollection) || (strings.Split(job, " ")[0] == JobTuning)
 }
-
