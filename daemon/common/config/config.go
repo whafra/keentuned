@@ -127,7 +127,7 @@ func Init() {
 }
 
 func initChanAndIPMap() {
-	IsInnerBenchRequests = make([]bool, len(KeenTune.IPMap)+2)
+	IsInnerBenchRequests = make([]bool, len(KeenTune.BenchIPMap)+2)
 	IsInnerApplyRequests = make([]bool, len(KeenTune.IPMap)+2)
 	IsInnerSensitizeRequests = make([]bool, len(KeenTune.IPMap)+2)
 	ApplyResultChan = make([]chan []byte, len(KeenTune.IPMap)+2)
@@ -366,7 +366,7 @@ func getWorkDir(cfg *ini.File) {
 	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
 
 	version := cfg.Section("version")
-        KeenTune.VersionConf = version.Key("VERSION_NUM").MustString("")
+	KeenTune.VersionConf = version.Key("VERSION_NUM").MustString("")
 }
 
 func InitTargetGroup() error {

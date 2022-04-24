@@ -8,9 +8,9 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"time"
-	"sync"
 	"strings"
+	"sync"
+	"time"
 )
 
 // Benchmark define benchmark cmd and host to run
@@ -37,57 +37,24 @@ type Result struct {
 }
 
 // RunBenchmark : run benchmark script or command in client
-func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {	
+func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]ItemDetail, string, error) {
 	start := time.Now()
 	var scores = make([]map[string][]float32, len(config.KeenTune.BenchGroup))
 	var sumScore = make([]map[string]float32, len(config.KeenTune.BenchGroup))
-	var groupsScores = make([][]map[string]float32, num)
+	var groupsScores = make([][]map[string]float32, len(config.KeenTune.BenchGroup))
 	var benchFinishStatus = make([]string, len(config.KeenTune.BenchIPMap))
 
 	for i := 1; i <= num; i++ {
-		wg := sync.WaitGroup{}
-		for groupID, group := range config.KeenTune.BenchGroup {
-			groupsScores[groupID] = make([]map[string]float32, len(group.SrcIPs))
-			scores[groupID] = make(map[string][]float32)
-			sumScore[groupID] = make(map[string]float32)
-			for index, benchIP := range group.SrcIPs {
-				wg.Add(1)
-				go func(wg *sync.WaitGroup, benchIP string, index int) {
-					config.IsInnerBenchRequests[1] = true
-                                        defer func() {
-                                                wg.Done()
-                                                config.IsInnerBenchRequests[1] = false
-                                        }()
-
-					tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchIP, group.SrcPort)
-					resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", getBenchReq(tuner.Benchmark.Cmd, benchIP))
-					if err != nil {
-						benchFinishStatus = append(benchFinishStatus, err.Error())
-						return
-					}
-
-					groupsScores[groupID][index], err = tuner.parseScore(resp, benchIP)
-					if err != nil {
-						benchFinishStatus = append(benchFinishStatus, err.Error())
-						return
-					}
-					wg.Done()
-
-				}(&wg, benchIP, index)
+		tuner.doBenchmark(groupsScores, scores, sumScore, benchFinishStatus)
+		var errMsg string
+		for _, status := range benchFinishStatus {
+			if status != "" {
+				errMsg += fmt.Sprintf("%v;", status)
 			}
 		}
-
-		wg.Wait()
-
-		var errMsg string
-                for _, status := range benchFinishStatus {
-                        if strings.Contains(status, "get benchmark is interrupted") {
-                                errMsg += fmt.Sprintf("%v;", status)
-                        }
-                }
-                if errMsg != "" {
-                        return scores[0], nil, "", fmt.Errorf(strings.TrimSuffix(errMsg, ";"))
-                }
+		if errMsg != "" {
+			return nil, nil, "", fmt.Errorf(strings.TrimSuffix(errMsg, ";"))
+		}
 
 		//  collect score of each group
 		for groupID, groupScores := range groupsScores {
@@ -106,6 +73,48 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 	return scores[0], benchScoreResult, resultString, err
 }
 
+func (tuner *Tuner) doBenchmark(groupsScores [][]map[string]float32, scores []map[string][]float32, sumScore []map[string]float32, benchFinishStatus []string) {
+	wg := sync.WaitGroup{}
+	for groupID, group := range config.KeenTune.BenchGroup {
+		groupsScores[groupID] = make([]map[string]float32, len(group.SrcIPs))
+		if scores[groupID] == nil {
+			scores[groupID] = make(map[string][]float32)
+		}
+
+		if sumScore[groupID] == nil {
+			sumScore[groupID] = make(map[string]float32)
+		}
+
+		for index, benchIP := range group.SrcIPs {
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, benchIP string, index int) {
+				ipIdx := config.KeenTune.Bench.BenchIPMap[benchIP]
+				config.IsInnerBenchRequests[ipIdx] = true
+				defer func() {
+					wg.Done()
+					config.IsInnerBenchRequests[ipIdx] = false
+				}()
+
+				tuner.Benchmark.Host = fmt.Sprintf("%s:%s", benchIP, group.SrcPort)
+				resp, err := http.RemoteCall("POST", tuner.Benchmark.Host+"/benchmark", getBenchReq(tuner.Benchmark.Cmd, benchIP))
+				if err != nil {
+					benchFinishStatus[ipIdx-1] += fmt.Sprintf("bench.group %v-%v %v", groupID+1, index+1, err.Error())
+					return
+				}
+
+				groupsScores[groupID][index], err = tuner.parseScore(resp, benchIP)
+				if err != nil {
+					benchFinishStatus[ipIdx-1] += fmt.Sprintf("bench.group %v-%v %v", groupID+1, index+1, err.Error())
+					return
+				}
+			}(&wg, benchIP, index)
+		}
+	}
+
+	wg.Wait()
+
+}
+
 func getBenchReq(cmd, ip string) interface{} {
 	var requestBody = map[string]interface{}{}
 	requestBody["benchmark_cmd"] = cmd
@@ -114,7 +123,6 @@ func getBenchReq(cmd, ip string) interface{} {
 	requestBody["bench_id"] = config.KeenTune.Bench.BenchIPMap[ip]
 	return requestBody
 }
-
 
 func (benchmark Benchmark) getScore(scores map[string][]float32, sumScores map[string]float32, start time.Time, benchTime *time.Duration) (map[string]ItemDetail, string, error) {
 	benchScoreResult := map[string]ItemDetail{}
@@ -223,6 +231,7 @@ func (tuner *Tuner) parseScore(body []byte, ip string) (map[string]float32, erro
 
 		break
 	case <-StopSig:
+		closeChan()
 		tuner.rollback()
 		return nil, fmt.Errorf("get benchmark is interrupted")
 	}
@@ -232,5 +241,11 @@ func (tuner *Tuner) parseScore(body []byte, ip string) (map[string]float32, erro
 	}
 
 	return resultMap, nil
+}
+
+func closeChan() {
+	for i := range config.IsInnerBenchRequests {
+		config.IsInnerBenchRequests[i] = false
+	}
 }
 
