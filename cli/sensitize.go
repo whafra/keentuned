@@ -80,7 +80,7 @@ func collectCmd() *cobra.Command {
 			}
 
 			if com.GetRunningTask() != "" {
-                                fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", com.GetRunningTask())
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), com.GetRunningTask())
                                 return
                         }
 
@@ -115,7 +115,7 @@ func trainCmd() *cobra.Command {
 			}
 
 			if com.GetRunningTask() != "" {
-                                fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", com.GetRunningTask())
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"),com.GetRunningTask())
                                 return
                         }
 

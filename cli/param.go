@@ -76,7 +76,7 @@ func tuneCmd() *cobra.Command {
 			}
 
 			if com.GetRunningTask() != "" {
-                                fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", com.GetRunningTask())
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), com.GetRunningTask())
                                 return
                         }
 
@@ -141,7 +141,7 @@ func deleteParamJobCmd() *cobra.Command {
 			}
 
 			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, flag.Name)) {
-                                fmt.Printf("tuning job %v is running, wait for it finishing\n", flag.Name)
+                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("yellow", "[Warning]"), flag.Name)
                                 return
                         }
 
@@ -185,7 +185,7 @@ func dumpCmd() *cobra.Command {
 			}
 
 			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
-                                fmt.Printf("tuning job %v is running, wait for it finishing\n", dump.Name)
+                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("yellow", "[Warning]"), dump.Name)
                                 return
                         }
 
