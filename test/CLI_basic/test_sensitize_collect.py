@@ -24,11 +24,11 @@ class TestSensitizeCollect(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test01")
+        deleteDependentData("sensitize1")
         logger.info('the test_sensitize_collect testcase finished')
 
-    def test_sensitize_collect(self):
-        cmd = 'keentune sensitize collect -i 10 --data test01'
+    def test_sensitize_collect_FUN(self):
+        cmd = 'keentune sensitize collect -i 10 --data sensitize1'
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 
@@ -48,4 +48,4 @@ class TestSensitizeCollect(unittest.TestCase):
         cmd = 'keentune sensitize list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('test01'))
+        self.assertTrue(self.out.__contains__('sensitize1'))

@@ -18,7 +18,7 @@ class TestSensitizeDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runSensitizeCollect("test01")
+        status = runSensitizeCollect("sensitize1")
         self.assertEqual(status, 0)
         logger.info('start to run test_sensitize_delete testcase')
 
@@ -26,11 +26,11 @@ class TestSensitizeDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test01")
+        deleteDependentData("sensitize1")
         logger.info('the test_sensitize_delete testcase finished')
 
-    def test_sensitize_delete(self):
-        cmd = 'echo y | keentune sensitize delete --data test01'
+    def test_sensitize_delete_FUN(self):
+        cmd = 'echo y | keentune sensitize delete --data sensitize1'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))
@@ -38,8 +38,8 @@ class TestSensitizeDelete(unittest.TestCase):
         cmd = 'keentune sensitize list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertFalse(self.out.__contains__('test01'))
+        self.assertFalse(self.out.__contains__('sensitize1'))
 
-        self.path = "/var/keentune/data/tuning_data/collect/'test01[{}]'".format(self.algorithm)
+        self.path = "/var/keentune/data/tuning_data/collect/'sensitize1[{}]'".format(self.algorithm)
         res = os.path.exists(self.path)
         self.assertFalse(res)

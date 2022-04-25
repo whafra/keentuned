@@ -19,9 +19,9 @@ class TestSensitizeList(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune("test1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        status = runSensitizeCollect("test01")
+        status = runSensitizeCollect("sensitize1")
         self.assertEqual(status, 0)
         logger.info('start to run test_sensitize_list testcase')
 
@@ -29,15 +29,15 @@ class TestSensitizeList(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
-        deleteDependentData("test01")
+        deleteDependentData("param1")
+        deleteDependentData("sensitize1")
         logger.info('the test_sensitize_list testcase finished')
 
-    def test_sensitize_list(self):
+    def test_sensitize_list_FUN(self):
         cmd = 'keentune sensitize list'
         self.status, self.out, _ = sysCommand(cmd)
 
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('identification results successfully'))
-        self.assertTrue(self.out.__contains__('test1'))
-        self.assertTrue(self.out.__contains__('test01'))
+        self.assertTrue(self.out.__contains__('param1'))
+        self.assertTrue(self.out.__contains__('sensitize1'))

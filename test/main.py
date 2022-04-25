@@ -17,10 +17,10 @@ from CLI_basic.test_profile_info import TestProfileInfo
 from CLI_basic.test_profile_list import TestProfileList
 from CLI_basic.test_profile_rollback import TestProfileRollback
 from CLI_basic.test_profile_set import TestProfileSet
-from test_sensitize_collect import TestSensitizeCollect
+from CLI_basic.test_sensitize_collect import TestSensitizeCollect
 from test_sensitize_train import TestSensitizeTrain
-from test_sensitize_list import TestSensitizeList
-from test_sensitize_delete import TestSensitizeDelete
+from CLI_basic.test_sensitize_list import TestSensitizeList
+from CLI_basic.test_sensitize_delete import TestSensitizeDelete
 from test_multi_target import TestMultiTarget
 from common import deleteDependentData
 
@@ -44,10 +44,10 @@ def RunBasicCase():
     profile_suite.addTest(TestProfileDelete('test_profile_delete_FUN'))
 
     sensitize_suite = unittest.TestSuite()
-    sensitize_suite.addTest(TestSensitizeCollect('test_sensitize_collect'))
+    sensitize_suite.addTest(TestSensitizeCollect('test_sensitize_collect_FUN'))
     sensitize_suite.addTest(TestSensitizeTrain('test_sensitize_train'))
-    sensitize_suite.addTest(TestSensitizeList('test_sensitize_list'))
-    sensitize_suite.addTest(TestSensitizeDelete('test_sensitize_delete'))
+    sensitize_suite.addTest(TestSensitizeList('test_sensitize_list_FUN'))
+    sensitize_suite.addTest(TestSensitizeDelete('test_sensitize_delete_FUN'))
 
     target_suite = unittest.TestSuite()
     target_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
