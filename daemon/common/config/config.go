@@ -13,26 +13,34 @@ import (
 
 // KeentunedConf
 type KeentunedConf struct {
-	Home string
-	Port string
-	Bench
-	TargetIP   []string
-	TargetPort string
+	Default `ini:"keentuned"`
+	Bench   `ini:"benchmark"`
 	Target
-	BrainIP       string
-	BrainPort     string
-	Algorithm     string
-	HeartbeatTime int
-	VersionConf   string
-	DumpConf
-	Sensitize
-	LogConf
+	Brain     `ini:"brain"`
+	Version   `ini:"version"`
+	DumpConf  `ini:"dump"`
+	Sensitize `ini:"sensitize"`
+	LogConf   `ini:"log"`
+}
+
+type Version struct {
+	VersionConf string `ini:"VERSION_NUM"`
+}
+
+type Brain struct {
+	BrainIP   string
+	BrainPort string
+	Algorithm string
+}
+
+type Default struct {
+	Home          string `ini:"KEENTUNED_HOME"`
+	Port          string `ini:"PORT"`
+	HeartbeatTime int    `ini:"HEARTBEAT_TIME"`
 }
 
 type Bench struct {
 	BenchGroup []BenchGroup
-	DestIP     string
-	DestPort   string
 	BaseRound  int
 	ExecRound  int
 	AfterRound int
@@ -41,8 +49,10 @@ type Bench struct {
 }
 
 type BenchGroup struct {
-	SrcIPs  []string
-	SrcPort string
+	SrcIPs   []string
+	SrcPort  string
+	DestIP   string
+	DestPort string
 }
 
 type Group struct {
@@ -148,7 +158,7 @@ func initChanAndIPMap() {
 }
 
 func (c *KeentunedConf) Save() error {
-	cfg, err := ini.Load(keentuneConfigFile)
+	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
 	}
@@ -162,14 +172,14 @@ func (c *KeentunedConf) Save() error {
 		return err
 	}
 
-	if err = c.getBenchGroup(cfg, true); err != nil {
+	if err = c.getBenchGroup(cfg); err != nil {
 		return err
 	}
 
 	brain := cfg.Section("brain")
 	c.BrainIP = brain.Key("BRAIN_IP").MustString("")
 	c.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
-	c.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
+	c.Brain.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
 
 	dump := cfg.Section("dump")
 	c.DumpConf.BaseDump = dump.Key("DUMP_BASELINE_CONFIGURATION").MustBool(false)
@@ -190,7 +200,7 @@ func (c *KeentunedConf) Save() error {
 }
 
 func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
-	var groupNames=make([]string, 0) 
+	var groupNames = make([]string, 0)
 	if !hasGroupSections(cfg, &groupNames, TargetSectionPrefix) {
 		return fmt.Errorf("target-group is null, please configure first")
 	}
@@ -203,7 +213,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 	for _, groupName := range groupNames {
 		target := cfg.Section(groupName)
 		var group Group
-		ipString := target.Key("TARGET_IP").MustString("")
+		ipString := target.Key("TARGET_IP").MustString("localhost")
 		group.IPs, err = changeStringToSlice(ipString)
 		if err != nil {
 			return fmt.Errorf("keentune check target ip %v", err)
@@ -246,8 +256,8 @@ func hasGroupSections(cfg *ini.File, groupNames *[]string, sectionPrefix string)
 	return len(*groupNames) != 0
 }
 
-func (c *KeentunedConf) getBenchGroup(cfg *ini.File, defaultConf bool) error {
-	var groupNames=make([]string, 0)
+func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
+	var groupNames = make([]string, 0)
 	if !hasGroupSections(cfg, &groupNames, BenchSectionPrefix) {
 		return fmt.Errorf("bench-group is null, please configure first")
 	}
@@ -260,7 +270,7 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File, defaultConf bool) error {
 	for _, groupName := range groupNames {
 		bench := cfg.Section(groupName)
 		var group BenchGroup
-		ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("")
+		ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("localhost")
 		group.SrcIPs, err = changeStringToSlice(ipStringSrc)
 		if err != nil {
 			return fmt.Errorf("keentune check bench ip %v", err)
@@ -272,33 +282,25 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File, defaultConf bool) error {
 			return fmt.Errorf("%v", err)
 		}
 
+		group.DestIP = bench.Key("BENCH_DEST_IP").MustString("localhost")
+		group.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
+
 		c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
 		c.addBenchIPMap(group.SrcIPs, ipExist, id)
-
-		c.DestIP = bench.Key("BENCH_DEST_IP").MustString("")
-		if c.DestIP == "" && defaultConf {
-			return fmt.Errorf("BENCH_DEST_IP in keentuned.conf is empty")
-		}
-
-		c.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
-		c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
-		c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
-		c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
-		c.BenchConf = bench.Key("BENCH_CONFIG").MustString("")
-
-		if c.BenchConf == "" {
-			if defaultConf {
-				return fmt.Errorf("BENCH_CONFIG in keentuned.conf is empty")
-			}
-			return nil
-		}
-
-		if err = checkBenchConf(&c.BenchConf); err != nil {
-			return err
-		}
 	}
 
-	return nil
+	return c.getBenchmark(cfg)
+}
+
+func (c *KeentunedConf) getBenchmark(cfg *ini.File) error {
+	bench := cfg.Section("benchmark")
+
+	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
+	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
+	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
+	c.BenchConf = bench.Key("BENCH_CONFIG").MustString("bench_wrk_nginx_long.json")
+
+	return checkBenchConf(&c.BenchConf)
 }
 
 func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
@@ -405,7 +407,7 @@ func InitBrainConf() error {
 	brain := cfg.Section("brain")
 	KeenTune.BrainIP = brain.Key("BRAIN_IP").MustString("")
 	KeenTune.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
-	KeenTune.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
+	KeenTune.Brain.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
 
 	getWorkDir(cfg)
 	KeenTune.GetLogConf(cfg)

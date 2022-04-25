@@ -10,13 +10,11 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	ParamMap  string
-	Name      string // job specific name
-	Round     int
-	BenchConf string
-	ParamConf []string
-	Verbose   bool
-	Log       string // log file
+	Config  string
+	Name    string // job specific name
+	Round   int
+	Verbose bool
+	Log     string // log file
 }
 
 // DumpFlag ...
@@ -64,7 +62,7 @@ type BenchmarkFlag struct {
 }
 
 type VersionFlag struct {
-        VersionNum string
+	VersionNum string
 }
 
 var (
@@ -165,3 +163,4 @@ func RunJobsRemote(ctx context.Context, flag string) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
+

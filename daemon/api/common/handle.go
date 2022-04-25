@@ -221,17 +221,12 @@ func handleTuneCmd(originCmd string) (string, error) {
 		return originCmd, nil
 	}
 
-	configName, err := parseFlag(originCmd, "--config")
+	_, err := parseFlag(originCmd, "--config")
 	if err != nil {
 		return "", err
 	}
 
-	jobPureName, err := parseFlag(originCmd, "--job", "-j")
-	if err != nil {
-		return originCmd, err
-	}
-
-	err = config.Update(configName, jobPureName)
+	_, err = parseFlag(originCmd, "--job", "-j")
 	if err != nil {
 		return originCmd, err
 	}

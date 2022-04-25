@@ -233,7 +233,7 @@ func detect(macroMap map[string]string, macroNames []string, detectedMacroValue 
 		"data": macroMap,
 	}
 
-	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.DestIP, config.KeenTune.Group[0].Port)
+	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.BenchGroup[0].DestIP, config.KeenTune.Group[0].Port)
 	resp, err := http.RemoteCall("POST", url, requestMap)
 	if err != nil {
 		return fmt.Errorf("remote call err:%v", err)
