@@ -67,6 +67,11 @@ func collectCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if com.GetRunningTask() != "" {
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
+                                os.Exit(1)
+                        }
+
 			if err := checkTuningFlags("sensitize", &flag); err != nil {
 				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
@@ -78,11 +83,6 @@ func collectCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), com.GetRunningTask())
-                                return
-                        }
 
 			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-collect", time.Now().Unix())
 			RunCollectRemote(cmd.Context(), flag)
@@ -115,8 +115,8 @@ func trainCmd() *cobra.Command {
 			}
 
 			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"),com.GetRunningTask())
-                                return
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"),com.GetRunningTask())
+                                os.Exit(1)
                         }
 
 			if !com.IsDataNameUsed(trainflags.Data) {

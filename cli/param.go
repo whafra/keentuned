@@ -63,6 +63,11 @@ func tuneCmd() *cobra.Command {
 		Long:    "Deploy and start a parameter tuning job",
 		Example: egTune,
 		PreRun: func(cmd *cobra.Command, args []string) {
+			if com.GetRunningTask() != "" {
+                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
+                                os.Exit(1)
+                        }
+
 			if err := checkTuningFlags("tune", &flag); err != nil {
 				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
@@ -74,11 +79,6 @@ func tuneCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), com.GetRunningTask())
-                                return
-                        }
 
 			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-param-tune", time.Now().Unix())
 
@@ -141,8 +141,8 @@ func deleteParamJobCmd() *cobra.Command {
 			}
 
 			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, flag.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("yellow", "[Warning]"), flag.Name)
-                                return
+                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), flag.Name)
+                                os.Exit(1)
                         }
 
 			//Determine whether job already exists
@@ -185,8 +185,8 @@ func dumpCmd() *cobra.Command {
 			}
 
 			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("yellow", "[Warning]"), dump.Name)
-                                return
+                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), dump.Name)
+                                os.Exit(1)
                         }
 
 			err := checkDumpParam(&dump)
