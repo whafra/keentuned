@@ -27,11 +27,6 @@ type TuneFlag struct {
 
 // Tune run param tune service
 func (s *Service) Tune(flag TuneFlag, reply *string) error {
-	if com.GetRunningTask() != "" {
-		log.Errorf("", "Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-		return fmt.Errorf("Job %v is running, you can wait for finishing it or stop it.", com.GetRunningTask())
-	}
-
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
@@ -118,7 +113,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 
 	inst := benchmarks[0]
 	inst.Cmd = strings.Replace(strings.Replace(inst.Cmd, "{remote_script_path}", inst.FilePath, 1), "{target_ip}", tuneIP[0], 1)
-//	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.SrcIPs, config.KeenTune.SrcPort)
+	//	inst.Host = fmt.Sprintf("%s:%s", config.KeenTune.SrcIPs, config.KeenTune.SrcPort)
 	inst.SortedItems = sortBenchItemNames(inst.Items)
 	return &inst, nil
 }
@@ -132,4 +127,3 @@ func sortBenchItemNames(items map[string]m.ItemDetail) []string {
 	sort.Strings(sortNames)
 	return sortNames
 }
-

@@ -6,6 +6,7 @@ import (
 	"io"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"os"
 	"strings"
@@ -79,6 +80,10 @@ func collectCmd() *cobra.Command {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
+				return
+			}
+			if file.IsJobRunning(sensitizeCsv, flag.Name) {
+				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
 				return
 			}
 

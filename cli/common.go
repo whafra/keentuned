@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"keentune/daemon/common/config"
+
+	"github.com/spf13/cobra"
 )
 
 func subCommands() []*cobra.Command {
@@ -18,6 +19,9 @@ func subCommands() []*cobra.Command {
 
 	return subCmds
 }
+
+var tuningCsv = "/var/keentune/tuning_jobs.csv"
+var sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
 
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
 
@@ -98,18 +102,18 @@ func benchCmd() *cobra.Command {
 }
 
 func versionCmd() *cobra.Command {
-        var flag VersionFlag
-        var cmd = &cobra.Command{
-                Use:     "version",
-                Short:   "Print the version number of keentune",
-                Long:    "Print the version number of keentune",
-                Example: egBenchmark,
-                Run: func(cmd *cobra.Command, args []string) {
-                        flag.VersionNum = config.KeenTune.VersionConf
-                        fmt.Printf("keentune version %v\n", flag.VersionNum)
-                },
-        }
-        return cmd
+	var flag VersionFlag
+	var cmd = &cobra.Command{
+		Use:     "version",
+		Short:   "Print the version number of keentune",
+		Long:    "Print the version number of keentune",
+		Example: egBenchmark,
+		Run: func(cmd *cobra.Command, args []string) {
+			flag.VersionNum = config.KeenTune.VersionConf
+			fmt.Printf("keentune version %v\n", flag.VersionNum)
+		},
+	}
+	return cmd
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
@@ -151,4 +155,3 @@ func ColorString(color string, content string) string {
 		return content
 	}
 }
-

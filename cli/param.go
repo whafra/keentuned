@@ -74,6 +74,10 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
+			if file.IsJobRunning(tuningCsv, flag.Name) {
+				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
+				return
+			}
 			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
 			RunTuneRemote(cmd.Context(), flag)
@@ -143,7 +147,7 @@ func deleteParamJobCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
-			df, err := file.LoadCsv("/var/keentune/tuning_jobs.csv")
+			df, err := file.LoadCsv(tuningCsv)
 			if err != nil {
 				fmt.Print(err)
 			}

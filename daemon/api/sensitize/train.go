@@ -24,11 +24,6 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	if com.GetRunningTask() != "" {
-		log.Errorf("", "Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-		return fmt.Errorf("Job %v is running, you can wait for it finishing or stop it.", com.GetRunningTask())
-	}
-
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
@@ -158,4 +153,3 @@ func dumpSensitivityResult(resultMap map[string]interface{}, recordName string) 
 
 	return nil
 }
-
