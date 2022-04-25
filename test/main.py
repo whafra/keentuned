@@ -14,9 +14,9 @@ from CLI_basic.test_param_delete import TestParamDelete
 from CLI_basic.test_profile_delete import TestProfileDelete
 from CLI_basic.test_profile_generate import TestProfileGenerate
 from CLI_basic.test_profile_info import TestProfileInfo
-from test_profile_list import TestProfileList
-from test_profile_rollback import TestProfileRollback
-from test_profile_set import TestProfileSet
+from CLI_basic.test_profile_list import TestProfileList
+from CLI_basic.test_profile_rollback import TestProfileRollback
+from CLI_basic.test_profile_set import TestProfileSet
 from test_sensitize_collect import TestSensitizeCollect
 from test_sensitize_train import TestSensitizeTrain
 from test_sensitize_list import TestSensitizeList
@@ -36,11 +36,11 @@ def RunBasicCase():
     param_suite.addTest(TestParamDelete('test_param_delete_FUN'))
 
     profile_suite = unittest.TestSuite()
-    profile_suite.addTest(TestProfileList('test_profile_list'))
+    profile_suite.addTest(TestProfileList('test_profile_list_FUN'))
     profile_suite.addTest(TestProfileInfo('test_profile_info_FUN'))
-    profile_suite.addTest(TestProfileSet('test_profile_set'))
+    profile_suite.addTest(TestProfileSet('test_profile_set_FUN'))
     profile_suite.addTest(TestProfileGenerate('test_profile_generate_FUN'))
-    profile_suite.addTest(TestProfileRollback('test_profile_rollback'))
+    profile_suite.addTest(TestProfileRollback('test_profile_rollback_FUN'))
     profile_suite.addTest(TestProfileDelete('test_profile_delete_FUN'))
 
     sensitize_suite = unittest.TestSuite()

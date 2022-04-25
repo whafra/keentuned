@@ -20,9 +20,9 @@ class TestProfileSet(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune("test1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        status = runParamDump("test1")
+        status = runParamDump("param1")
         self.assertEqual(status, 0)
         logger.info('start to run test_profile_set testcase')
 
@@ -30,17 +30,17 @@ class TestProfileSet(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
+        deleteDependentData("param1")
         logger.info('the test_profile_set testcase finished')
 
-    def test_profile_set(self):
-        cmd = 'keentune profile set --group1 test1_group1.conf'
+    def test_profile_set_FUN(self):
+        cmd = 'keentune profile set --group1 param1_group1.conf'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Set test1_group1.conf successfully'))
+        self.assertTrue(self.out.__contains__('Set param1_group1.conf successfully'))
 
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+param1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('active'))

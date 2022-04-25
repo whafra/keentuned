@@ -21,9 +21,9 @@ class TestProfileRollback(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runParamTune("test1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        status = runParamDump("test1")
+        status = runParamDump("param1")
         self.assertEqual(status, 0)
         status = runProfileSet()
         self.assertEqual(status, 0)
@@ -33,14 +33,14 @@ class TestProfileRollback(unittest.TestCase):
         server_list = ["keentuned", "keentune-target"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("test1")
+        deleteDependentData("param1")
         logger.info('the test_profile_rollback testcase finished')
 
-    def test_profile_rollback(self):
+    def test_profile_rollback_FUN(self):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+param1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('active'))
 
         cmd = 'keentune profile rollback'
@@ -51,5 +51,5 @@ class TestProfileRollback(unittest.TestCase):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+test1_group1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+param1_group1.conf', self.out).group(1)
         self.assertTrue(self.result.__contains__('available'))
