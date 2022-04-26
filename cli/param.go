@@ -75,7 +75,7 @@ func tuneCmd() *cobra.Command {
 			}
 
 			if file.IsJobRunning(tuningCsv, flag.Name) {
-				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			}
 
@@ -154,7 +154,7 @@ func deleteParamJobCmd() *cobra.Command {
 			}
 			//Determine whether job can be deleted
 			if file.IsJobRunning(tuningCsv, flag.Name) {
-				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			} else {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
@@ -187,7 +187,8 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 			if file.IsJobRunning(tuningCsv, dump.Name) {
-				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", dump.Name)
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), dump.Name)
+				return
 			}
 			err := checkDumpParam(&dump)
 			if err != nil {

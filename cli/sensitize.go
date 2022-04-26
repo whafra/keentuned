@@ -136,7 +136,7 @@ func trainCmd() *cobra.Command {
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
 			if file.IsJobRunning(tuningCsv, trainflags.Data) {
-				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", trainflags.Data)
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), trainflags.Data)
 				return
 			}
 			if !file.IsPathExist(trainflags.Config) {
