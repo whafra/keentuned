@@ -3,11 +3,10 @@ import sys
 import logging
 import unittest
 
-from common import sysCommand
-from common import checkServerStatus
-
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
+from common import sysCommand
+from common import checkServerStatus
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,7 @@ class TestVersion(unittest.TestCase):
         self.assertEqual(status, 0)
         logger.info('the test_version testcase finished')
 
-    def test_version(self):
+    def test_version_FUN(self):
         cmd = 'keentune version'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)

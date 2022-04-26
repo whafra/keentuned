@@ -91,18 +91,18 @@ def runParamTune(name, iteration=1):
 def runParamDump(name):
     cmd = 'echo y | keentune param dump -j {}'.format(name)
     sysCommand(cmd)
-    path = "/var/keentune/profile/test1_group1.conf"
+    path = "/var/keentune/profile/param1_group1.conf"
     res = os.path.exists(path)
     result = 0 if res else 1
     return result
 
 
 def runProfileSet():
-    cmd = 'keentune profile set --group1 test1_group1.conf'
+    cmd = 'keentune profile set --group1 param1_group1.conf'
     sysCommand(cmd)
     cmd = 'keentune profile list'
     _, output, _ = sysCommand(cmd)
-    res = re.search(r'\[(.*?)\].+test1_group1.conf', output).group(1)
+    res = re.search(r'\[(.*?)\].+param1_group1.conf', output).group(1)
     result = 0 if res.__contains__('active') else 1
     return result
 
