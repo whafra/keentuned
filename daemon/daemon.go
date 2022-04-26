@@ -77,9 +77,10 @@ func mkWorkDir() {
 	}
 	sensitizeCsv := config.GetDumpPath("sensitize_jobs.csv")
 	if !file.IsPathExist(sensitizeCsv) {
-		fp, _ := os.Create(sensitizeCsv)
-		if fp != nil {
-			fp.Close()
+		err := file.CreatCSV(sensitizeCsv, m.SensitizeJobHeader)
+		if err != nil {
+			fmt.Printf("%v create sensitize jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
 		}
 	}
 	activeConf := config.GetProfileWorkPath("active.conf")
