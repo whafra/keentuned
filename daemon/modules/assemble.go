@@ -6,6 +6,8 @@ package modules
 import (
 	"fmt"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"strconv"
 	"strings"
@@ -216,6 +218,12 @@ func (tuner *Tuner) parseAcquireParam(resp ReceivedConfigure) error {
 		tuner.Group[index].Dump.budget = resp.Budget
 	}
 
+	paramPath := fmt.Sprintf("%v/parameters_value.csv", config.GetTuningPath(tuner.Name))
+	err := file.Append(paramPath, strings.Split(resp.ParamValue, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save parameters_value failed: %v", tuner.Iteration, err)
+	}
+
 	return nil
 }
 
@@ -367,3 +375,4 @@ func (tuner *Tuner) initProfiles() error {
 
 	return nil
 }
+

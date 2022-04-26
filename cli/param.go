@@ -153,30 +153,18 @@ func deleteParamJobCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
-			df, err := file.LoadCsv(tuningCsv)
-			if err != nil {
-				fmt.Print(err)
-			}
-			r, _, err := file.GetPrimaryName(df)
-			for i1, _ := range r {
-				for i2, _ := range r[i1] {
-					if r[i1][i2] == flag.Name {
-						if r[i1][7] == "running" {
-							fmt.Printf("%v param.Delete failed, msg: The status of Job [%v] is running which can not be deleted\n", ColorString("red", "[ERROR]"), flag.Name)
-							os.Exit(1)
-						} else {
-							fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-							if !confirm() {
-								fmt.Println("[-] Give Up Delete")
-								return
-							}
-							RunDeleteRemote(cmd.Context(), flag)
-						}
-
-					}
+			if file.IsJobRunning(tuningCsv, flag.Name) {
+				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
+				return
+			} else {
+				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+				if !confirm() {
+					fmt.Println("[-] Give Up Delete")
+					return
 				}
+				RunDeleteRemote(cmd.Context(), flag)
+				return
 			}
-			return
 		},
 	}
 
@@ -263,4 +251,3 @@ func checkDumpParam(dump *DumpFlag) error {
 
 	return nil
 }
-

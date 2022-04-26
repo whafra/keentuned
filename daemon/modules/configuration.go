@@ -21,10 +21,11 @@ type Configuration struct {
 }
 
 type ReceivedConfigure struct {
-	Candidate []Parameter           `json:"candidate"`
-	Score     map[string]ItemDetail `json:"bench_score,omitempty"`
-	Iteration int                   `json:"iteration"`
-	Budget    float32               `json:"budget"`
+	Candidate  []Parameter           `json:"candidate"`
+	Score      map[string]ItemDetail `json:"bench_score,omitempty"`
+	Iteration  int                   `json:"iteration"`
+	Budget     float32               `json:"budget"`
+	ParamValue string                `json:"parameter_value,omitempty"`
 }
 
 type ItemDetail struct {
@@ -147,3 +148,4 @@ func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 
 	return collectParam(applyResp)
 }
+
