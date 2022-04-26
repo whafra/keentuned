@@ -186,7 +186,9 @@ func dumpCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-
+			if file.IsJobRunning(tuningCsv, dump.Name) {
+				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", dump.Name)
+			}
 			err := checkDumpParam(&dump)
 			if err != nil {
 				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)
