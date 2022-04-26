@@ -27,6 +27,27 @@ var TuneJobHeader = []string{
 	TabStart, TabEnd, TabCost, TabWSP, TabCmd, TabLog,
 }
 
+//  table header const
+const (
+	TabTrainName   = "name"
+	TabTrainStart  = "start_time"
+	TabTrainEnd    = "end_time"
+	TabTrainCost   = "total_time"
+	TabTrainRound  = "trials"
+	TabTrainStatus = "status"
+	TabTrainEpoch  = "epoch"
+	TabTrainLog    = "log"
+	TabTrainWSP    = "workspace"
+	TabTrainAlgo   = "algorithm"
+	TabTrainPath   = "data_path"
+)
+
+var SensitizeJobHeader = []string{
+	TabTrainName, TabTrainStart, TabTrainEnd, TabTrainCost, TabTrainRound,
+	TabTrainStatus, TabTrainEpoch, TabTrainLog, TabTrainWSP, TabTrainAlgo,
+	TabTrainPath,
+}
+
 func getTuneJobFile() string {
 	return fmt.Sprint(config.GetDumpPath("tuning_jobs.csv"))
 }
@@ -87,4 +108,3 @@ func (tuner *Tuner) updateStatus(info string) {
 		tuner.updateJob(map[int]interface{}{tuneStatusIdx: info})
 	}
 }
-
