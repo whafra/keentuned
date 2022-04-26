@@ -65,7 +65,7 @@ func addRecord(fileName string, header []string) error {
 	return nil
 }
 
-func appendRecord(fileName string, header []string) error {
+func Append(fileName string, record []string) error {
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		return err
@@ -73,7 +73,7 @@ func appendRecord(fileName string, header []string) error {
 
 	defer f.Close()
 	w := csv.NewWriter(f)
-	err = w.Write(header)
+	err = w.Write(record)
 	if err != nil {
 		return err
 	}
@@ -101,7 +101,7 @@ func Insert(fileName string, record []string) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	return appendRecord(fileName, record)
+	return Append(fileName, record)
 }
 
 // GetPrimaryName get name of COL.1 as the primary name
@@ -292,3 +292,4 @@ func GetRecord(fileName, header, value, primaryName string) string {
 
 	return getRecord(df, header, value, primaryName)
 }
+

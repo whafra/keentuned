@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
@@ -132,12 +133,6 @@ func (tuner *Tuner) acquire() (bool, error) {
 		return false, err
 	}
 
-	// check interrupted
-	if tuner.isInterrupted() {
-		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
-		return false, fmt.Errorf("tuning is interrupted")
-	}
-
 	// check end loop ahead of time
 	if acquiredInfo.Iteration < 0 {
 		log.Warnf(tuner.logName, "%vth Tuning acquired round is less than zero, the tuning job will end ahead of time", tuner.Iteration)
@@ -155,6 +150,12 @@ func (tuner *Tuner) acquire() (bool, error) {
 		return false, err
 	}
 
+	// check interrupted
+	if tuner.isInterrupted() {
+		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
+		return false, fmt.Errorf("tuning is interrupted")
+	}
+
 	return false, nil
 }
 
@@ -166,9 +167,39 @@ func (tuner *Tuner) feedback() error {
 		"bench_score": tuner.feedbackScore,
 	}
 
-	err := http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/feedback", feedbackMap)
+	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/feedback"
+	body, err := http.RemoteCall("POST", url, feedbackMap)
 	if err != nil {
-		return fmt.Errorf("[feedback] remote call feedback err:%v\n", err)
+		return fmt.Errorf("'feedback' remote call err:%v\n", err)
+	}
+
+	var resp struct {
+		Suc       bool        `json:"suc"`
+		Msg       interface{} `json:"msg"`
+		TimeData  string      `json:"time_data"`
+		ScoreData string      `json:"score_data"`
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return fmt.Errorf("unmarshal 'feedback' responese failed: %v", err)
+	}
+
+	if !resp.Suc {
+		return fmt.Errorf("'feedback' failed, msg: %v", resp.Msg)
+	}
+
+	scorePath := fmt.Sprintf("%v/score.csv", config.GetTuningPath(tuner.Name))
+
+	err = file.Append(scorePath, strings.Split(resp.ScoreData, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save score value failed: %v", tuner.Iteration, err)
+	}
+
+	timePath := fmt.Sprintf("%v/time.csv", config.GetTuningPath(tuner.Name))
+	err = file.Append(timePath, strings.Split(resp.TimeData, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save score value failed: %v", tuner.Iteration, err)
 	}
 
 	timeCost := utils.Runtime(start)
@@ -206,11 +237,11 @@ func endTime(cost int64) string {
 	m := min / 60
 	sec := min % 60
 
-	if h > 0 {
+	if h > 1 {
 		return fmt.Sprintf("%dh%dm%vs", h, m, sec)
 	}
 
-	if m > 0 {
+	if m > 1 {
 		return fmt.Sprintf("%dm%vs", m, sec)
 	}
 
