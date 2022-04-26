@@ -236,7 +236,7 @@ func GetRunningTask() string {
 
 func SetRunningTask(class, name string) {
 	activeJob = fmt.Sprintf("%s %s", class, name)
-        ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0777)
+        ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0666)
 }
 
 func ClearTask() {
