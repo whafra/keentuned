@@ -6,6 +6,7 @@ import (
 	"io"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"os"
 	"strings"
@@ -134,6 +135,15 @@ func trainCmd() *cobra.Command {
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
+			if file.IsJobRunning(tuningCsv, trainflags.Data) {
+				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", trainflags.Data)
+				return
+			}
+			if !file.IsPathExist(trainflags.Config) {
+				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), trainflags.Config)
+				os.Exit(1)
+			}
+
 			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainflags.Job)
 			_, err = os.Stat(SensiName)
 			if err == nil {
@@ -154,6 +164,7 @@ func trainCmd() *cobra.Command {
 	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials")
 	flags.StringVarP(&trainflags.Job, "job", "j", "", "job file of sensitive parameter identification and explanation")
+	flags.StringVar(&trainflags.Config, "config", "", "configuration specified for train")
 
 	return cmd
 }

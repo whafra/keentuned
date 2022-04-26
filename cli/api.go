@@ -43,6 +43,7 @@ type TrainFlag struct {
 	Trials int
 	Force  bool
 	Log    string // log file
+	Config string
 }
 
 type DeleteFlag struct {
