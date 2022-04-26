@@ -133,17 +133,15 @@ func (tuner *Tuner) brainInit() error {
 	requireConf["algorithm"] = tuner.Algorithm
 	requireConf["iteration"] = tuner.MAXIteration
 	requireConf["name"] = tuner.Name
-	requireConf["type"] = tuner.Flag
 	requireConf["parameters"] = tuner.BrainParam
 	requireConf["baseline_score"] = tuner.benchScore
 
 	tuner.saveBrainInit()
 	start := time.Now()
 
-	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/init"
-	err = http.ResponseSuccess("POST", url, requireConf)
+	err = requestInit(requireConf, tuner.Name)
 	if err != nil {
-		return fmt.Errorf("remote call [init] failed: %v", err)
+		return err
 	}
 
 	timeCost := utils.Runtime(start)
@@ -152,6 +150,42 @@ func (tuner *Tuner) brainInit() error {
 	if !tuner.isSensitize {
 		log.Infof(tuner.logName, "\nStep%v. AI Engine is ready.", tuner.IncreaseStep())
 	}
+	return nil
+}
+
+func requestInit(requireConf map[string]interface{}, job string) error {
+	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/init"
+	body, err := http.RemoteCall("POST", url, requireConf)
+	if err != nil {
+		return fmt.Errorf("remote call [init] failed: %v", err)
+	}
+
+	var resp struct {
+		Suc       bool        `json:"suc"`
+		Msg       interface{} `json:"msg"`
+		ParamHead string      `json:"parameters_head"`
+		ScoreHead string      `json:"score_head"`
+		TimeHead  string      `json:"time_head"`
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return fmt.Errorf("unmarshal 'init' responese failed: %v", err)
+	}
+
+	if !resp.Suc {
+		return fmt.Errorf("'init' failed, msg: %v", resp.Msg)
+	}
+
+	paramPath := fmt.Sprintf("%v/parameters_value.csv", config.GetTuningPath(job))
+	ioutil.WriteFile(paramPath, []byte(resp.ParamHead), 0666)
+
+	scorePath := fmt.Sprintf("%v/score.csv", config.GetTuningPath(job))
+	ioutil.WriteFile(scorePath, []byte(resp.ScoreHead), 0666)
+
+	timePath := fmt.Sprintf("%v/time.csv", config.GetTuningPath(job))
+	ioutil.WriteFile(timePath, []byte(resp.TimeHead), 0666)
+
 	return nil
 }
 
