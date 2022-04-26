@@ -1,6 +1,7 @@
 | Requirement | Minimum Version | Recommended Version | Install | Keentuned | Keentune-Target | Keentune-Bench | Keentune-Brain |
 |-|-|-|-|-|-|-|-|
 |golang|1.13|1.16|yum install go|y|-|-|-|
+|python3||3.6||-|y|y|y|
 |tornado||6.1|pip3 install tornado|-|y|y|y|
 |pynginxconfig||0.3.4|pip3 install pynginxconfig|-|o|-|-|
 |hyperopt|0.2.5|0.2.5|pip3 install hyperopt==0.2.5|-|-|-|o|
