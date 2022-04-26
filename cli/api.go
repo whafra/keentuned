@@ -38,7 +38,7 @@ type SetFlag struct {
 }
 
 type TrainFlag struct {
-	Output string
+	Job    string
 	Data   string
 	Trials int
 	Force  bool
@@ -137,7 +137,7 @@ func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 	remoteImpl("sensitize.Train", flag)
 
 	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\toutput: %v\n", flag.Trials, flag.Data, flag.Output)
+	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\tjob: %v\n", flag.Trials, flag.Data, flag.Job)
 	fmt.Printf("\n\tsee more detailsby log file:  \"%v\"\n", flag.Log)
 	return
 }
@@ -163,4 +163,3 @@ func RunJobsRemote(ctx context.Context, flag string) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
-

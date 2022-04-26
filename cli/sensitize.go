@@ -16,8 +16,8 @@ import (
 
 const (
 	//egCollect       = "\tkeentune sensitize collect --data collect_test --iteration 10"
-	egTrain         = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
-	egDelete        = "\tkeentune sensitize delete --data collect_test"
+	egTrain         = "\tkeentune sensitize train --data collect_test --job train_test --trials 2"
+	egDelete        = "\tkeentune sensitize delete --job collect_test"
 	egSensitiveJobs = "\tkeentune sensitize jobs"
 	egSensitiveStop = "\tkeentune sensitize stop"
 )
@@ -30,7 +30,7 @@ func createSensitizeCmds() *cobra.Command {
 		Example: fmt.Sprintf("%s\n%s\n%s\n%s", egDelete, egSensitiveJobs, egSensitiveStop, egTrain),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "jobs" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
+				if args[0] != "--help" && args[0] != "-h" /*&& args[0] != "collect" */ && args[0] != "jobs" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
 					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				}
 			}
@@ -123,8 +123,8 @@ func trainCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if strings.Trim(trainflags.Output, " ") == "" {
-				trainflags.Output = trainflags.Data
+			if strings.Trim(trainflags.Job, " ") == "" {
+				trainflags.Job = trainflags.Data
 			}
 
 			if trainflags.Trials > 10 || trainflags.Trials < 1 {
@@ -134,13 +134,13 @@ func trainCmd() *cobra.Command {
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
-			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainflags.Output)
+			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainflags.Job)
 			_, err = os.Stat(SensiName)
 			if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
 				trainflags.Force = confirm()
 				if !trainflags.Force {
-					fmt.Printf("outputFile exist and you have given up to overwrite it\n")
+					fmt.Printf("job File exist and you have given up to overwrite it\n")
 					os.Exit(1)
 				}
 				RunTrainRemote(cmd.Context(), trainflags)
@@ -153,7 +153,7 @@ func trainCmd() *cobra.Command {
 	flags := cmd.Flags()
 	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials")
-	flags.StringVarP(&trainflags.Output, "output", "o", "", "output file of sensitive parameter identification and explanation")
+	flags.StringVarP(&trainflags.Job, "job", "j", "", "job file of sensitive parameter identification and explanation")
 
 	return cmd
 }
@@ -205,8 +205,8 @@ func deleteSensitivityCmd() *cobra.Command {
 	var flag DeleteFlag
 	cmd := &cobra.Command{
 		Use:     "delete",
-		Short:   "Delete the sensitivity identification data",
-		Long:    "Delete the sensitivity identification data",
+		Short:   "Delete the sensitivity identification job",
+		Long:    "Delete the sensitivity identification job",
 		Example: egDelete,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
