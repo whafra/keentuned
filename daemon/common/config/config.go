@@ -28,9 +28,9 @@ type Version struct {
 }
 
 type Brain struct {
-	BrainIP   string
-	BrainPort string
-	Algorithm string
+	BrainIP   string `ini:"BRAIN_IP"`
+	BrainPort string `ini:"BRAIN_PORT"`
+	Algorithm string `ini:"ALGORITHM"`
 }
 
 type Default struct {
@@ -41,10 +41,10 @@ type Default struct {
 
 type Bench struct {
 	BenchGroup []BenchGroup
-	BaseRound  int
-	ExecRound  int
-	AfterRound int
-	BenchConf  string
+	BaseRound  int    `ini:"BASELINE_BENCH_ROUND"`
+	ExecRound  int    `ini:"TUNING_BENCH_ROUND"`
+	AfterRound int    `ini:"RECHECK_BENCH_ROUND"`
+	BenchConf  string `ini:"BENCH_CONFIG"`
 	BenchIPMap map[string]int
 }
 
@@ -57,6 +57,7 @@ type BenchGroup struct {
 
 type Group struct {
 	ParamMap  []DBLMap
+	ParamConf string
 	IPs       []string
 	Port      string
 	GroupName string //target-group-x
@@ -69,23 +70,22 @@ type Target struct {
 }
 
 type DumpConf struct {
-	BaseDump bool
-	ExecDump bool
-	BestDump bool
-	DumpHome string
+	BaseDump bool   `ini:"DUMP_BASELINE_CONFIGURATION"`
+	ExecDump bool   `ini:"DUMP_TUNING_CONFIGURATION"`
+	BestDump bool   `ini:"DUMP_BEST_CONFIGURATION"`
+	DumpHome string `ini:"DUMP_HOME"`
 }
 
 type Sensitize struct {
 	Algorithm  string
 	BenchRound int
-	ResultDir  string
 }
 
 type LogConf struct {
-	LogFileLvl  string
-	FileName    string
-	Interval    int
-	BackupCount int
+	LogFileLvl  string `ini:"LOGFILE_LEVEL"`
+	FileName    string `ini:"LOGFILE_NAME"`
+	Interval    int    `ini:"LOGFILE_INTERVAL"`
+	BackupCount int    `ini:"LOGFILE_BACKUP_COUNT"`
 }
 
 // DBLMap Double Map
@@ -228,7 +228,8 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 			return fmt.Errorf("target-group is error, please check configure first")
 		}
 		group.GroupNo = groupNo
-		paramFiles := strings.Split(target.Key("PARAMETER").MustString(""), ",")
+		group.ParamConf = target.Key("PARAMETER").MustString("sysctl.json")
+		paramFiles := strings.Split(group.ParamConf, ",")
 
 		_, group.ParamMap, err = checkParamConf(paramFiles)
 		if err != nil {

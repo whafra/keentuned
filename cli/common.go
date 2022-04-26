@@ -52,6 +52,8 @@ func setTuneFlag(cmdName string, cmd *cobra.Command, flag *TuneFlag) {
 		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of sensitivity identification data collection")
 	}
 
+	flags.StringVar(&flag.Config, "config", "", "configuration specified for tuning")
+
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
 
@@ -155,3 +157,4 @@ func ColorString(color string, content string) string {
 		return content
 	}
 }
+

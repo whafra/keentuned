@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/go-ini/ini"
 	"keentune/daemon/common/file"
+	"os"
+	"strings"
 )
 
 func ReSet() error {
@@ -68,10 +70,41 @@ func dump(jobName string) error {
 		return err
 	}
 
+	for index, bench := range KeenTune.BenchGroup {
+		sectionName := fmt.Sprintf("bench-group-%v", index+1)
+		sec, err := newCfg.NewSection(sectionName)
+		if err != nil {
+			return fmt.Errorf("new bench group %v section %v", index+1, err)
+		}
+
+		sec.NewKey("BENCH_SRC_IP", strings.Join(bench.SrcIPs, ","))
+		sec.NewKey("BENCH_SRC_PORT", bench.SrcPort)
+		sec.NewKey("BENCH_DEST_IP", bench.DestIP)
+		sec.NewKey("BENCH_DEST_PORT", bench.DestPort)
+	}
+
+	for index, target := range KeenTune.Target.Group {
+		sectionName := fmt.Sprintf("target-group-%v", target.GroupNo)
+		sec, err := newCfg.NewSection(sectionName)
+		if err != nil {
+			return fmt.Errorf("new target group %v section %v", index+1, err)
+		}
+
+		sec.NewKey("TARGET_IP", strings.Join(target.IPs, ","))
+		sec.NewKey("TARGET_PORT", target.Port)
+		sec.NewKey("PARAMETER", target.ParamConf)
+	}
+
 	return newCfg.SaveTo(jobFile)
 }
 
 func Backup(fileName, jobName string) error {
+	defer func() {
+		if file.IsPathExist(TuneTempConf) {
+			os.Remove(TuneTempConf)
+		}
+	}()
+
 	err := update(fileName)
 	if err != nil {
 		return fmt.Errorf("update %v", err)

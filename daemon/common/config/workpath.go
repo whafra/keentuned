@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var TuneTempConf = "/var/keentune/tuning_workspace/temp.conf"
+
 func GetTuningWorkPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter", fileName)
 }
@@ -149,3 +151,4 @@ func GetBenchJsonPath(fileName string) string {
 
 	return fmt.Sprintf("%v/%v", GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
+

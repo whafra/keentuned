@@ -78,6 +78,12 @@ func tuneCmd() *cobra.Command {
 				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
 				return
 			}
+
+			if !file.IsPathExist(flag.Config) {
+				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), flag.Config)
+				os.Exit(1)
+			}
+
 			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
 			RunTuneRemote(cmd.Context(), flag)
@@ -257,3 +263,4 @@ func checkDumpParam(dump *DumpFlag) error {
 
 	return nil
 }
+

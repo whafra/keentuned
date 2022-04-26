@@ -9,6 +9,7 @@ import (
 	"keentune/daemon/common/log"
 	"net/http"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -16,6 +17,8 @@ const (
 	// LimitBytes
 	LimitBytes = 1024 * 1024 * 5
 )
+
+var compiler = "\"([^\"]+)\""
 
 func registerRouter() {
 	http.HandleFunc("/benchmark_result", handler)
@@ -221,40 +224,56 @@ func handleTuneCmd(originCmd string) (string, error) {
 		return originCmd, nil
 	}
 
-	_, err := parseFlag(originCmd, "--config")
+	matched, err := parseConfigFlag(originCmd)
+	if err != nil {
+		return matched, err
+	}
+
+	retCmd := strings.ReplaceAll(originCmd, matched, config.TuneTempConf)
+
+	return retCmd, nil
+}
+
+func parseConfigFlag(originCmd string) (string, error) {
+	configPart := strings.Split(originCmd, "--config")
+	if len(configPart) < 2 {
+		return "", fmt.Errorf("split --config length less than 2")
+	}
+
+	re, err := regexp.Compile(compiler)
 	if err != nil {
 		return "", err
 	}
 
-	_, err = parseFlag(originCmd, "--job", "-j")
-	if err != nil {
-		return originCmd, err
-	}
+	matched := ""
+	parts := re.FindAllString(configPart[1], -1)
+	switch len(parts) {
+	case 0:
+		return "", fmt.Errorf("find all is empty in '%v'", originCmd)
+	case 1:
+		if len(strings.Trim(parts[0], " ")) == 0 {
+			return "", fmt.Errorf("parse config part0 is empty")
+		}
 
-	return getRetCmd(originCmd)
-}
-
-func getRetCmd(originCmd string) (string, error) {
-	configParts := strings.Split(originCmd, "--config")
-	if len(configParts) < 2 {
-		return originCmd, fmt.Errorf("'%v' format is not correct", originCmd)
-	}
-
-	suffixParts := strings.Split(configParts[1], " ")
-	index := 0
-	for i, part := range suffixParts {
-		if len(strings.Trim(part, " ")) != 0 {
-			index = i
+		matched = parts[0]
+	default:
+		if len(parts[0]) > 0 {
+			matched = parts[0]
 			break
 		}
+		matched = parts[1]
 	}
 
-	var suffix string
-	if len(suffixParts) >= index+1 {
-		suffix = strings.Join(suffixParts[index+1:], " ")
+	if matched == "" {
+		return "", fmt.Errorf("config info not found in '%v'", originCmd)
 	}
 
-	return configParts[0] + suffix, nil
+	err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
+	if err != nil {
+		return "", err
+	}
+
+	return matched, nil
 }
 
 func parseFlag(originCmd, flagName string, short ...string) (string, error) {
