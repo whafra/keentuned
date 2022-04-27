@@ -15,15 +15,22 @@ import (
 )
 
 type TrainFlag struct {
-	Output string
+	Job    string
 	Data   string
 	Trials int
 	Force  bool
 	Log    string
+	Config string
 }
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
+	/*
+		err := config.BackupSensitize(flags.Config, flags.Job)
+		if err != nil {
+			return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
+		}
+	*/
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
@@ -44,7 +51,13 @@ func runTrain(flags TrainFlag) {
 
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
 
-	if err := initiateSensitization(&flags); err != nil {
+	var err error
+	if err = createTuneJob(flags); err != nil {
+		log.Errorf(log.SensitizeTrain, "create tune job failed: %v", err)
+		return
+	}
+
+	if err = initiateSensitization(&flags); err != nil {
 		return
 	}
 
@@ -58,11 +71,11 @@ func runTrain(flags TrainFlag) {
 
 	log.Infof(log.SensitizeTrain, "Step3. Get sensitive parameter identification results successfully, and the details are as follows.%v", resultString)
 
-	if err = dumpSensitivityResult(resultMap, flags.Output); err != nil {
+	if err = dumpSensitivityResult(resultMap, flags.Job); err != nil {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flags.Output))
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flags.Job))
 }
 
 func initiateSensitization(flags *TrainFlag) error {

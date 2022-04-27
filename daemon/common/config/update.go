@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"github.com/go-ini/ini"
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
+
+	"github.com/go-ini/ini"
 )
 
 func ReSet() error {
@@ -118,3 +119,22 @@ func Backup(fileName, jobName string) error {
 	return nil
 }
 
+func BackupSensitize(fileName, jobName string) error {
+	defer func() {
+		if file.IsPathExist(SensitizeTempConf) {
+			os.Remove(SensitizeTempConf)
+		}
+	}()
+
+	err := update(fileName)
+	if err != nil {
+		return fmt.Errorf("update %v", err)
+	}
+
+	err = dump(jobName)
+	if err != nil {
+		return fmt.Errorf("backup conf%v", err)
+	}
+
+	return nil
+}

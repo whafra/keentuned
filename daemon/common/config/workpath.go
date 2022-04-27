@@ -7,6 +7,7 @@ import (
 )
 
 var TuneTempConf = "/var/keentune/tuning_workspace/temp.conf"
+var SensitizeTempConf = "/var/keentune/sensitize_workspace/temp.conf"
 
 func GetTuningWorkPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter", fileName)
@@ -32,6 +33,10 @@ func GetTuningPath(jobName string) string {
 }
 func GetSensitizePath() string {
 	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize_workspace", "")
+}
+
+func GetSensitizeWorkPath(fileName string) string {
+	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize_workspace", fileName)
 }
 
 func GetParamHomePath() string {
@@ -151,4 +156,3 @@ func GetBenchJsonPath(fileName string) string {
 
 	return fmt.Sprintf("%v/%v", GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
-
