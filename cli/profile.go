@@ -120,7 +120,7 @@ func setCmd() *cobra.Command {
 			}
 
 			var targetMsg = new(string)
-			if com.IsTargetOffline(targetMsg) {
+			if com.IsSetTargetOffline(setFlag.Group, targetMsg) {
 				fmt.Printf("%v Found %v offline, please get them (it) ready before use\n",
 					ColorString("red", "[ERROR]"),
 					strings.TrimSuffix(*targetMsg, ", "))

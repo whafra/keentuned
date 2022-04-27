@@ -13,9 +13,9 @@ import (
 
 // KeentunedConf
 type KeentunedConf struct {
-	Default `ini:"keentuned"`
-	Bench   `ini:"benchmark"`
-	Target
+	Default   `ini:"keentuned"`
+	Bench     `ini:"benchmark"`
+	Target    `ini:"-"`
 	Brain     `ini:"brain"`
 	Version   `ini:"version"`
 	DumpConf  `ini:"dump"`
@@ -40,12 +40,12 @@ type Default struct {
 }
 
 type Bench struct {
-	BenchGroup []BenchGroup
-	BaseRound  int    `ini:"BASELINE_BENCH_ROUND"`
-	ExecRound  int    `ini:"TUNING_BENCH_ROUND"`
-	AfterRound int    `ini:"RECHECK_BENCH_ROUND"`
-	BenchConf  string `ini:"BENCH_CONFIG"`
-	BenchIPMap map[string]int
+	BenchGroup []BenchGroup   `ini:"-"`
+	BaseRound  int            `ini:"BASELINE_BENCH_ROUND"`
+	ExecRound  int            `ini:"TUNING_BENCH_ROUND"`
+	AfterRound int            `ini:"RECHECK_BENCH_ROUND"`
+	BenchConf  string         `ini:"BENCH_CONFIG"`
+	BenchIPMap map[string]int `ini:"-"`
 }
 
 type BenchGroup struct {

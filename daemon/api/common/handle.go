@@ -113,13 +113,12 @@ func command(w http.ResponseWriter, r *http.Request) {
 	var result = new(string)
 	var err error
 	defer func() {
+		w.WriteHeader(http.StatusOK)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", err.Error())))
 			return
 		}
 
-		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
 		return
 	}()
@@ -144,6 +143,7 @@ func command(w http.ResponseWriter, r *http.Request) {
 func execCmd(inputCmd string, result *string) error {
 	cmd := exec.Command("/bin/bash", "-c", inputCmd)
 	// Create get command output pipeline
+	stderr, _ := cmd.StderrPipe()
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("can not obtain stdout pipe for command:%s\n", err)
@@ -158,8 +158,13 @@ func execCmd(inputCmd string, result *string) error {
 		return fmt.Errorf("ReadAll Stdout: %v", err.Error())
 	}
 
+	if len(bytes) == 0 {
+		bytes, _ = ioutil.ReadAll(stderr)
+	}
+
 	if err = cmd.Wait(); err != nil {
-		return fmt.Errorf("wait: %v, output %s\n", err.Error(), bytes)
+		fmt.Printf("err:%v, msg: %s\n", err, bytes)
+		return fmt.Errorf("%s", getMsg(string(bytes), inputCmd))
 	}
 
 	if strings.Contains(string(bytes), "Y(yes)/N(no)") {
@@ -173,11 +178,12 @@ func execCmd(inputCmd string, result *string) error {
 	}
 
 	*result = getMsg(string(bytes), inputCmd)
+
 	return nil
 }
 
 func getMsg(origin, cmd string) string {
-	if strings.Contains(cmd, "-h") || strings.Contains(cmd, "sensitize list") {
+	if strings.Contains(cmd, "-h") || strings.Contains(cmd, "jobs") {
 		return origin
 	}
 

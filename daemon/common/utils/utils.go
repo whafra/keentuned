@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"strings"
@@ -214,5 +215,14 @@ func RemoveRepeated(s []string) []string {
 		}
 	}
 	return result
+}
+
+func DeepCopy(dst, src interface{}) error {
+	bytes, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+
+	return json.Unmarshal(bytes, dst)
 }
 

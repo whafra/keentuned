@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"keentune/daemon/common/file"
+	"keentune/daemon/common/utils"
 	"os"
 	"strings"
 
@@ -16,7 +17,7 @@ func ReSet() error {
 		return fmt.Errorf("reload Keentuned.conf: %v\n", err)
 	}
 
-	err = file.DeepCopy(KeenTune, backupConf)
+	err = utils.DeepCopy(KeenTune, *backupConf)
 	if err != nil {
 		return fmt.Errorf("reset keentuned.conf: %v", err)
 	}
@@ -27,7 +28,7 @@ func ReSet() error {
 
 func update(fileName string) error {
 	backupConf := new(KeentunedConf)
-	err := file.DeepCopy(backupConf, KeenTune)
+	err := utils.DeepCopy(backupConf, KeenTune)
 	if err != nil {
 		return fmt.Errorf("deep copy: %v", err)
 	}
@@ -64,7 +65,7 @@ func update(fileName string) error {
 }
 
 func dump(jobName string) error {
-	jobFile := fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)
+	jobFile := fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)	
 
 	newCfg := ini.Empty()
 	if err := ini.ReflectFrom(newCfg, KeenTune); err != nil {
@@ -95,6 +96,8 @@ func dump(jobName string) error {
 		sec.NewKey("TARGET_PORT", target.Port)
 		sec.NewKey("PARAMETER", target.ParamConf)
 	}
+
+	os.Mkdir(GetTuningPath(jobName), 0666)
 
 	return newCfg.SaveTo(jobFile)
 }

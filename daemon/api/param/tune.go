@@ -45,6 +45,7 @@ func runTuning(flag TuneFlag) {
 	// create log file
 	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
 	defer func() {
+		config.ReSet()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.ClearTask()
