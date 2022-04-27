@@ -42,12 +42,14 @@ mkdir -p ${RPM_BUILD_ROOT}/usr/bin/
 mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/
 mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/conf/
 mkdir -p ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
+mkdir -p ${RPM_BUILD_ROOT}/usr/share/bash-completion/completions/
 
 cp -f keentune ${RPM_BUILD_ROOT}/usr/bin/keentune
 cp -f keentuned ${RPM_BUILD_ROOT}/usr/bin/keentuned
 cp -rf daemon/examples/. ${RPM_BUILD_ROOT}/etc/keentune
 cp -f ./keentuned.conf ${RPM_BUILD_ROOT}/etc/keentune/conf/
 cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
+cp -f ./keentune.bash ${RPM_BUILD_ROOT}/usr/share/bash-completion/completions/
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -71,6 +73,7 @@ fi
 %{_sysconfdir}/keentune
 %license LICENSE
 %{_prefix}/lib/systemd/system/keentuned.service
+%{_datadir}/bash-completion/completions/keentune.bash
 
 %changelog
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
