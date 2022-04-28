@@ -1,0 +1,66 @@
+.TH "keentune" "8" "28 April 2022" "OpenAnolis KeenTune SIG" "System performance tuning daemon"
+.SH NAME
+keentune - system performance tuning daemon
+.SH SYNOPSIS
+\fBkeentune\fP [\fIoptions\fP]
+.SH DESCRIPTION
+\fBkeentune\fR is a dual-wheel drive intelligent optimization product of operating system with AI algorithm and expert knowledge base. It provides lightweight and cross-platform one-click performance tuning for the mainstream operating system, so that the application can play the optimal performance in the intelligent customized operating environment\.
+.
+.SH OPTIONS
+.
+.SS "Dynamic tuning"
+Provide a set of configuration parameters for the kernel, compiler, runtime, and TOP application, identify the sensitive parameters using the AI algorithm, and perform the optimal configuration of the parameter combination\.
+.
+.TP
+\fBparam delete --job\fR
+Delete the dynamic parameter tuning job\.
+.
+.TP
+\fBparam jobs\fR
+List parameter optimizing jobs\.
+.
+.TP
+\fBparam list\fR
+List parameter and benchmark configuration files\.
+.
+.TP
+\fBparam rollback\fR
+Restore initial state\.
+.
+.TP
+\fBparam stop\fR
+Terminate a parameter tuning job\.
+.
+.TP
+\fBparam tune\fR
+Deploy and start a parameter tuning job\.
+.
+.SS "Static tuning"
+Preset multiple typical high-load scenarios and application experience optimization configuration, users can improve environmental performance through one-click setting; this function can also be applied to expand the experience setting of small-scale environment tuning in large clusters\.
+.
+.TP
+\fBprofile delete --name\fR
+Delete a profile\.
+.
+.TP
+\fBprofile generate --name\fR
+Generate a parameter configuration file from profile\.
+.
+.TP
+\fBprofile info --name\fR
+Show information of the specified profile\.
+.
+.TP
+\fBprofile list\fR
+List all profiles\.
+.
+.TP
+\fBprofile rollback\fR
+Restore initial state\.
+.
+.TP
+\fBprofile set --name\fR
+Apply a profile to the target machine\.
+.
+.SH "BUGS"
+Report bugs at: https://gitee.com/anolis/keentuned/issues
