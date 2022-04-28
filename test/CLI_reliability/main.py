@@ -5,14 +5,18 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 os.chdir(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
+from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
 
 def RunReliabilityCase():
+    multi_scenes = unittest.TestSuite()
+    multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultipleScenes))
+
     multi_target = unittest.TestSuite()
     multi_target.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
 
-    suite = unittest.TestSuite([multi_target])
+    suite = unittest.TestSuite([multi_scenes, multi_target])
     return suite
 
 

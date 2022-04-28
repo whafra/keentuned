@@ -78,7 +78,7 @@ class TestMultiTarget(unittest.TestCase):
                 param_name = data["name"]
                 param_value = str(data["value"])
                 cmd = "ssh {} 'sysctl -n {}'".format(server[0], param_name)
-                sys_value = str(sysCommand(cmd)[1].strip('\n')).replace("\t", " ")
+                sys_value = str(sysCommand(cmd)[1]).strip('\n').replace("\t", " ")
                 if param_value != sys_value:
                     print("param_name is: %s" % param_name)
                     print("param_value is: %s" % param_value)
