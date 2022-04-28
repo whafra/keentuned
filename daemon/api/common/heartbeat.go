@@ -158,10 +158,9 @@ func isBrainOffline() bool {
 }
 
 func ConnectTarget(group []bool) error {
-	inputLen := len(group)
-	hasLen := len(config.KeenTune.Group)
-	if inputLen != hasLen {
-		return fmt.Errorf("target group out of range, has count %v, input count %v", hasLen, inputLen)
+	err := checkSettableTarget(group)
+	if err != nil {
+		return err
 	}
 
 	var clientName = new(string)
@@ -174,13 +173,22 @@ func ConnectTarget(group []bool) error {
 	return nil
 }
 
+func checkSettableTarget(group []bool) error {
+	inputLen := len(group)
+	hasLen := len(config.KeenTune.Group)
+	if inputLen != hasLen {
+		return fmt.Errorf("target group out of range, has count %v, input count %v", hasLen, inputLen)
+	}
+	return nil
+}
+
 func detectSettableTargetStatus(group []bool, clientName *string) {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	var faultCount int
 	ticker := time.NewTicker(time.Duration(config.KeenTune.HeartbeatTime) * time.Second)
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -208,6 +216,12 @@ func detectSettableTargetStatus(group []bool, clientName *string) {
 }
 
 func IsSetTargetOffline(group []bool, clientName *string) bool {
+	err := checkSettableTarget(group)
+	if err != nil {
+		*clientName += err.Error()
+		return true
+	}
+
 	var offline bool
 	for i, settable := range group {
 		if !settable {

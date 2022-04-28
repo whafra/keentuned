@@ -163,7 +163,11 @@ func execCmd(inputCmd string, result *string) error {
 	}
 
 	if err = cmd.Wait(); err != nil {
-		fmt.Printf("err:%v, msg: %s\n", err, bytes)
+		parts := strings.Split(string(bytes), ":")
+		if len(parts) > 0 {
+			return fmt.Errorf("%s", getMsg(parts[len(parts)-1], inputCmd))
+		}
+		
 		return fmt.Errorf("%s", getMsg(string(bytes), inputCmd))
 	}
 
