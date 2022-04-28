@@ -113,6 +113,7 @@ func KeenTunedService(quit chan os.Signal) {
 		case <-quit:
 			log.Info("", "keentune is interrupted")
 			if GetRunningTask() != "" {
+				ClearTask()
 				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			os.Exit(1)
