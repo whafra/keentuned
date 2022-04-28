@@ -25,7 +25,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	if com.IsApplying() {
 		return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
 	}
-	if err := com.HeartbeatCheck(); err != nil {
+	if err := com.ConnectTarget(flag.Group); err != nil {
 		log.Errorf(log.ProfSet, "Check %v", err)
 		return fmt.Errorf("Check %v", err)
 	}
@@ -41,7 +41,7 @@ func runSeting(flag SetFlag, reply *string) {
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
 	}()
-	//log.Infof(log.ProfSet, "Step1. Profile Set start\n")
+	
 	if err := SetingImpl(flag, "tuning"); err != nil {
 		log.Errorf(log.ProfSet, "Profile Set failed, msg: %v", err)
 		return
