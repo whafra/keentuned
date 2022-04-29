@@ -16,6 +16,7 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
+	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
 
 	return subCmds
 }
