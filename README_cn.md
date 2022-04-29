@@ -46,17 +46,21 @@ $ vim /etc/keentune/conf/keentuned.conf
 
 TARGET_IP = [ip of vm 1]
 BRAIN_IP  = [ip of vm 2]
-BENCH_IP  = [ip of vm 3]
+BENCH_SRC_IP  = [ip of vm 3]
+BENCH_DEST_IP = [ip of vm 4]
+
+PARAMETER = [param conf]
+BENCH_CONFIG = [bench conf]
 ```
 #### 启动keentuned
 ```shell
 $ keentuned
 ```
 ### 动态参数调优
-keentune param tune --param [param conf] --bench [bench conf] --name [job name]   --iteration [number of iteration]  
+keentune param tune --job [job name] --iteration [number of iteration]
 运行示例:  
 ```bash
-$ keentune param tune --param param_100.json --bench benchmark/wrk/bench_wrk_nginx_long.json --name tune_test --iteration 10 
+$ keentune param tune --job tune_test --iteration 10
 ```
 任务发起后，可以通过msg命令检查任务执行情况。  
 ```bash
