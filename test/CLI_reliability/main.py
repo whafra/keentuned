@@ -11,7 +11,7 @@ from CLI_reliability.test_multi_target import TestMultiTarget
 
 def RunReliabilityCase():
     multi_scenes = unittest.TestSuite()
-    multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultipleScenes))
+    multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
 
     multi_target = unittest.TestSuite()
     multi_target.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))

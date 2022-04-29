@@ -126,8 +126,15 @@ def runSensitizeCollect(name, iteration=10):
     return result
 
 def getSysBackupData():
-    path ="/var/keentune/backup/sysctl_backup.json"
-    if os.path.exists(path):
+    path ="/var/keentune/backup/sysctl_backup.conf"
+    if target_ip == "localhost":
+        cmd = "sysctl -n {}"
+        result = os.path.exists(path)
+    else:
+        cmd = "ssh %s 'sysctl -n {}'" % target_ip
+        status = sysCommand("ssh {} 'ls -f {}'".format(target_ip, path))[0]
+        result = True if status == 0 else False
+    if result:
         status, output, _ = sysCommand('keentune param rollback')
         assert status == 0
         assert 'param rollback successfully' in output
@@ -137,8 +144,8 @@ def getSysBackupData():
         backup_data = json.load(f)
 
     for param_name, param_info in backup_data.items():
-        cmd = "sysctl -n {}".format(param_name)
-        param_info["value"] = sysCommand(cmd)[1].strip('\n')
+        new_cmd = cmd.format(param_name)
+        param_info["value"] = str(sysCommand(new_cmd)[1]).strip('\n')
         backup_data[param_name] = param_info
 
     with open(path, "w", encoding='UTF-8') as f:
@@ -149,9 +156,10 @@ def checkBackupData():
     with open(path, "r", encoding='UTF-8') as f:
         backup_data = json.load(f)
 
+    cmd = "sysctl -n {}" if target_ip == "localhost" else "ssh %s 'sysctl -n {}'" % target_ip
     for param_name, param_info in backup_data.items():
-        cmd = "sysctl -n {}".format(param_name)
-        value = sysCommand(cmd)[1].strip('\n')
+        new_cmd = cmd.format(param_name)
+        value = str(sysCommand(new_cmd)[1]).strip('\n')
         if param_info["value"] != value:
             status = 1
             break
@@ -160,13 +168,14 @@ def checkBackupData():
     return status
 
 def checkProfileData(name, flag=False):
+    cmd = "sysctl -n {}" if target_ip == "localhost" else "ssh %s 'sysctl -n {}'" % target_ip
     path = "/var/keentune/profile/{}.conf".format(name) if flag else "conf/{}.conf".format(name)
     with open(path, "r", encoding='UTF-8') as f:
         for line in f.readlines()[1:]:
             key = line.strip().split(": ")[0]
             value = line.strip().split(": ")[1]
-            cmd = "sysctl -n {}".format(key)
-            sys_val = sysCommand(cmd)[1].strip('\n')
+            new_cmd = cmd.format(key)
+            sys_val = str(sysCommand(new_cmd)[1]).strip('\n')
             if value != sys_val:
                 status = 1
                 break
