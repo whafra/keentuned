@@ -1,0 +1,140 @@
+.TH "keentuned.conf" "5" "5 May 2022" "KeenTune"
+.SH NAME
+keentuned.conf - keentuned configuration file
+.SH SYNOPSIS
+.B /etc/keentune/conf/keentuned.conf
+.SH DESCRIPTION
+This man page documents format of the keentuned configuration file.
+The \fIkeentuned.conf\fR file uses the ini\-file format.
+.
+.SH "[keentuned]"
+Attributes used in KeenTuned
+.
+.TP
+\fBKEENTUNED_HOME = /etc/keentune\fR
+KeenTuned depository location
+.
+.TP
+\fBPORT = 9871\fR
+KeenTuned access port
+.
+.TP
+\fBHEARTBEAT_TIME = 30\fR
+Heartbeat detection interval(unit: seconds), recommended value 30
+.
+.SH "[brain]"
+Attributes used to connect brain environment
+.
+.TP
+\fBBRAIN_IP = localhost\fR
+Brain machine ip
+.
+.TP
+\fBBRAIN_PORT = 9872\fR
+Brain machine access port
+.
+.TP
+\fBALGORITHM = tpe\fR
+Brain optimization algorithm, available value: tpe, hord, random
+.
+.SH "[target-group-1]"
+Attributes used to connect target group environment
+.
+.TP
+\fBTARGET_IP = localhost\fR
+Target tuned machine ips, e.g. "ip1,ip2,...,ipn", Multiple groups TARGET_IP cannot be duplicated
+.
+.TP
+\fBTARGET_PORT = 9873\fR
+Target tuned machine access port
+.
+.TP
+\fBPARAMETER = sysctl.json\fR
+.
+.SH "[bench-group-1]"
+Attributes used to connect benchmark environment
+.
+.TP
+\fBBENCH_SRC_IP = localhost\fR
+\fBBENCH_DEST_IP = localhost\fR
+Benchmark machine ip
+.
+.TP
+\fBBENCH_SRC_PORT = 9874\fR
+\fBBENCH_DEST_PORT = 9875\fR
+Benchmark machine access port
+.
+.TP
+\fBBASELINE_BENCH_ROUND = 5\fR
+Benchmark execution rounds of baseline
+.
+.TP
+\fBTUNING_BENCH_ROUND = 3\fR
+Benchmark execution rounds during tuning execution
+.
+.TP
+\fBRECHECK_BENCH_ROUND = 4\fR
+Benchmark execution rounds after tuning for recheck
+.
+.TP
+\fBBENCH_CONFIG = bench_wrk_nginx_long.json\fR
+.
+.SH "[dump]"
+.
+.TP
+\fBDUMP_BASELINE_CONFIGURATION = false\fR
+Baseline configuration storage enable
+.
+.TP
+\fBDUMP_TUNING_CONFIGURATION = false\fR
+Configuring storage enable in tuning execution
+.
+.TP
+\fBDUMP_BEST_CONFIGURATION = true\fR
+Best configuration storage enable
+.
+.TP
+\fBDUMP_HOME = /var/keentune\fR
+Dump home is the output folder for keentuned exec result
+.
+.SH "[sensitize]"
+.
+.TP
+\fBALGORITHM = random\fR
+algorithm of sensitive parameter tuning, at present, scope enum: random, lhs
+.
+.TP
+\fBBENCH_ROUND = 3\fR
+Benchmark execution rounds during sensitive parameter tuning execution; scope [1,10]
+.
+.SH "[log]"
+Attributes used in keentuned log
+.
+.TP
+\fBLOGFILE_LEVEL = DEBUG\fR
+\fBLOGFILE_NAME = keentuned.log\fR
+logfile log level, enum：INFO, DEBUG, WARN, FATAL; recommend：DEBUG
+.
+.TP
+\fBLOGFILE_INTERVAL = 2\fR
+logfile interval, unit: day
+.
+.TP
+\fBLOGFILE_BACKUP_COUNT = 14\fR
+logfile backup count
+.
+.SH "[version]"
+.
+.TP
+\fBVERSION_NUM = 1.1.0\fR
+Record the version number of keentune
+
+.SH FILES
+.I /etc/keentune/conf/keentuned.conf
+
+.SH "SEE ALSO"
+.LP
+keentune(8)
+
+.SH "BUGS"
+Report bugs at: https://gitee.com/anolis/keentuned/issues
