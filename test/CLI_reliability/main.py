@@ -5,18 +5,24 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 os.chdir(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
+from CLI_reliability.test_param_dump import TestParamDump
+from CLI_reliability.test_param_delete import TestParamDelete
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
 
 def RunReliabilityCase():
+    param_suite = unittest.TestSuite()
+    param_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamDump))
+    param_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamDelete))
+
     multi_scenes = unittest.TestSuite()
     multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
 
     multi_target = unittest.TestSuite()
     multi_target.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
 
-    suite = unittest.TestSuite([multi_scenes, multi_target])
+    suite = unittest.TestSuite([param_suite, multi_scenes, multi_target])
     return suite
 
 
