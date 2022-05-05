@@ -106,6 +106,14 @@ func trainCmd() *cobra.Command {
 		Short:   "Deploy and start a sensitivity identification job",
 		Long:    "Deploy and start a sensitivity identification job",
 		Example: egTrain,
+
+		PreRun: func(cmd *cobra.Command, args []string) {
+			if err := checkTrainingFlags("sensitize", &trainflags); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+		},
+
 		Run: func(cmd *cobra.Command, args []string) {
 			err := initSensitizeConf()
 			if err != nil {

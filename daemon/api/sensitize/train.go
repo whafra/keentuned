@@ -25,12 +25,12 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	/*
-		err := config.BackupSensitize(flags.Config, flags.Job)
-		if err != nil {
-			return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
-		}
-	*/
+
+	err := config.BackupSensitize(flags.Config, flags.Job)
+	if err != nil {
+		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
+	}
+
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
