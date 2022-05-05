@@ -63,9 +63,9 @@ if [ "$(ls -A $CONF_DIR)" = "" ]; then
 fi
 
 %files
-%defattr(0444,root,root, 0555)
-%attr(0555, root, root) /usr/bin/keentune
-%attr(0555, root, root) /usr/bin/keentuned
+%defattr(0644,root,root, 0755)
+%attr(0755, root, root) /usr/bin/keentune
+%attr(0755, root, root) /usr/bin/keentuned
 %{_bindir}/%{name}
 %{_bindir}/keentune
 %{_sysconfdir}/keentune
