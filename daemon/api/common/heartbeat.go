@@ -157,22 +157,6 @@ func isBrainOffline() bool {
 	return false
 }
 
-func ConnectTarget(group []bool) error {
-	err := checkSettableTarget(group)
-	if err != nil {
-		return err
-	}
-
-	var clientName = new(string)
-
-	if IsSetTargetOffline(group, clientName) {
-		return fmt.Errorf(*clientName)
-	}
-
-	go detectSettableTargetStatus(group, clientName)
-	return nil
-}
-
 func checkSettableTarget(group []bool) error {
 	inputLen := len(group)
 	hasLen := len(config.KeenTune.Group)
@@ -182,43 +166,10 @@ func checkSettableTarget(group []bool) error {
 	return nil
 }
 
-func detectSettableTargetStatus(group []bool, clientName *string) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	var faultCount int
-	ticker := time.NewTicker(time.Duration(config.KeenTune.HeartbeatTime) * time.Second)
-
-	for {
-		select {
-		case <-ticker.C:
-			if IsSetTargetOffline(group, clientName) {
-				faultCount++
-				log.Infof("", "keentuned detected that  settable target was offline for the %vth time", faultCount)
-			}
-
-			if faultCount == MaxReconnectionTime {
-				log.Info("", "Heartbeat Check settable target is offline")
-				config.ServeFinish <- true
-				return
-			}
-
-		case <-config.ProgramNeedExit:
-			log.Debug("", "Heartbeat Check program is finish")
-			config.ServeFinish <- true
-			return
-		case <-signalChan:
-			log.Debug("", "Heartbeat Check program is interrupt")
-			config.ServeFinish <- true
-			return
-		}
-	}
-}
-
-func IsSetTargetOffline(group []bool, clientName *string) bool {
+func IsSetTargetOffline(group []bool, msg *string) bool {
 	err := checkSettableTarget(group)
 	if err != nil {
-		*clientName += err.Error()
+		*msg += err.Error()
 		return true
 	}
 
@@ -231,11 +182,10 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 		for index, ip := range config.KeenTune.Group[i].IPs {
 			targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.Group[i].Port)
 			if checkOffline(targetURI) {
-				*clientName += fmt.Sprintf("target%v-%v, ", config.KeenTune.Group[i].GroupNo, index+1)
+				*msg += fmt.Sprintf("target%v-%v, ", config.KeenTune.Group[i].GroupNo, index+1)
 				offline = true
 			}
 		}
-
 	}
 
 	return offline

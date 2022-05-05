@@ -32,7 +32,6 @@ type GenFlag struct {
 }
 
 type SetFlag struct {
-	Name     string
 	Group    []bool
 	ConfFile []string
 }

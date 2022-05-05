@@ -45,7 +45,7 @@ type Tuner struct {
 	implyDetail
 	bestInfo    Configuration
 	allowUpdate bool
-	Seter
+	Setter
 }
 
 type TimeSpend struct {
