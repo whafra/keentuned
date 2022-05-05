@@ -46,8 +46,12 @@ $ keentune-bench
 $ vim /etc/keentune/conf/keentuned.conf
 
 TARGET_IP = [ip of vm 1]
-BRAIN_IP  = [ip of vm 2]
-BENCH_IP  = [ip of vm 3]
+BRAIN_IP = [ip of vm 2]
+BENCH_SRC_IP = [ip of vm 3]
+BENCH_DEST_IP = [ip of vm 4]
+
+PARAMETER = [param conf]
+BENCH_CONFIG = [bench conf]
 ```
 
 ### Run keentuned
@@ -56,10 +60,10 @@ $ keentuned
 ```
 
 ### Param Tune
-keentune param tune --param [param conf] --bench [bench conf] --name [job name]   --iteration [number of iteration]  
+keentune param tune --job [job name] --iteration [number of iteration] 
 e.g.  
 ```bash  
-$ keentune param tune --param param_100.json --bench benchmark/wrk/bench_wrk_nginx_long.json --name tune_test --iteration 10 
+$ keentune param tune --job tune_test --iteration 10 
 ```
 
 Check the execution of the task by 'msg' command.

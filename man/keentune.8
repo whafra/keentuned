@@ -1,6 +1,18 @@
-.TH "keentune" "8" "28 April 2022" "OpenAnolis KeenTune SIG" "System performance tuning daemon"
+.\"/*
+.\" * All rights reserved
+.\" *Copyright (c) [Year] [name of copyright holder]
+.\" *[Software Name] is licensed under Mulan PSL v2.
+.\" *You can use this software according to the terms and conditions of the Mulan PSL v2.
+.\" *You may obtain a copy of Mulan PSL v2 at:
+.\" *         http://license.coscl.org.cn/MulanPSL2
+.\" *THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+.\" *EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+.\" *MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE. 
+.\" */
+.\"
+.TH "keentune" "8" "28 April 2022" "OpenAnolis KeenTune SIG" "KeenTune"
 .SH NAME
-keentune - system performance tuning daemon
+keentune - command line tool for Dynamic and Static tunning
 .SH SYNOPSIS
 \fBkeentune\fP [\fIoptions\fP]
 .SH DESCRIPTION
@@ -61,6 +73,13 @@ Restore initial state\.
 .TP
 \fBprofile set --name\fR
 Apply a profile to the target machine\.
-.
+
+.SH "FILES"
+.nf
+/etc/keentune/*
+
+.SH "SEE ALSO"
+.BR keentuned (8)
+
 .SH "BUGS"
 Report bugs at: https://gitee.com/anolis/keentuned/issues
