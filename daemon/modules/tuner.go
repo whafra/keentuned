@@ -274,8 +274,8 @@ func (tuner *Tuner) feedback() error {
 }
 
 func (tuner *Tuner) init() error {
-	result, allSuccess := Rollback(tuner.logName)
-	if !allSuccess {
+	result, err := Rollback(tuner.logName)
+	if err != nil {
 		return fmt.Errorf("Rollback before %v:\n%v", tuner.Flag, result)
 	}
 
@@ -285,7 +285,7 @@ func (tuner *Tuner) init() error {
 	}
 
 	var implyApplyResults string
-	var err error
+
 	implyApplyResults, tuner.BaseConfiguration, err = emptyConf.Apply(&tuner.timeSpend.apply, true)
 	if err != nil {
 		return fmt.Errorf("baseline apply configuration failed: %v, details: %v", err, implyApplyResults)
