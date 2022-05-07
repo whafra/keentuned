@@ -163,11 +163,11 @@ func execCmd(inputCmd string, result *string) error {
 	}
 
 	if err = cmd.Wait(); err != nil {
-		parts := strings.Split(string(bytes), ":")
+		parts := strings.Split(string(bytes), "failed, msg: ")
 		if len(parts) > 0 {
 			return fmt.Errorf("%s", getMsg(parts[len(parts)-1], inputCmd))
 		}
-		
+
 		return fmt.Errorf("%s", getMsg(string(bytes), inputCmd))
 	}
 

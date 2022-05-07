@@ -16,7 +16,7 @@ import (
 )
 
 type Setter struct {
-	IdMap    map[int]int  // key: total group Idx; value: real setter groupIdx 
+	IdMap    map[int]int // key: total group Idx; value: real setter groupIdx
 	Group    []bool
 	ConfFile []string
 }
@@ -54,8 +54,8 @@ func (tuner *Tuner) Set() error {
 	}
 
 	if err = tuner.prepareBeforeSet(); err != nil {
-		log.Errorf(log.ProfSet, "Prepare err %v", err)
-		return fmt.Errorf("prepare for Set err %v", err)
+		log.Errorf(log.ProfSet, "prepare for setting %v", err)
+		return fmt.Errorf("prepare for setting %v", err)
 	}
 
 	sucInfos, failedInfo, err := tuner.setConfiguration(requestInfoAll)
@@ -115,7 +115,7 @@ func (tuner *Tuner) prepareBeforeSet() error {
 	// step1. rollback the target machine
 	err := tuner.rollback()
 	if err != nil {
-		return fmt.Errorf("rollback details:\n%v", err)
+		return fmt.Errorf("rollback failed:\n%v", tuner.rollbackFailure)
 	}
 
 	// step2. clear the active file
@@ -127,7 +127,7 @@ func (tuner *Tuner) prepareBeforeSet() error {
 	// step3. backup the target machine
 	err = tuner.backup()
 	if err != nil {
-		return fmt.Errorf("backup details:\n%v", tuner.backupFailure)
+		return fmt.Errorf("backup failed:\n%v", tuner.backupFailure)
 	}
 	return nil
 }

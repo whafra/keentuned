@@ -109,6 +109,10 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 	}
 
 	if !response.Suc {
+		detail, _ := json.Marshal(response.Msg)
+		if detail != nil {
+			return fmt.Sprintf("%s", detail), FAILED
+		}
 		return fmt.Sprintf("%v", response.Msg), FAILED
 	}
 
@@ -119,3 +123,4 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 
 	return "", SUCCESS
 }
+
