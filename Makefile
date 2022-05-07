@@ -1,4 +1,4 @@
-VERSION = 1.1.0
+VERSION = 1.1.1
 .PHONY: all clean daemon cli
 
 PKGPATH=pkg
@@ -41,8 +41,8 @@ install:
 	mkdir -p $(SYSCONFDIR)/keentune/conf/
 	mkdir -p $(SYSTEMDDIR)
 	mkdir -p $(DESTDIR)$(PREFIX)/share/bash-completion/completions/
-	install -m 0555 $(PKGPATH)/keentune $(BINDIR)
-	install -m 0555 $(PKGPATH)/keentuned $(BINDIR)
+	install -m 0755 $(PKGPATH)/keentune $(BINDIR)
+	install -m 0755 $(PKGPATH)/keentuned $(BINDIR)
 	cp -rf daemon/examples/* $(SYSCONFDIR)/keentune
 	install -m 0644 keentuned.conf $(SYSCONFDIR)/keentune/conf/
 	install -m 0644 keentuned.service $(SYSTEMDDIR)
