@@ -15,6 +15,11 @@ Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  go >= 1.13
+BuildRequires:	systemd
+
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 Vendor:         Alibaba
 
