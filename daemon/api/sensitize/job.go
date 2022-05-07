@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"keentune/daemon/common/config"
-	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"os"
 )
@@ -102,33 +100,4 @@ func (s *Service) Jobs(flag string, reply *string) error {
 	}
 
 	return nil
-}
-
-func createTuneJob(flags TrainFlag) error {
-	cmd := fmt.Sprintf("keentune sensitize train --data %v --job %v --trials %v --config %v", flags.Data, flags.Job, flags.Trials, flags.Config)
-
-	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", flags.Job)
-
-	jobInfo := []string{
-		flags.Job, NA, NA, NA, fmt.Sprint(flags.Trials), Run,
-		"0", log, config.GetSensitizeWorkPath(flags.Job), cmd, log,
-	}
-	return file.Insert(getSensitizeJobFile(), jobInfo)
-}
-
-func updateJob(flags TrainFlag, info map[int]interface{}) {
-	var err error
-	err = file.UpdateRow(getSensitizeJobFile(), flags.Job, info)
-	if err != nil {
-		log.Warnf("", "update '%v' %v", info, err)
-		return
-	}
-}
-
-func updateStatus(flags TrainFlag, info string) {
-	updateJob(flags, map[int]interface{}{tuneStatusIdx: info})
-}
-
-func getSensitizeJobFile() string {
-	return fmt.Sprint(config.GetDumpPath("sensitize_jobs.csv"))
 }

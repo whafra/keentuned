@@ -82,6 +82,21 @@ const (
 	tuneLogIdx
 )
 
+// tune job column index
+const (
+	trainNameIdx = iota
+	trainStartIdx
+	trainEndIdx
+	trainCostIdx
+	trainTrials
+	trainStatusIdx
+	trainEpoch
+	trainLogIdx
+	trainWSPIdx
+	trainAlgoIdx
+	trainDataPath
+)
+
 func (tuner *Tuner) CreateTuneJob() error {
 	cmd := fmt.Sprintf("keentune param tune --job %v -i %v", tuner.Name, tuner.MAXIteration)
 	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", tuner.Name)
@@ -111,4 +126,19 @@ func (tuner *Tuner) updateStatus(info string) {
 	if tuner.Flag == "tuning" {
 		tuner.updateJob(map[int]interface{}{tuneStatusIdx: info})
 	}
+}
+
+func (trainer *Trainer) updateJob(info map[int]interface{}) {
+	var err error
+	err = file.UpdateRow(getSensitizeJobFile(), trainer.Job, info)
+
+	if err != nil {
+		log.Warnf("", "'%v' update '%v' %v", trainer.Flag, info, err)
+		return
+	}
+}
+
+func (trainer *Trainer) updateStatus(info string) {
+	trainer.updateJob(map[int]interface{}{trainStatusIdx: info})
+
 }

@@ -8,6 +8,7 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"strings"
 	"time"
 )
 
@@ -179,46 +180,77 @@ func (trainer *Trainer) dumpSensitivityResult(resultMap map[string]interface{}, 
 }
 
 func (trainer *Trainer) parseTuningError(err error) {
-	/*
-		if err == nil {
-			trainer.updateStatus(Finish)
-			return
-		}
 
-		trainer.rollback()
-		if strings.Contains(err.Error(), "interrupted") {
-			trainer.updateStatus(Stop)
-			log.Infof(trainer.logName, "parameter optimization job abort!")
-			return
-		}
+	if err == nil {
+		trainer.updateStatus(Finish)
+		return
+	}
 
-		trainer.updateStatus(Err)
-		log.Infof(trainer.logName, "%v", err)
-	*/
+	//trainer.rollback()
+	if strings.Contains(err.Error(), "interrupted") {
+		trainer.updateStatus(Stop)
+		log.Infof(trainer.logName, "parameter optimization job abort!")
+		return
+	}
+
+	trainer.updateStatus(Err)
+	log.Infof(trainer.logName, "%v", err)
+
 }
 
 func (trainer *Trainer) end() {
-	/*
-		start := time.Now()
-		http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
-		timeCost := utils.Runtime(start)
-		trainer.timeSpend.end += timeCost.Count
 
-		totalTime := utils.Runtime(trainer.StartTime).Count.Seconds()
+	start := time.Now()
+	http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+	timeCost := utils.Runtime(start)
+	trainer.timeSpend.end += timeCost.Count
 
-		if totalTime == 0.0 || !trainer.Verbose {
-			return
-		}
+	totalTime := utils.Runtime(trainer.StartTime).Count.Seconds()
 
-		trainer.setTimeSpentDetail(totalTime)
+	if totalTime == 0.0 || !trainer.Verbose {
+		return
+	}
 
-		var endInfo = make(map[int]interface{})
+	trainer.setTimeSpentDetail(totalTime)
 
-		if trainer.Flag == "tuning" {
-			endInfo[tuneEndIdx] = start.Format(Format)
-			endInfo[tuneCostIdx] = endTime(int64(totalTime))
-		}
+	var endInfo = make(map[int]interface{})
 
-		trainer.updateJob(endInfo)
-	*/
+	if trainer.Flag == "tuning" {
+		endInfo[tuneEndIdx] = start.Format(Format)
+		endInfo[tuneCostIdx] = endTime(int64(totalTime))
+	}
+
+	trainer.updateJob(endInfo)
+}
+
+func (trainer *Trainer) setTimeSpentDetail(totalTime float64) {
+	initRatio := fmt.Sprintf("%.2f%%", trainer.timeSpend.init.Seconds()*100/totalTime)
+	applyRatio := fmt.Sprintf("%.2f%%", trainer.timeSpend.apply.Seconds()*100/totalTime)
+	acquireRatio := fmt.Sprintf("%.2f%%", trainer.timeSpend.acquire.Seconds()*100/totalTime)
+	benchmarkRatio := fmt.Sprintf("%.2f%%", trainer.timeSpend.benchmark.Seconds()*100/totalTime)
+	feedbackRatio := fmt.Sprintf("%.2f%%", trainer.timeSpend.feedback.Seconds()*100/totalTime)
+
+	var detailSlice [][]string
+	header := []string{"Process", "Execution Count", "Total Time", "The Share of Total Time"}
+	detailSlice = append(detailSlice, header)
+
+	initTime := fmt.Sprintf("%.3fs", trainer.timeSpend.init.Seconds())
+	detailSlice = append(detailSlice, []string{"init", "1", initTime, initRatio})
+
+	applyRound := fmt.Sprint(trainer.MAXIteration + 2)
+	applyTime := fmt.Sprintf("%.3fs", trainer.timeSpend.apply.Seconds())
+	detailSlice = append(detailSlice, []string{"apply", applyRound, applyTime, applyRatio})
+
+	maxRound := fmt.Sprint(trainer.MAXIteration)
+	acquireTime := fmt.Sprintf("%.3fs", trainer.timeSpend.acquire.Seconds())
+	detailSlice = append(detailSlice, []string{"acquire", maxRound, acquireTime, acquireRatio})
+
+	benchRound := fmt.Sprint(trainer.MAXIteration*config.KeenTune.ExecRound + config.KeenTune.BaseRound + config.KeenTune.AfterRound)
+	benchTime := fmt.Sprintf("%.3fs", trainer.timeSpend.benchmark.Seconds())
+	detailSlice = append(detailSlice, []string{"benchmark", benchRound, benchTime, benchmarkRatio})
+
+	feedbackTime := fmt.Sprintf("%.3fs", trainer.timeSpend.feedback.Seconds())
+	detailSlice = append(detailSlice, []string{"feedback", maxRound, feedbackTime, feedbackRatio})
+
+	trainer.timeSpend.detailInfo = utils.FormatInTable(detailSlice)
 }
