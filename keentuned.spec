@@ -1,17 +1,17 @@
 %define debug_package %{nil}
-%define anolis_release 6
+%define anolis_release 1
 
 #
 # spec file for package golang-keentuned
 #
 
 Name:           keentuned
-Version:        1.0.0
+Version:        1.1.1
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
 License:        MulanPSLv2
-Source:         %{name}-%{version}.tar.gz
+Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{version}.tar.gz
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  go >= 1.13
@@ -22,41 +22,26 @@ Vendor:         Alibaba
 KeenTune tuning tools rpm package
 
 %prep
-%setup -n %{name}-%{version}
+%autosetup -n %{name}-%{version}
 
 %build
-go env -w CGO_ENABLED=0
-go env -w GO111MODULE=on
-go env -w GOPROXY=https://goproxy.cn,direct
-cd daemon
-go build -ldflags=-linkmode=external -o keentuned
-mv -f keentuned ../
-cd ../cli
-go build -ldflags=-linkmode=external -o keentune
-mv -f keentune ../
-cd ../
+%make_build
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p ${RPM_BUILD_ROOT}/usr/bin/
-mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/
-mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/conf/
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
-
-cp -f keentune ${RPM_BUILD_ROOT}/usr/bin/keentune
-cp -f keentuned ${RPM_BUILD_ROOT}/usr/bin/keentuned
-cp -rf daemon/examples/. ${RPM_BUILD_ROOT}/etc/keentune
-cp -f ./keentuned.conf ${RPM_BUILD_ROOT}/etc/keentune/conf/
-cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
+%make_install
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 %post
-systemctl daemon-reload
+%systemd_post keentuned.service
+
+%preun
+%systemd_preun keentuned.service
 
 %postun
+%systemd_postun keentuned.service
 CONF_DIR=%{_sysconfdir}/keentune/conf
 if [ "$(ls -A $CONF_DIR)" = "" ]; then
         rm -rf $CONF_DIR
@@ -64,15 +49,18 @@ fi
 
 %files
 %defattr(0644,root,root, 0755)
-%attr(0755, root, root) /usr/bin/keentune
-%attr(0755, root, root) /usr/bin/keentuned
-%{_bindir}/%{name}
-%{_bindir}/keentune
-%{_sysconfdir}/keentune
 %license LICENSE
+%doc README.md docs/directory.md
+%attr(0755, root, root) %{_bindir}/keentune
+%attr(0755, root, root) %{_bindir}/keentuned
+%{_sysconfdir}/keentune
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Thu Mar 5 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.1
+- add makefile
+- update spec file
+
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
 - add tpce tpch benchmark files
 
