@@ -270,18 +270,20 @@ func getRecord(df dataframe.DataFrame, header1, value1, header2 string) (value2 
 	}
 
 	var index int
+	var matchFlag bool
 	for i, s := range record1 {
 		if s == value1 {
 			index = i
+			matchFlag = true
 			break
 		}
 	}
-
-	if index == 0 {
+	if matchFlag {
+		return record2[index]
+	} else {
 		return value2
 	}
 
-	return record2[index]
 }
 
 func GetRecord(fileName, header, value, primaryName string) string {
@@ -292,4 +294,3 @@ func GetRecord(fileName, header, value, primaryName string) string {
 
 	return getRecord(df, header, value, primaryName)
 }
-

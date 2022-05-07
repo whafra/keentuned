@@ -127,6 +127,16 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
+			if file.IsJobRunning(sensitizeCsv, trainflags.Job) {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), trainflags.Job)
+				return
+			}
+
+			if !file.IsPathExist(trainflags.Config) {
+				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), trainflags.Config)
+				os.Exit(1)
+			}
+
 			if !com.IsDataNameUsed(trainflags.Data) {
 				fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
 				os.Exit(1)
