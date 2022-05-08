@@ -10,6 +10,8 @@ from CLI_reliability.test_param_dump import TestParamDump
 from CLI_reliability.test_param_delete import TestParamDelete
 from CLI_reliability.test_profile_info import TestProfileInfo
 from CLI_reliability.test_profile_set import TestProfileSet
+from CLI_reliability.test_profile_delete import TestProfileDelete
+from CLI_reliability.test_profile_generate import TestProfileGenerate
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
@@ -23,6 +25,8 @@ def RunReliabilityCase():
     profile_suite = unittest.TestSuite()
     profile_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestProfileInfo))
     profile_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestProfileSet))
+    profile_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestProfileDelete))
+    profile_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestProfileGenerate))
 
     multi_scenes = unittest.TestSuite()
     multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
