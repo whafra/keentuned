@@ -1,0 +1,56 @@
+.\"/*
+.\" * All rights reserved
+.\" *Copyright (c) [Year] [name of copyright holder]
+.\" *[Software Name] is licensed under Mulan PSL v2.
+.\" *You can use this software according to the terms and conditions of the Mulan PSL v2.
+.\" *You may obtain a copy of Mulan PSL v2 at:
+.\" *         http://license.coscl.org.cn/MulanPSL2
+.\" *THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+.\" *EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+.\" *MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE. 
+.\" */
+.\"
+.TH "keentune-benchmark" "7" "6 May 2022" "OpenAnolis KeenTune SIG" "KeenTune"
+.SH NAME
+keentune-benchmark - description of basic keentune benchmark
+
+.SH DESCRIPTION
+Benchmark needs to complete two files one for benchmark script and another for benchmark conf file.
+
+The benchmark script file is responsible for defining how to run that benchmark tool, accept the output of the benchmark tool and parse the output results. Benchmark script file is saved under the /etc/keentune/benchmark/ path.
+
+The benchmark conf file is defined a few fields in the json file.
+
+.SH BENCHMARK
+At the moment we're providing the following pre-defined benchmark:
+
+.TP
+.BI "wrk"
+The wrk is a more advanced HTTP stress testing tool capable of generating a heavy load when run on a single multi-core CPU.
+
+.TP
+.BI "iperf"
+Iperf3 is a bandwidth testing tool that supports the adjustment of various parameters such as communication protocol, number of packets, transmission duration, reporting of network bandwidth, packet loss rate and other parameters.
+
+.TP
+.BI "tpce"
+TPC-E tests the OLTP performance of the database by simulating the business of securities trading companies.The TPC-E test focuses on the database, focusing more on the database for processing related transactions from securities companies and their customer accounts.
+
+.TP
+.BI "tpch"
+The main purpose of TPC-H is to evaluate the decision support capability of a specific query, emphasizing the capability of the server in data mining and analysis processing. Generally speaking, TPC-H is when a database developer developed a new database operating system, using TpC-H as the test benchmark, to test the ability to measure the database operating system query decision support.
+
+.TP
+.BI "fio"
+The fio is an IO test tool that can run on Linux, Windows, and can be used to test the performance of local disk, networked storage, etc.
+Flexible configuration, support multi-client concurrent testing (server, client mode), support file level, object level storage testing.
+
+.SH FILES
+.I /etc/keentune/benchmark/
+
+.SH "SEE ALSO"
+.LP
+keentune-target(8)
+
+.SH "BUGS"
+Report bugs at: https://gitee.com/anolis/keentuned/issues
