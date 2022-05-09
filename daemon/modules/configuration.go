@@ -255,7 +255,8 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 
 func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	var applyShortRet struct {
-		Success bool `json:"suc"`
+		Success bool        `json:"suc"`
+		Msg     interface{} `json:"msg"`
 	}
 
 	err := json.Unmarshal(sucBytes, &applyShortRet)
@@ -264,7 +265,11 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	}
 
 	if !applyShortRet.Success {
-		return nil, fmt.Errorf("apply short return failed")
+		detail, _ := json.Marshal(applyShortRet.Msg)
+		if len(detail) != 0 {
+			return nil, fmt.Errorf("%s", detail)
+		}
+		return nil, fmt.Errorf("%v", applyShortRet.Msg)
 	}
 
 	var applyResp struct {
@@ -280,11 +285,21 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 		if err := json.Unmarshal(body, &applyResp); err != nil {
 			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
-
 	}
 
 	if !applyResp.Success {
-		return nil, fmt.Errorf("get apply result failed, msg: %v", applyResp.Msg)
+		msg, _ := json.Marshal(applyShortRet.Msg)
+		paramInfo, ok := applyResp.Msg.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("%s", msg)
+		}
+
+		details, _, _ := collectParam(paramInfo)
+		if strings.Contains(details, "failed details") {
+			return nil, fmt.Errorf(details)
+		}
+
+		return nil, fmt.Errorf("%s", msg)
 	}
 
 	return applyResp.Data, nil
@@ -304,3 +319,4 @@ func (configuration Configuration) UpdateBase(origin *Configuration) {
 		origin.Parameters[i].Base = configuration.Parameters[i].Value
 	}
 }
+

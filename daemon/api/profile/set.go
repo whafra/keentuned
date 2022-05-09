@@ -53,8 +53,8 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 
 	sucInfos, failedInfo, err := setConfiguration(requestInfo)
 	if err != nil {
-		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
-		return fmt.Errorf("Set failed:%v, details:%v", err, failedInfo)
+		log.Errorf(log.ProfSet, "Set failed: %v", failedInfo)
+		return fmt.Errorf(failedInfo)
 	}
 
 	activeFile := m.GetProfileWorkPath("active.conf")
@@ -159,7 +159,7 @@ func analysisApplyResults(applyResult map[int]Result) ([]string, string, error) 
 	failedInfo = strings.TrimSuffix(failedInfo, ";")
 
 	if len(successInfo) == 0 {
-		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
+		return nil, failedInfo, fmt.Errorf("all failed, details:%v", failedInfo)
 	}
 
 	if len(successInfo) != len(config.KeenTune.TargetIP) {
@@ -186,7 +186,7 @@ func set(request map[string]interface{}, wg *sync.WaitGroup, applyResult map[int
 	setResult, _, err := m.GetApplyResult(resp, index)
 	if err != nil {
 		applyResult[index] = Result{
-			Info:    fmt.Sprintf("target %v get apply result: %v;", index, err),
+			Info:    fmt.Sprintf("target %v %v", index, err.Error()),
 			Success: false,
 		}
 		return

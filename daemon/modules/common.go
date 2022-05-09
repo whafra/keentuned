@@ -154,7 +154,7 @@ func ConcurrentRequestSuccess(logName, uri string, request interface{}) (string,
 		}
 	}
 
-	return strings.TrimSuffix(*failedInfo, ";\n") + ".", false
+	return strings.TrimSuffix(strings.TrimSuffix(*failedInfo, "; "), "\n") + ".", false
 }
 
 func remoteCall(method string, url string, request interface{}) (string, int) {
