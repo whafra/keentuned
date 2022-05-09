@@ -64,8 +64,8 @@ func mkWorkDir() {
 		os.MkdirAll(config.GetTuningPath(""), os.ModePerm)
 	}
 
-	if !file.IsPathExist(config.GetSensitizePath()) {
-		os.MkdirAll(config.GetSensitizePath(), os.ModePerm)
+	if !file.IsPathExist(config.GetSensitizePath("")) {
+		os.MkdirAll(config.GetSensitizePath(""), os.ModePerm)
 	}
 	tuningCsv := config.GetDumpPath("tuning_jobs.csv")
 	if !file.IsPathExist(tuningCsv) {

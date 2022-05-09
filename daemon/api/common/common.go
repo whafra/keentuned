@@ -43,6 +43,8 @@ type DumpFlag struct {
 }
 
 var activeJob = ""
+var tuningCsv = "/var/keentune/tuning_jobs.csv"
+var sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
 
 var (
 	JobTuning     = "tuning"
@@ -158,10 +160,35 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
 	primaryKeys := []string{flag.Name}
-	file.DeleteRow("/var/keentune/tuning_jobs.csv", primaryKeys)
+	file.DeleteRow(tuningCsv, primaryKeys)
 
 	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
 	return nil
+}
+
+// RunDelete run delete file service
+func RunTrainDelete(flag DeleteFlag, reply *string) error {
+	fullName := GetSensitizePath(flag.Name)
+
+	inst := new(deleter)
+	inst.cmd = flag.Cmd
+	inst.fileName = fullName
+
+	if err := inst.check(flag.Name); err != nil {
+		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
+		return fmt.Errorf("Check name failed: %v", err.Error())
+	}
+
+	if err := inst.delete(); err != nil {
+		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
+		return fmt.Errorf("Delete failed: %v", err.Error())
+	}
+	primaryKeys := []string{flag.Name}
+	file.DeleteRow(sensitizeCsv, primaryKeys)
+
+	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
+	return nil
+
 }
 
 func (d *deleter) check(inputName string) error {
@@ -214,6 +241,25 @@ func GetProfilePath(fileName string) string {
 
 func GetParameterPath(fileName string) string {
 	workPath := config.GetTuningPath(fileName)
+	if file.IsPathExist(workPath) {
+		return workPath
+	}
+
+	homePath := config.GetParamHomePath() + fileName
+	if file.IsPathExist(homePath) {
+		return homePath
+	}
+
+	generatePath := config.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(fileName, ".json"), ".json"))
+	if file.IsPathExist(generatePath) {
+		return generatePath
+	}
+
+	return ""
+}
+
+func GetSensitizePath(fileName string) string {
+	workPath := config.GetSensitizePath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
-	"io"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
@@ -162,7 +160,7 @@ func trainCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainflags.Job)
+			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainflags.Job), trainflags.Job)
 			_, err = os.Stat(SensiName)
 			if err == nil {
 				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
@@ -202,34 +200,6 @@ func jobSensitivityCmd() *cobra.Command {
 	return cmd
 }
 
-func readCsv(fileName string, name string) bool {
-
-	fs, err := os.Open(fileName)
-	if err != nil {
-		fmt.Printf("%v can not open the file, err is  %v\n", ColorString("red", "[ERROR]"), err)
-		os.Exit(1)
-	}
-	defer fs.Close()
-	r := csv.NewReader(fs)
-	//针对大文件，一行一行的读取文件
-	for {
-		row, err := r.Read()
-		if err != nil && err != io.EOF {
-			fmt.Printf("%v can not read, err is  %v\n", ColorString("red", "[ERROR]"), err)
-			os.Exit(1)
-		}
-		if err == io.EOF {
-			break
-		}
-		fmt.Println(row)
-
-		if (len(row) == 10) && (row[0] == name) && (row[5] == "running") {
-			return true
-		}
-	}
-	return false
-}
-
 func deleteSensitivityCmd() *cobra.Command {
 	var flag DeleteFlag
 	cmd := &cobra.Command{
@@ -250,32 +220,39 @@ func deleteSensitivityCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if !(readCsv("/var/keentune/sensitize_workspace.csv", flag.Name)) {
-				err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
-				fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
+			//Determine whether job already exists
+			JobPath := config.GetSensitizePath(flag.Name)
+			_, err = os.Stat(JobPath)
+			if err != nil {
+				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
-
-			_, _, DataList, err := com.GetDataList()
-			if err != nil {
-				if find := strings.Contains(err.Error(), "connection refused"); find {
-					fmt.Println("brain access denied")
-					return
-				}
-				fmt.Println("Get sensitize Data List err:%v", err)
+			//Determine whether job can be deleted
+			if file.IsJobRunning(sensitizeCsv, flag.Name) {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
-			}
-			if find := strings.Contains(DataList, flag.Name); find {
-				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-				if !confirm() {
-					fmt.Println("[-] Give Up Delete")
+			} else {
+				_, _, DataList, err := com.GetDataList()
+				if err != nil {
+					if find := strings.Contains(err.Error(), "connection refused"); find {
+						fmt.Println("brain access denied")
+						return
+					}
+					fmt.Println("Get sensitize Data List err:%v", err)
 					return
 				}
-				flag.Cmd = "sensitize"
-				RunDeleteRemote(cmd.Context(), flag)
-			} else {
-				err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
-				fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
+				if find := strings.Contains(DataList, flag.Name); find {
+					fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+					if !confirm() {
+						fmt.Println("[-] Give Up Delete")
+						return
+					}
+					flag.Cmd = "sensitize"
+					RunDeleteRemote(cmd.Context(), flag)
+				} else {
+					err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
+					fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
+				}
 			}
 
 			return

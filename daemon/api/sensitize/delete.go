@@ -23,11 +23,10 @@ func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete %v failed, err:%v", flag.Name, err)
 	}
 
-	path := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), flag.Name)
+	path := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(flag.Name), flag.Name)
 	if file.IsPathExist(path) {
 		os.Remove(path)
 	}
 
-	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
-	return nil
+	return com.RunTrainDelete(flag, reply)
 }

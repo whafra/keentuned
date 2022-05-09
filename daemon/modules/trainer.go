@@ -75,7 +75,7 @@ func (trainer *Trainer) Train() {
 		return
 	}
 
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(), trainer.Job))
+	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainer.Job), trainer.Job))
 }
 
 func (trainer *Trainer) CreateTrainJob() error {
@@ -171,7 +171,7 @@ func (trainer *Trainer) getSensitivityResult() (string, map[string]interface{}, 
 
 func (trainer *Trainer) dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {
 	fileName := "sensi-" + recordName + ".json"
-	if err := file.Dump2File(config.GetSensitizePath(), fileName, resultMap); err != nil {
+	if err := file.Dump2File(config.GetSensitizePath(fileName), fileName, resultMap); err != nil {
 		log.Errorf(log.SensitizeTrain, "dump sensitivity result to file [%v] err:[%v] ", fileName, err)
 		return err
 	}
