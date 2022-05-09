@@ -3,7 +3,6 @@ Description=AI Tuning tool Daemon
 After=systemd-sysctl.service network.target
 
 [Service]
-EnvironmentFile=-/etc/keentune/conf/keentuned.conf
 ExecStart=/usr/bin/keentuned
 Type=simple
 

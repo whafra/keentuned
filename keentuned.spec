@@ -62,11 +62,11 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
-* Wed Dec 15 2021 Runzhe Wang <15501019889@126.com> - 1.1.2
+* Mon May 09 2021 Runzhe Wang <15501019889@126.com> - 1.1.2
 - remove unsupported profile in anolis23
 - remove useless requires in .service file
 
-* Thu Mar 5 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.1
+* Thu May 05 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.1
 - add makefile
 - update spec file
 
