@@ -53,7 +53,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 		log.ClearCliLog(log.SensitizeJobs)
 	}()
 
-	filepath := "/var/keentune/sensitize_workspace.csv"
+	filepath := "/var/keentune/sensitize_jobs.csv"
 	content, err := ioutil.ReadFile(filepath)
 	if string(content) == "" {
 		log.Infof(log.SensitizeJobs, "No job found")
