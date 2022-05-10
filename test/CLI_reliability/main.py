@@ -13,6 +13,7 @@ from CLI_reliability.test_profile_set import TestProfileSet
 from CLI_reliability.test_profile_delete import TestProfileDelete
 from CLI_reliability.test_profile_generate import TestProfileGenerate
 from CLI_reliability.test_sensitize_collect import TestSensitizeCollect
+from CLI_reliability.test_sensitize_train import TestSensitizeTrain
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
@@ -31,6 +32,7 @@ def RunReliabilityCase():
 
     sensitize_suite = unittest.TestSuite()
     sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeCollect))
+    sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeTrain))
 
     multi_scenes = unittest.TestSuite()
     multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
