@@ -14,6 +14,8 @@ from CLI_reliability.test_profile_delete import TestProfileDelete
 from CLI_reliability.test_profile_generate import TestProfileGenerate
 from CLI_reliability.test_sensitize_collect import TestSensitizeCollect
 from CLI_reliability.test_sensitize_train import TestSensitizeTrain
+from CLI_reliability.test_sensitize_delete import TestSensitizeDelete
+from CLI_reliability.test_param_tune_rollback import TestParamTuneRollback
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
@@ -33,6 +35,10 @@ def RunReliabilityCase():
     sensitize_suite = unittest.TestSuite()
     sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeCollect))
     sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeTrain))
+    sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeDelete))
+
+    combination_suite = unittest.TestSuite()
+    combination_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamTuneRollback))
 
     multi_scenes = unittest.TestSuite()
     multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
@@ -40,7 +46,7 @@ def RunReliabilityCase():
     multi_target = unittest.TestSuite()
     multi_target.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
 
-    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, multi_scenes, multi_target])
+    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, combination_suite, multi_scenes, multi_target])
     return suite
 
 
