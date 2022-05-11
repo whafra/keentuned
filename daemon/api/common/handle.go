@@ -200,7 +200,7 @@ func getMsg(origin, cmd string) string {
 
 	changeLinefeed := strings.ReplaceAll(pureMSg, "\n", "\\n")
 	changeTab := strings.ReplaceAll(changeLinefeed, "\t", " ")
-	return strings.TrimSuffix(changeTab, "\\n")
+	return strings.ReplaceAll(strings.TrimSuffix(changeTab, "\\n"), "\"", "")
 }
 
 func getCmd(body io.ReadCloser) (string, error) {

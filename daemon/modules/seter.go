@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	com "keentune/daemon/api/common"
@@ -60,10 +59,13 @@ func (tuner *Tuner) Set() error {
 
 	sucInfos, failedInfo, err := tuner.setConfiguration(requestInfoAll)
 	if err != nil {
-		details, _ := json.Marshal(failedInfo)
-		log.Errorf(log.ProfSet, "Set failed: %v, details: %s", err, details)
+		var details string
+		for _, detail := range failedInfo {
+			details += fmt.Sprintln(detail)
+		}
 
-		return fmt.Errorf("set failed '%v', details '%s'", err, details)
+		log.Errorf(log.ProfSet, "Set failed: %v", details)
+		return fmt.Errorf(details)
 	}
 
 	activeFile := config.GetProfileWorkPath("active.conf")
@@ -210,7 +212,7 @@ func (tuner *Tuner) analysisApplyResults(applyResultAll map[int]map[string]Resul
 		failedInfo[applyResultIndex] = strings.TrimSuffix(failedInfo[applyResultIndex], ";")
 	}
 	if len(successInfo) == 0 {
-		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
+		return nil, failedInfo, fmt.Errorf("all failed, details:%v", failedInfo)
 	}
 	if failFlag {
 		return successInfo, failedInfo, fmt.Errorf("partial failed")
@@ -241,7 +243,7 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 			setResult, _, err := GetApplyResult(resp, index)
 			if err != nil {
 				applyResult[priorityDomain] = ResultProfileSet{
-					Info:    fmt.Sprintf("target %v get apply result: [%v] %v;", index, priorityDomain, err),
+					Info:    fmt.Sprintf("target %v set '%v' %v;", index, priorityDomain, err),
 					Success: false,
 				}
 			} else {

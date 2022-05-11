@@ -116,7 +116,11 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	}
 
 	if !applyShortRet.Success {
-		return nil, fmt.Errorf("apply short return failed, msg:%v", applyShortRet.Msg)
+		detail, _ := json.Marshal(applyShortRet.Msg)
+		if len(detail) != 0 {
+			return nil, fmt.Errorf("%s", detail)
+		}
+		return nil, fmt.Errorf("%v", applyShortRet.Msg)
 	}
 
 	var applyResp struct {
@@ -134,7 +138,19 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	}
 
 	if !applyResp.Success {
-		return nil, fmt.Errorf("get apply result failed, msg: %v", applyResp.Msg)
+		msg, _ := json.Marshal(applyResp.Msg)
+		var paramInfo config.DBLMap
+		err = json.Unmarshal(msg, &paramInfo)
+		if err != nil {
+			return nil, fmt.Errorf("%s", msg)
+		}
+
+		details, _, _ := collectParam(paramInfo)
+		if strings.Contains(details, "failed details") {
+			return nil, fmt.Errorf(details)
+		}
+
+		return nil, fmt.Errorf("%s", msg)
 	}
 
 	return applyResp.Data, nil
