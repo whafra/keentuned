@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"syscall"
 )
 
 type listInfo struct {
@@ -109,14 +110,18 @@ func KeenTunedService(quit chan os.Signal) {
 	registerRouter()
 
 	go func() {
-		select {
-		case <-quit:
-			log.Info("", "keentune is interrupted")
-			if GetRunningTask() != "" {
-				ClearTask()
-				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+		for s := range quit {
+			switch s {
+			case syscall.SIGTERM:
+				log.Info("", "keentune is stopped")
+				os.Exit(0)
+			case syscall.SIGQUIT, syscall.SIGINT:
+				log.Info("", "keentune is interrupted")
+				if GetRunningTask() != "" {
+					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+				}
+				os.Exit(1)
 			}
-			os.Exit(1)
 		}
 	}()
 
@@ -232,12 +237,12 @@ func GetParameterPath(fileName string) string {
 
 func GetRunningTask() string {
 	file, _ := ioutil.ReadFile("/var/keentune/job.cnf")
-        return string(file)
+	return string(file)
 }
 
 func SetRunningTask(class, name string) {
 	activeJob = fmt.Sprintf("%s %s", class, name)
-        ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0666)
+	ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0666)
 }
 
 func ClearTask() {
@@ -256,4 +261,3 @@ func IsApplying() bool {
 
 	return (strings.Split(job, " ")[0] == JobCollection) || (strings.Split(job, " ")[0] == JobTuning)
 }
-
