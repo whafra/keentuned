@@ -11,11 +11,11 @@ import (
 
 type SensiRecord struct {
 	name      string
-	algorithm string
-	trails    string
-	status    string
 	starttime string
 	endtime   string
+	trials    string
+	status    string
+	algorithm string
 }
 
 //  table header const
@@ -80,15 +80,15 @@ func (s *Service) Jobs(flag string, reply *string) error {
 			case 0:
 				sensirecord.name = value
 			case 1:
-				sensirecord.algorithm = value
-			case 2:
-				sensirecord.trails = value
-			case 3:
-				sensirecord.status = value
-			case 4:
 				sensirecord.starttime = value
-			case 5:
+			case 2:
 				sensirecord.endtime = value
+			case 4:
+				sensirecord.trials = value
+			case 5:
+				sensirecord.status = value
+			case 10:
+				sensirecord.algorithm = value
 			}
 		}
 		SensiData = append(SensiData, sensirecord)

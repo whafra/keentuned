@@ -42,9 +42,7 @@ func (s *Service) Stop(request string, reply *string) error {
 
 	if strings.Contains(status, "running") {
 		StrReplace("running", "abort")
-	//	m.StopSig <- os.Interrupt
-		log.Errorf("", "here.")
-                return fmt.Errorf("here.")
+		m.StopSig <- os.Interrupt
 	} else {
 		log.Errorf("", "No running job can stop.")
 		return fmt.Errorf("No running job can stop.")
