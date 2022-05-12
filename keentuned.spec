@@ -50,6 +50,12 @@ cp -rf daemon/examples/. ${RPM_BUILD_ROOT}/etc/keentune
 cp -f ./keentuned.conf ${RPM_BUILD_ROOT}/etc/keentune/conf/
 cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
 cp -f ./keentune.bash ${RPM_BUILD_ROOT}/usr/share/bash-completion/completions/
+install -D -m644 man/keentune.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/keentune.8
+install -D -m644 man/keentuned.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/keentuned.8
+install -D -m644 man/keentuned.conf.5 ${RPM_BUILD_ROOT}%{_mandir}/man5/keentuned.conf.5
+install -D -m644 man/keentune-benchmark.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-benchmark.7
+install -D -m644 man/keentune-profile.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-profile.7
+install -D -m644 man/keentune-detect.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-detect.7
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -74,6 +80,12 @@ fi
 %license LICENSE
 %{_prefix}/lib/systemd/system/keentuned.service
 %{_datadir}/bash-completion/completions/keentune.bash
+%{_mandir}/man8/keentune.8*
+%{_mandir}/man8/keentuned.8*
+%{_mandir}/man5/keentuned.conf.5*
+%{_mandir}/man7/keentune-benchmark.7*
+%{_mandir}/man7/keentune-profile.7*
+%{_mandir}/man7/keentune-detect.7*
 
 %changelog
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
