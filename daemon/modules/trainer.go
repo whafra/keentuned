@@ -44,9 +44,9 @@ type Trainer struct {
 // Tune : tuning main process
 func (trainer *Trainer) Train() {
 	var err error
-	trainer.logName = log.ParamTune
+	trainer.logName = log.SensitizeTrain
 	if err = trainer.CreateTrainJob(); err != nil {
-		log.Errorf(log.ParamTune, "create tune job failed: %v", err)
+		log.Errorf(log.SensitizeTrain, "create sensitize train job failed: %v", err)
 		return
 	}
 
@@ -79,13 +79,13 @@ func (trainer *Trainer) Train() {
 }
 
 func (trainer *Trainer) CreateTrainJob() error {
-	cmd := fmt.Sprintf("keentune sensitize train --data %v --job %v --trials %v --config %v", trainer.Data, trainer.Job, trainer.Trials, trainer.Config)
+	//cmd := fmt.Sprintf("keentune sensitize train --data %v --job %v --trials %v --config %v", trainer.Data, trainer.Job, trainer.Trials, trainer.Config)
 
 	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", trainer.Job)
 
 	jobInfo := []string{
 		trainer.Job, NA, NA, NA, fmt.Sprint(trainer.Trials), Run,
-		"0", log, config.GetSensitizeWorkPath(trainer.Job), cmd, log,
+		"0", log, config.GetSensitizeWorkPath(trainer.Job), trainer.Algorithm, trainer.Data,
 	}
 	return file.Insert(getSensitizeJobFile(), jobInfo)
 }
