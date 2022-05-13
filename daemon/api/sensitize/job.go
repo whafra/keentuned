@@ -95,7 +95,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 	}
 	for _, v := range SensiData {
 		var listInfo string
-		listInfo += fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v", v.name, v.algorithm, v.trails, v.status, v.starttime, v.endtime)
+		listInfo += fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v", v.name, v.algorithm, v.trials, v.status, v.starttime, v.endtime)
 		log.Infof(log.SensitizeJobs, "%v", listInfo)
 	}
 

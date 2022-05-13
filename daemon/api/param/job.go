@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-type CSVRecord struct {
+type tuningRecord struct {
 	name string
 	algorithm string
 	iteration string
@@ -39,32 +39,32 @@ func (s *Service) Jobs(flag string, reply *string) error {
 	defer file.Close()
 	
 	r := csv.NewReader(file)
-	var csvData []CSVRecord
+	var tuningData []tuningRecord
 	for {
 		record, err := r.Read()
 		if err == io.EOF {
 			break
 		}
-		var csvrecord CSVRecord
+		var csvrecord tuningRecord
 		for index, value := range record {
 			switch index {
 			case 0:
 				csvrecord.name = value
 			case 1:
-				csvrecord.algorithm = value
+				csvrecord.startname = value
 			case 2:
-				csvrecord.iteration = value
-			case 3:
-				csvrecord.status = value
-			case 4:
-				csvrecord.starttime = value
-			case 5:
 				csvrecord.endtime = value
+			case 4:
+				csvrecord.algorithm = value
+			case 5:
+				csvrecord.iteration = value
+			case 7:
+				csvrecord.status = value
 			}
 		}
-		csvData = append(csvData, csvrecord)
+		tuningData = append(tuningData, csvrecord)
 	}
-	for _, v := range csvData {
+	for _, v := range tuningData {
 		var listInfo string
 		listInfo += fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v",v.name, v.algorithm, v.iteration, v.status, v. starttime, v.endtime) 
 	        log.Infof(log.ParamJobs,"%v", listInfo)
