@@ -56,6 +56,7 @@ install -D -m644 man/keentuned.conf.5 ${RPM_BUILD_ROOT}%{_mandir}/man5/keentuned
 install -D -m644 man/keentune-benchmark.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-benchmark.7
 install -D -m644 man/keentune-profile.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-profile.7
 install -D -m644 man/keentune-detect.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-detect.7
+install -D -m644 man/keentune-param.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-param.7
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
@@ -86,6 +87,7 @@ fi
 %{_mandir}/man7/keentune-benchmark.7*
 %{_mandir}/man7/keentune-profile.7*
 %{_mandir}/man7/keentune-detect.7*
+%{_mandir}/man7/keentune-param.7*
 
 %changelog
 * Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
