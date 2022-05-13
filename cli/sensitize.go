@@ -124,6 +124,13 @@ func trainCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
+			if strings.Trim(trainflags.Job, " ") == "" {
+				trainflags.Job = trainflags.Data
+			}
+			if trainflags.Trials > 10 || trainflags.Trials < 1 {
+				fmt.Printf("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
+				return
+			}
 
 			if file.IsJobRunning(sensitizeCsv, trainflags.Job) {
 				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), trainflags.Job)
@@ -140,39 +147,24 @@ func trainCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if strings.Trim(trainflags.Job, " ") == "" {
-				trainflags.Job = trainflags.Data
-			}
-
-			if trainflags.Trials > 10 || trainflags.Trials < 1 {
-				fmt.Printf("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
-				return
-			}
-
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
 
-			if file.IsJobRunning(tuningCsv, trainflags.Data) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), trainflags.Data)
-				return
-			}
-			if !file.IsPathExist(trainflags.Config) {
-				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), trainflags.Config)
-				os.Exit(1)
-			}
-
-			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainflags.Job), trainflags.Job)
-			_, err = os.Stat(SensiName)
-			if err == nil {
-				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
-				trainflags.Force = confirm()
-				if !trainflags.Force {
-					fmt.Printf("job File exist and you have given up to overwrite it\n")
-					os.Exit(1)
+			/*
+				SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainflags.Job), trainflags.Job)
+				_, err = os.Stat(SensiName)
+				if err == nil {
+					fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
+					trainflags.Force = confirm()
+					if !trainflags.Force {
+						fmt.Printf("job File exist and you have given up to overwrite it\n")
+						os.Exit(1)
+					}
+					RunTrainRemote(cmd.Context(), trainflags)
+				} else {
+					RunTrainRemote(cmd.Context(), trainflags)
 				}
-				RunTrainRemote(cmd.Context(), trainflags)
-			} else {
-				RunTrainRemote(cmd.Context(), trainflags)
-			}
+			*/
+			RunTrainRemote(cmd.Context(), trainflags)
 		},
 	}
 
