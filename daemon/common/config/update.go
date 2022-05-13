@@ -97,7 +97,7 @@ func dump(jobName string) error {
 		sec.NewKey("PARAMETER", target.ParamConf)
 	}
 
-	os.Mkdir(GetTuningPath(jobName), 0666)
+	os.Mkdir(GetTuningPath(jobName), 0755)
 
 	return newCfg.SaveTo(jobFile)
 }

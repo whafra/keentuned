@@ -51,7 +51,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 			case 0:
 				csvrecord.name = value
 			case 1:
-				csvrecord.startname = value
+				csvrecord.starttime = value
 			case 2:
 				csvrecord.endtime = value
 			case 4:
