@@ -9,7 +9,6 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -43,7 +42,7 @@ func runTuning(flag TuneFlag) {
 	com.SetRunningTask(com.JobTuning, flag.Name)
 	log.ParamTune = "param tune" + ":" + flag.Log
 	// create log file
-	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
+	ioutil.WriteFile(flag.Log, []byte{}, 0755)
 	defer func() {
 		config.ReSet()
 		config.ProgramNeedExit <- true
@@ -73,20 +72,10 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 		Step:         1,
 		Flag:         cmd,
 		Benchmark:    *benchInfo,
+		Algorithm:    config.KeenTune.Brain.Algorithm,
 	}
-
-	if cmd == "tuning" {
-		tuner.Algorithm = config.KeenTune.Brain.Algorithm
-		tuner.Tune()
-		return nil
-	}
-
-	if cmd == "collect" {
-		tuner.Algorithm = config.KeenTune.Sensitize.Algorithm
-		tuner.Collect()
-		return nil
-	}
-
+	
+	tuner.Tune()
 	return nil
 }
 
@@ -131,3 +120,4 @@ func sortBenchItemNames(items map[string]m.ItemDetail) []string {
 	sort.Strings(sortNames)
 	return sortNames
 }
+

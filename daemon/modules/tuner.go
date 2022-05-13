@@ -69,12 +69,7 @@ func (tuner *Tuner) Tune() {
 		return
 	}
 
-	defer func() {
-		if err != nil {
-			tuner.end()
-			tuner.parseTuningError(err)
-		}
-	}()
+	defer tuner.parseTuningError(err)
 
 	if err = tuner.init(); err != nil {
 		err = fmt.Errorf("[%v] prepare for tuning: %v", utils.ColorString("red", "ERROR"), err)
@@ -105,6 +100,7 @@ func (tuner *Tuner) parseTuningError(err error) {
 		return
 	}
 
+	defer tuner.end()
 	tuner.rollback()
 	if strings.Contains(err.Error(), "interrupted") {
 		tuner.updateStatus(Stop)
@@ -113,7 +109,7 @@ func (tuner *Tuner) parseTuningError(err error) {
 	}
 
 	tuner.updateStatus(Err)
-	log.Infof(tuner.logName, "%v", err)
+	log.Errorf(tuner.logName, "%v", err)
 }
 
 /*acquire configuration from brain*/
@@ -214,13 +210,7 @@ func (tuner *Tuner) end() {
 	tuner.timeSpend.end += timeCost.Count
 
 	totalTime := utils.Runtime(tuner.StartTime).Count.Seconds()
-
-	if totalTime == 0.0 || !tuner.Verbose {
-		return
-	}
-
-	tuner.setTimeSpentDetail(totalTime)
-
+	
 	var endInfo = make(map[int]interface{})
 
 	if tuner.Flag == "tuning" {
@@ -229,6 +219,12 @@ func (tuner *Tuner) end() {
 	}
 
 	tuner.updateJob(endInfo)
+
+	if totalTime == 0.0 || !tuner.Verbose {
+		return
+	}
+
+	tuner.setTimeSpentDetail(totalTime)
 }
 
 func endTime(cost int64) string {

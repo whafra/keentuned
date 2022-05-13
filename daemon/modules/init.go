@@ -178,13 +178,13 @@ func requestInit(requireConf map[string]interface{}, job string) error {
 	}
 
 	paramPath := fmt.Sprintf("%v/parameters_value.csv", config.GetTuningPath(job))
-	ioutil.WriteFile(paramPath, []byte(resp.ParamHead), 0666)
+	ioutil.WriteFile(paramPath, []byte(resp.ParamHead+"\n"), 0666)
 
 	scorePath := fmt.Sprintf("%v/score.csv", config.GetTuningPath(job))
-	ioutil.WriteFile(scorePath, []byte(resp.ScoreHead), 0666)
+	ioutil.WriteFile(scorePath, []byte(resp.ScoreHead+"\n"), 0666)
 
 	timePath := fmt.Sprintf("%v/time.csv", config.GetTuningPath(job))
-	ioutil.WriteFile(timePath, []byte(resp.TimeHead), 0666)
+	ioutil.WriteFile(timePath, []byte(resp.TimeHead+"\n"), 0666)
 
 	return nil
 }
