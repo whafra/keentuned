@@ -47,6 +47,10 @@ Terminate a parameter tuning job\.
 \fBparam tune\fR
 Deploy and start a parameter tuning job\.
 .
+.TP
+\fBparam dump\fR
+Dump the parameter tuning result to a profile\.
+.
 .SS "Static tuning"
 Preset multiple typical high-load scenarios and application experience optimization configuration, users can improve environmental performance through one-click setting; this function can also be applied to expand the experience setting of small-scale environment tuning in large clusters\.
 .
@@ -73,7 +77,15 @@ Restore initial state\.
 .TP
 \fBprofile set --name\fR
 Apply a profile to the target machine\.
-
+.
+.SS "Info command"
+.TP
+\fB--help\fR
+help message\.
+.
+.TP
+\fBversion\fR
+Print the version number of keentune\.
 .SH "FILES"
 .nf
 /etc/keentune/*
