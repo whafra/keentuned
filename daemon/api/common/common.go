@@ -7,7 +7,6 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
-	"keentune/daemon/common/utils"
 	utilhttp "keentune/daemon/common/utils/http"
 	"net/http"
 	"os"
@@ -75,8 +74,8 @@ func GetDataList() ([]string, string, string, error) {
 	}
 
 	var sensiList struct {
-		Success bool       `json:"suc"`
-		Data    []listInfo `json:"data"`
+		Success bool     `json:"suc"`
+		Data    []string `json:"data"`
 	}
 
 	if err = json.Unmarshal(resp, &sensiList); err != nil {
@@ -86,24 +85,26 @@ func GetDataList() ([]string, string, string, error) {
 	if !sensiList.Success {
 		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
 	}
+	return sensiList.Data, "", "", nil
+	/*
+		var dataDetailSlice [][]string
+		var dataList []string
+		var collectList string
 
-	var dataDetailSlice [][]string
-	var dataList []string
-	var collectList string
-
-	if len(sensiList.Data) > 0 {
-		dataDetailSlice = append(dataDetailSlice, []string{"data name", "application scenario", "algorithm"})
-	}
-
-	for _, value := range sensiList.Data {
-		dataDetailSlice = append(dataDetailSlice, []string{value.Name, value.Scenario, value.Algorithm})
-		dataList = append(dataList, value.Name)
-		if value.Scenario == "collect" {
-			collectList += fmt.Sprintf("\n\t%v", value.Name)
+		if len(sensiList.Data) > 0 {
+			dataDetailSlice = append(dataDetailSlice, []string{"data name", "application scenario", "algorithm"})
 		}
-	}
+		/*
+			for _, value := range sensiList.Data {
+				dataDetailSlice = append(dataDetailSlice, []string{value.Name, value.Scenario, value.Algorithm})
+				dataList = append(dataList, value.Name)
+				if value.Scenario == "collect" {
+					collectList += fmt.Sprintf("\n\t%v", value.Name)
+				}
+			}
 
-	return dataList, collectList, utils.FormatInTable(dataDetailSlice), nil
+		return sensiList, collectList, utils.FormatInTable(dataDetailSlice), nil
+	*/
 }
 
 func KeenTunedService(quit chan os.Signal) {

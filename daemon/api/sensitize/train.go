@@ -64,8 +64,8 @@ func TrainImpl(flag TrainFlag, cmd string) error {
 		StartTime:    time.Now(),
 		Step:         1,
 		Flag:         cmd,
+		Algorithm:    config.KeenTune.Sensitize.Algorithm,
 	}
-	trainer.Algorithm = config.KeenTune.Sensitize.Algorithm
 	trainer.Train()
 	return nil
 }
