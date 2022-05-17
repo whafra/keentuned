@@ -6,8 +6,10 @@ import (
 	"io"
 	"io/ioutil"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"net/http"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -26,6 +28,80 @@ func registerRouter() {
 	http.HandleFunc("/sensitize_result", handler)
 	http.HandleFunc("/status", status)
 	http.HandleFunc("/cmd", command)
+	http.HandleFunc("/write", write)
+}
+
+func write(w http.ResponseWriter, r *http.Request) {
+	var result = new(string)
+	if strings.ToUpper(r.Method) != "POST" {
+		*result = fmt.Sprintf("request method '%v' is not supported", r.Method)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(*result))
+		return
+	}
+
+	var err error
+	defer func() {
+		w.WriteHeader(http.StatusOK)
+		if err != nil {
+			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", err.Error())))
+			log.Errorf("", "write operation: %v", err)
+			return
+		}
+
+		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
+		log.Infof("", "write operation: %v", *result)
+	}()
+
+	bytes, err := ioutil.ReadAll(&io.LimitedReader{R: r.Body, N: LimitBytes})
+	if err != nil {
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+		Info string `json:"info"`
+	}
+
+	err = json.Unmarshal(bytes, &req)
+	if err != nil {
+		err = fmt.Errorf("parse request info failed: %v", err)
+		return
+	}
+
+	fullName := getFullPath(req.Name)
+	if file.IsPathExist(fullName) {
+		err = fmt.Errorf("file '%v' already exists", fullName)
+		return
+	}
+
+	parts := strings.Split(fullName, "/")
+	if !file.IsPathExist(strings.Join(parts[:len(parts)-1], "/")) {
+		os.MkdirAll(strings.Join(parts[:len(parts)-1], "/"), os.ModePerm)
+	}
+
+	err = ioutil.WriteFile(fullName, []byte(req.Info), 0755)
+	if err != nil {
+		return
+	}
+
+	*result = fmt.Sprintf("write file '%v' successfully.", req.Name)
+	return
+}
+
+func getFullPath(name string) string {
+	var fullName string
+	if strings.HasPrefix(name, "/") {
+		return name
+	}
+
+	if strings.Contains(name, "profile/") {
+		fullName = fmt.Sprintf("%v/%v", config.KeenTune.DumpHome, name)
+		return fullName
+	}
+
+	fullName = fmt.Sprintf("%v/profile/%v", config.KeenTune.DumpHome, name)
+	return fullName
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
