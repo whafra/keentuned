@@ -50,12 +50,7 @@ func (trainer *Trainer) Train() {
 		return
 	}
 
-	defer func() {
-		if err != nil {
-			trainer.end()
-			trainer.parseTuningError(err)
-		}
-	}()
+	defer trainer.parseTuningError(err)
 
 	if err = trainer.initiateSensitization(); err != nil {
 		return
@@ -81,10 +76,10 @@ func (trainer *Trainer) Train() {
 func (trainer *Trainer) CreateTrainJob() error {
 	//cmd := fmt.Sprintf("keentune sensitize train --data %v --job %v --trials %v --config %v", trainer.Data, trainer.Job, trainer.Trials, trainer.Config)
 
-	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", trainer.Job)
+	log := fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", trainer.Job)
 
 	jobInfo := []string{
-		trainer.Job, NA, NA, NA, fmt.Sprint(trainer.Trials), Run,
+		trainer.Job, trainer.StartTime.Format(Format), NA, NA, fmt.Sprint(trainer.Trials), Run,
 		"0", log, config.GetSensitizeWorkPath(trainer.Job), trainer.Algorithm, trainer.Data,
 	}
 	return file.Insert(getSensitizeJobFile(), jobInfo)
@@ -181,6 +176,7 @@ func (trainer *Trainer) dumpSensitivityResult(resultMap map[string]interface{}, 
 
 func (trainer *Trainer) parseTuningError(err error) {
 
+	defer trainer.end()
 	if err == nil {
 		trainer.updateStatus(Finish)
 		return
@@ -207,20 +203,18 @@ func (trainer *Trainer) end() {
 
 	totalTime := utils.Runtime(trainer.StartTime).Count.Seconds()
 
+	var endInfo = make(map[int]interface{})
+
+	endInfo[trainEndIdx] = start.Format(Format)
+	endInfo[trainCostIdx] = endTime(int64(totalTime))
+
+	trainer.updateJob(endInfo)
+
 	if totalTime == 0.0 || !trainer.Verbose {
 		return
 	}
 
 	trainer.setTimeSpentDetail(totalTime)
-
-	var endInfo = make(map[int]interface{})
-
-	if trainer.Flag == "tuning" {
-		endInfo[tuneEndIdx] = start.Format(Format)
-		endInfo[tuneCostIdx] = endTime(int64(totalTime))
-	}
-
-	trainer.updateJob(endInfo)
 }
 
 func (trainer *Trainer) setTimeSpentDetail(totalTime float64) {

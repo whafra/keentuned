@@ -31,21 +31,6 @@ const (
 	Err    = "error"
 )
 
-// tune job column index
-const (
-	tuneNameIdx = iota
-	tuneAlgoIdx
-	tuneStatusIdx
-	tuneRoundIdx
-	tuneCurRoundIdx
-	tuneStartIdx
-	tuneEndIdx
-	tuneCostIdx
-	tuneWSPIdx
-	tuneCmdIdx
-	tuneLogIdx
-)
-
 // List run sensitize list service
 func (s *Service) Jobs(flag string, reply *string) error {
 	defer func() {

@@ -58,13 +58,13 @@ func runTrain(flags TrainFlag) {
 func TrainImpl(flag TrainFlag, cmd string) error {
 
 	trainer := &m.Trainer{
-		MAXIteration: flag.Trials,
-		Data:         flag.Data,
-		Job:          flag.Job,
-		StartTime:    time.Now(),
-		Step:         1,
-		Flag:         cmd,
-		Algorithm:    config.KeenTune.Sensitize.Algorithm,
+		Trials:    flag.Trials,
+		Data:      flag.Data,
+		Job:       flag.Job,
+		StartTime: time.Now(),
+		Step:      1,
+		Flag:      cmd,
+		Algorithm: config.KeenTune.Sensitize.Algorithm,
 	}
 	trainer.Train()
 	return nil

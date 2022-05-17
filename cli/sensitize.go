@@ -8,7 +8,6 @@ import (
 	"keentune/daemon/common/log"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -147,7 +146,7 @@ func trainCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", time.Now().Unix())
+			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", trainflags.Job)
 
 			/*
 				SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainflags.Job), trainflags.Job)
@@ -251,7 +250,7 @@ func deleteSensitivityCmd() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&flag.Name, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
+	cmd.Flags().StringVarP(&flag.Name, "job", "j", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 
 	return cmd
 }
