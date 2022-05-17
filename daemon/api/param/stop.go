@@ -13,7 +13,7 @@ import (
 
 // Stop run param stop service
 func (s *Service) Stop(request string, reply *string) error {
-	fs, err := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR|os.O_CREATE, 0666)
+	fs, err := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR, 0666)
 	if err != nil {
 		log.Errorf("", "Can not open the file, err: %v\n",err)
 		return fmt.Errorf("Can not open the file.")
@@ -53,7 +53,7 @@ func (s *Service) Stop(request string, reply *string) error {
 
 //StrReplace Modify csv file data
 func StrReplace(src string, dest string) {
-	out, _ := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR|os.O_CREATE, 0766)
+	out, _ := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR, 0666)
 	defer out.Close()
 	in, _ := os.Open("/var/keentune/tuning_jobs.csv")
 	defer in.Close()
@@ -65,7 +65,7 @@ func StrReplace(src string, dest string) {
 			break
 		}
 		newLine := strings.Replace(string(line), src, dest, -1)
-		_, err = out.WriteString(newLine + "\n")
+		_, err = out.WriteString(newLine)
 		if err != nil {
 			log.Errorf("", "replace err.")
 			os.Exit(1)
