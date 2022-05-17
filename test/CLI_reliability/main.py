@@ -16,6 +16,8 @@ from CLI_reliability.test_sensitize_collect import TestSensitizeCollect
 from CLI_reliability.test_sensitize_train import TestSensitizeTrain
 from CLI_reliability.test_sensitize_delete import TestSensitizeDelete
 from CLI_reliability.test_param_tune_rollback import TestParamTuneRollback
+from CLI_reliability.test_param_tune_delete import TestParamTuneDelete
+from CLI_reliability.test_param_tune_dump import TestParamTuneDump
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
 
@@ -39,6 +41,8 @@ def RunReliabilityCase():
 
     combination_suite = unittest.TestSuite()
     combination_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamTuneRollback))
+    combination_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamTuneDelete))
+    combination_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestParamTuneDump))
 
     multi_scenes = unittest.TestSuite()
     multi_scenes.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiScenes))
