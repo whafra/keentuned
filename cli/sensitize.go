@@ -148,22 +148,21 @@ func trainCmd() *cobra.Command {
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", trainflags.Job)
 
-			/*
-				SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(trainflags.Job), trainflags.Job)
-				_, err = os.Stat(SensiName)
-				if err == nil {
-					fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
-					trainflags.Force = confirm()
-					if !trainflags.Force {
-						fmt.Printf("job File exist and you have given up to overwrite it\n")
-						os.Exit(1)
-					}
-					RunTrainRemote(cmd.Context(), trainflags)
-				} else {
-					RunTrainRemote(cmd.Context(), trainflags)
+			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(""), trainflags.Job)
+			_, err = os.Stat(SensiName)
+			if err == nil {
+				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
+				trainflags.Force = confirm()
+				if !trainflags.Force {
+					fmt.Printf("job File exist and you have given up to overwrite it\n")
+					os.Exit(1)
 				}
-			*/
-			RunTrainRemote(cmd.Context(), trainflags)
+				RunTrainRemote(cmd.Context(), trainflags)
+			} else {
+				RunTrainRemote(cmd.Context(), trainflags)
+			}
+
+			//RunTrainRemote(cmd.Context(), trainflags)
 		},
 	}
 

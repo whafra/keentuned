@@ -25,7 +25,7 @@ type TuneFlag struct {
 
 // Tune run param tune service
 func (s *Service) Tune(flag TuneFlag, reply *string) error {
-	err := config.Backup(flag.Config, flag.Name)
+	err := config.Backup(flag.Config, flag.Name, "tuning")
 	if err != nil {
 		return fmt.Errorf("backup '%v' failed: %v", flag.Config, err)
 	}
@@ -74,7 +74,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 		Benchmark:    *benchInfo,
 		Algorithm:    config.KeenTune.Brain.Algorithm,
 	}
-	
+
 	tuner.Tune()
 	return nil
 }
@@ -120,4 +120,3 @@ func sortBenchItemNames(items map[string]m.ItemDetail) []string {
 	sort.Strings(sortNames)
 	return sortNames
 }
-
