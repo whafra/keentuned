@@ -213,7 +213,7 @@ func checkDumpParam(dump *DumpFlag) error {
 	}
 
 	workPath := config.GetProfileWorkPath("")
-	job := config.GetTuningWorkPath(dump.Name)
+	job := config.GetTuningPath(dump.Name)
 	if !file.IsPathExist(job) {
 		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
 	}

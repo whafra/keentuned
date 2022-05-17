@@ -41,7 +41,7 @@ func (conf Configuration) Save(fileName, suffix string) error {
 	// acquire API return round is 1 less than the actual round value
 	conf.Round += 1
 
-	err := file.Dump2File(config.GetTuningWorkPath(fileName), fileName+suffix, conf)
+	err := file.Dump2File(config.GetTuningPath(fileName), fileName+suffix, conf)
 	if err != nil {
 		return err
 	}

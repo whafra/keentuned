@@ -104,7 +104,7 @@ func (tuner *Tuner) CreateTuneJob() error {
 	jobInfo := []string{
 		tuner.Name, tuner.Algorithm, Run, fmt.Sprint(tuner.MAXIteration),
 		"0", tuner.StartTime.Format(Format), NA, NA,
-		config.GetTuningWorkPath(tuner.Name), cmd, log,
+		config.GetTuningPath(tuner.Name), cmd, log,
 	}
 
 	return file.Insert(getTuneJobFile(), jobInfo)
