@@ -2,7 +2,6 @@ package profile
 
 import (
 	"fmt"
-	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -25,22 +24,23 @@ func (s *Service) List(flag string, reply *string) error {
 
 	var fileListInfo string
 	activeFileName := config.GetProfileWorkPath("active.conf")
-	activeNameBytes, _ := ioutil.ReadFile(activeFileName)
-	activeNames := strings.Split(string(activeNameBytes), "\n")
+	records, _ := file.GetAllRecords(activeFileName)
 
 	for _, value := range proFileList {
+		if value == "active.conf" {
+			continue
+		}
+
 		activeFlag := false
-		for _, activeFile := range activeNames {
-			if activeFile == value {
+		for _, record := range records {
+			activeInfo := strings.Join(record, "\ttarget_info: ")
+			if strings.Contains(activeInfo, value) {
 				activeFlag = true
-				fileListInfo += fmt.Sprintf("%s\t%v\n", utils.ColorString("GREEN", "[active]"), value)
-				continue
-			}
-			if value == "active.conf" {
-				activeFlag = true
-				continue
+				fileListInfo += utils.ColorString("GREEN", fmt.Sprintf("%s\t%v\n", "[active]", activeInfo))
+				break
 			}
 		}
+
 		if !activeFlag {
 			fileListInfo += fmt.Sprintf("[available]\t%v\n", value)
 		}
