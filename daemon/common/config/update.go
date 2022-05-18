@@ -64,8 +64,14 @@ func update(fileName string) error {
 	return nil
 }
 
-func dump(jobName string) error {
-	jobFile := fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)	
+func dump(jobName string, cmd string) error {
+
+	var jobFile string
+	if cmd == "tuning" {
+		jobFile = fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)
+	} else if cmd == "training" {
+		jobFile = fmt.Sprintf("%v/%v/keentuned.conf", GetSensitizePath(""), jobName)
+	}
 
 	newCfg := ini.Empty()
 	if err := ini.ReflectFrom(newCfg, KeenTune); err != nil {
@@ -97,15 +103,24 @@ func dump(jobName string) error {
 		sec.NewKey("PARAMETER", target.ParamConf)
 	}
 
-	os.Mkdir(GetTuningPath(jobName), 0755)
-
+	if cmd == "tuning" {
+		os.Mkdir(GetTuningPath(jobName), 0755)
+	} else if cmd == "training" {
+		os.Mkdir(GetSensitizePath(jobName), 0755)
+	}
 	return newCfg.SaveTo(jobFile)
 }
 
-func Backup(fileName, jobName string) error {
+func Backup(fileName, jobName string, cmd string) error {
 	defer func() {
-		if file.IsPathExist(TuneTempConf) {
-			os.Remove(TuneTempConf)
+		if cmd == "tuning" {
+			if file.IsPathExist(TuneTempConf) {
+				os.Remove(TuneTempConf)
+			}
+		} else if cmd == "training" {
+			if file.IsPathExist(SensitizeTempConf) {
+				os.Remove(SensitizeTempConf)
+			}
 		}
 	}()
 
@@ -114,27 +129,7 @@ func Backup(fileName, jobName string) error {
 		return fmt.Errorf("update %v", err)
 	}
 
-	err = dump(jobName)
-	if err != nil {
-		return fmt.Errorf("backup conf%v", err)
-	}
-
-	return nil
-}
-
-func BackupSensitize(fileName, jobName string) error {
-	defer func() {
-		if file.IsPathExist(SensitizeTempConf) {
-			os.Remove(SensitizeTempConf)
-		}
-	}()
-
-	err := update(fileName)
-	if err != nil {
-		return fmt.Errorf("update %v", err)
-	}
-
-	err = dump(jobName)
+	err = dump(jobName, cmd)
 	if err != nil {
 		return fmt.Errorf("backup conf%v", err)
 	}

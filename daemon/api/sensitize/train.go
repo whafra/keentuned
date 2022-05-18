@@ -22,8 +22,7 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-
-	err := config.BackupSensitize(flags.Config, flags.Job)
+	err := config.Backup(flags.Config, flags.Job, "training")
 	if err != nil {
 		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
 	}
@@ -41,6 +40,7 @@ func runTrain(flags TrainFlag) {
 	com.SetRunningTask(com.JobTraining, flags.Data)
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
+		config.ReSet()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 		com.ClearTask()
