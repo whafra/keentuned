@@ -1,7 +1,7 @@
 /*
 Copyright © 2021 KeenTune
 
-Package main for cli
+Package main for cli, the package implements all the command-line functions of keentune, including dynamic and static tuning, sensitive parameter recognition. Determine whether the command-line parameters are compliant.
 */
 package main
 
