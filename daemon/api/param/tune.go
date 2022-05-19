@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package param for daemon, this package contains the delete, dump, job, list, rollback, stop, tune for dynamic tuning. Is a function implementation of the dynamic tuning server in the rpc framework.
+*/
 package param
 
 import (
