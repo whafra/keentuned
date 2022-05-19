@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package common for daemon, this package contains the common, handle, heartbeat for common function. The variables required for the dynamic and static tuning function are defined, including state detection of the keentuned service and heartbeat packet detection for the other three components.
+*/
 package common
 
 import (
