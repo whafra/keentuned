@@ -119,6 +119,9 @@ func KeenTunedService(quit chan os.Signal) {
 			switch s {
 			case syscall.SIGTERM:
 				log.Info("", "keentune is stopped")
+				if GetRunningTask() != "" {
+					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+				}
 				os.Exit(0)
 			case syscall.SIGQUIT, syscall.SIGINT:
 				log.Info("", "keentune is interrupted")
