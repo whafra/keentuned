@@ -203,7 +203,7 @@ func deleteSensitivityCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-
+			flag.Cmd = "sensitize"
 			err := initSensitizeConf()
 			if err != nil {
 				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
@@ -214,7 +214,7 @@ func deleteSensitivityCmd() *cobra.Command {
 			JobPath := config.GetSensitizePath(flag.Name)
 			_, err = os.Stat(JobPath)
 			if err != nil {
-				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+				fmt.Printf("%v sensitize.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
@@ -222,27 +222,31 @@ func deleteSensitivityCmd() *cobra.Command {
 				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			} else {
-				_, _, DataList, err := com.GetDataList()
-				if err != nil {
-					if find := strings.Contains(err.Error(), "connection refused"); find {
-						fmt.Println("brain access denied")
+				/*
+					_, _, DataList, err := com.GetDataList()
+					if err != nil {
+						if find := strings.Contains(err.Error(), "connection refused"); find {
+							fmt.Println("brain access denied")
+							return
+						}
+						fmt.Println("Get sensitize Data List err:%v", err)
 						return
 					}
-					fmt.Println("Get sensitize Data List err:%v", err)
-					return
-				}
-				if find := strings.Contains(DataList, flag.Name); find {
-					fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-					if !confirm() {
-						fmt.Println("[-] Give Up Delete")
-						return
-					}
-					flag.Cmd = "sensitize"
-					RunDeleteRemote(cmd.Context(), flag)
-				} else {
-					err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
-					fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
-				}
+
+						if find := strings.Contains(DataList, flag.Name); find {
+							fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
+							if !confirm() {
+								fmt.Println("[-] Give Up Delete")
+								return
+							}
+							flag.Cmd = "sensitize"
+							RunDeleteRemote(cmd.Context(), flag)
+						} else {
+							err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
+							fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
+						}
+				*/
+				RunDeleteRemote(cmd.Context(), flag)
 			}
 
 			return
