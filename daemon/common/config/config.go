@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package config for daemon, this package contains the check, config, priority, workpath. Parse the keentuned.conf file to get the ip, port information of the other three components.Determine whether the profile information meets and provide the file path related to keentune.
+*/
 package config
 
 import (

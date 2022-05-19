@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package log for daemon, this package contains the log. The package defines the command name, defines the log level, mainly using warning, error, info three levels, to achieve the log output screen and file two ways.
+*/
 package log
 
 import (

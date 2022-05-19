@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package profile for daemon, this package contains the delete, generate, info, list, rollback, set for static tuning. Is a function implementation of the static tuning server in the rpc framework.
+*/
 package profile
 
 import (

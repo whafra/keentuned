@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package system for daemon, this package contains the benchmark for dynamic tuning. The functional implementation is not currently used by other packages.
+*/
 package system
 
 import (

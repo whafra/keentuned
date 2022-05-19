@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package sensitize for daemon, this package contains the collect, delete, list, stop, train for sensitize parameter collection. Is a function implementation of the sensitize parameter collection server in the rpc framework.
+*/
 package sensitize
 
 import (

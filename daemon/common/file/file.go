@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package file for daemon, this package contains the file. The package implements the processing of files, including the transformation of file types, path acquisition, and directory existence judgment.
+*/
 package file
 
 import (
