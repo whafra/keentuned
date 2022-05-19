@@ -197,7 +197,7 @@ func (d *deleter) check(inputName string) error {
 		return fmt.Errorf("%v is not supported to delete", d.fileName)
 	}
 
-	if d.cmd == "param" {
+	if d.cmd != "profile" {
 		return nil
 	}
 
@@ -211,8 +211,8 @@ func (d *deleter) check(inputName string) error {
 		return fmt.Errorf("read file :%v err:%v", activeFileName, err)
 	}
 
-	if strings.Contains(d.fileName, string(activeNameBytes)) && string(activeNameBytes) != "" {
-		return fmt.Errorf("%v is active profile, please run \"keentune profile rollback\" before delete", string(activeNameBytes))
+	if strings.Contains(string(activeNameBytes), inputName) && string(activeNameBytes) != "" {
+		return fmt.Errorf("%v is active profile, please run \"keentune profile rollback\" before delete", inputName)
 	}
 
 	return nil

@@ -68,20 +68,9 @@ func (tuner *Tuner) Set() error {
 		return fmt.Errorf(details)
 	}
 
-	activeFile := config.GetProfileWorkPath("active.conf")
-
-	//先拼接，再写入
-	var fileSet string
-	for groupIndex, v := range tuner.Setter.Group {
-		if v {
-			fileSet = fileSet + file.GetPlainName(tuner.Setter.ConfFile[groupIndex]) + "\n"
-		}
-	}
-
-	fileSet = strings.TrimSuffix(fileSet, "\n")
-	if err := UpdateActiveFile(activeFile, []byte(fileSet)); err != nil {
-		log.Errorf(log.ProfSet, "Update active file err:%v", err)
-		return fmt.Errorf("update active file err %v", err)
+	err = tuner.updateActive()
+	if err != nil {
+		return err
 	}
 
 	for groupIndex, v := range tuner.Setter.Group {
@@ -92,6 +81,30 @@ func (tuner *Tuner) Set() error {
 				log.Infof(log.ProfSet, "%v Set %v successfully: %v ", utils.ColorString("green", "[OK]"), tuner.Setter.ConfFile[groupIndex], strings.TrimPrefix(successInfo, prefix))
 			}
 		}
+	}
+
+	return nil
+}
+
+func (tuner *Tuner) updateActive() error {
+	activeFile := config.GetProfileWorkPath("active.conf")
+	//先拼接，再写入
+	var fileSet = fmt.Sprintln("name,group_info")
+	var activeInfo = make(map[string][]string)
+	for groupIndex, settable := range tuner.Setter.Group {
+		if settable {
+			fileName := file.GetPlainName(tuner.Setter.ConfFile[groupIndex])
+			activeInfo[fileName] = append(activeInfo[fileName], fmt.Sprintf("group%v", groupIndex+1))
+		}
+	}
+
+	for name, info := range activeInfo {
+		fileSet += fmt.Sprintf("%s,%s\n", name, strings.Join(info, " "))
+	}
+
+	if err := UpdateActiveFile(activeFile, []byte(fileSet)); err != nil {
+		log.Errorf(log.ProfSet, "Update active file err:%v", err)
+		return fmt.Errorf("update active file err %v", err)
 	}
 
 	return nil
