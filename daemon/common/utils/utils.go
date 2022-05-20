@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package utils for daemon, this package contains the calculator, parsejson, utils, http. The package contains the parsing of the json file, calculate the suffix expressions, and the final result is saved at the top of the stack.Implement the device ip acquisition and validity judgment, print content string by color.
+*/
 package utils
 
 import (

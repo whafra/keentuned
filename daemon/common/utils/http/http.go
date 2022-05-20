@@ -1,3 +1,8 @@
+/*
+Copyright © 2021 KeenTune
+
+Package http for daemon, this package contains the http. The package contains the remote call the url with the specified method and request data, get success response after request url, and parses the return data.
+*/
 package http
 
 import (
