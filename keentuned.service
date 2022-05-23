@@ -4,7 +4,7 @@ After=systemd-sysctl.service network.target
 
 [Service]
 ExecStart=/usr/bin/keentuned
-Type=simple
+Type=idle
 
 [Install]
 WantedBy=multi-user.target

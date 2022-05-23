@@ -117,7 +117,7 @@ func (c *KeentunedConf) Save() error {
 	target := cfg.Section("target")
 	c.TargetIP, err = changeStringToSlice(target.Key("TARGET_IP").MustString(""))
 	if err != nil {
-		fmt.Printf("%v keentune check target ip %v", utils.ColorString("red", "[ERROR]"), err)
+		return fmt.Errorf("keentune check target ip %v", err)
 	}
 
 	c.TargetPort = target.Key("TARGET_PORT").MustString("9873")
