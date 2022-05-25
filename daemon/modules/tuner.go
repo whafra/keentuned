@@ -46,6 +46,7 @@ type Tuner struct {
 	bestInfo    Configuration
 	allowUpdate bool
 	Setter
+	Trainer
 }
 
 type TimeSpend struct {
@@ -95,12 +96,12 @@ func (tuner *Tuner) Tune() {
 }
 
 func (tuner *Tuner) parseTuningError(err error) {
+	defer tuner.end()
 	if err == nil {
 		tuner.updateStatus(Finish)
 		return
 	}
 
-	defer tuner.end()
 	tuner.rollback()
 	if strings.Contains(err.Error(), "interrupted") {
 		tuner.updateStatus(Stop)
@@ -216,6 +217,9 @@ func (tuner *Tuner) end() {
 	if tuner.Flag == "tuning" {
 		endInfo[tuneEndIdx] = start.Format(Format)
 		endInfo[tuneCostIdx] = endTime(int64(totalTime))
+	} else if tuner.Flag == "training" {
+               endInfo[trainEndIdx] = start.Format(Format)
+               endInfo[trainCostIdx] = endTime(int64(totalTime))
 	}
 
 	tuner.updateJob(endInfo)
