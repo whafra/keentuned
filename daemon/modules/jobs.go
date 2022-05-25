@@ -114,6 +114,8 @@ func (tuner *Tuner) updateJob(info map[int]interface{}) {
 	var err error
 	if tuner.Flag == "tuning" {
 		err = file.UpdateRow(getTuneJobFile(), tuner.Name, info)
+	} else if tuner.Flag == "training" {
+		err = file.UpdateRow(getSensitizeJobFile(), tuner.Job, info)
 	}
 
 	if err != nil {
@@ -125,20 +127,7 @@ func (tuner *Tuner) updateJob(info map[int]interface{}) {
 func (tuner *Tuner) updateStatus(info string) {
 	if tuner.Flag == "tuning" {
 		tuner.updateJob(map[int]interface{}{tuneStatusIdx: info})
+	} else if tuner.Flag == "training" {
+		tuner.updateJob(map[int]interface{}{trainStatusIdx: info})
 	}
-}
-
-func (trainer *Trainer) updateJob(info map[int]interface{}) {
-	var err error
-	err = file.UpdateRow(getSensitizeJobFile(), trainer.Job, info)
-
-	if err != nil {
-		log.Warnf("", "'%v' update '%v' %v", trainer.Flag, info, err)
-		return
-	}
-}
-
-func (trainer *Trainer) updateStatus(info string) {
-	trainer.updateJob(map[int]interface{}{trainStatusIdx: info})
-
 }

@@ -48,7 +48,7 @@ func runTrain(flags TrainFlag) {
 
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
 
-	if err := TrainImpl(flags, "train"); err != nil {
+	if err := TrainImpl(flags, "training"); err != nil {
 		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
 		return
 	}
@@ -57,15 +57,15 @@ func runTrain(flags TrainFlag) {
 
 func TrainImpl(flag TrainFlag, cmd string) error {
 
-	trainer := &m.Trainer{
-		Trials:    flag.Trials,
-		Data:      flag.Data,
-		Job:       flag.Job,
+	tuner := &m.Tuner{
 		StartTime: time.Now(),
 		Step:      1,
 		Flag:      cmd,
 		Algorithm: config.KeenTune.Sensitize.Algorithm,
 	}
-	trainer.Train()
+	tuner.Trials = flag.Trials
+	tuner.Data = flag.Data
+	tuner.Job = flag.Job
+	tuner.Train()
 	return nil
 }
