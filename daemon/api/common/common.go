@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"syscall"
 )
 
 type listInfo struct {
@@ -113,12 +114,16 @@ func KeenTunedService(quit chan os.Signal) {
 
 	go func() {
 		select {
-		case <-quit:
+		case sig := <-quit:
 			log.Info("", "keentune is interrupted")
 			if GetRunningTask() != "" {
 				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
-			os.Exit(1)
+			if sig == syscall.SIGTERM {
+				os.Exit(0)
+			} else {
+				os.Exit(1)
+			}
 		}
 	}()
 

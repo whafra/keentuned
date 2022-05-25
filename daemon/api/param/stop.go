@@ -13,7 +13,8 @@ import (
 
 // Stop run param stop service
 func (s *Service) Stop(request string, reply *string) error {
-	fs, err := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR, 0666)
+	filePath := "/var/keentune/tuning_jobs.csv"
+	fs, err := os.OpenFile(filePath, os.O_RDWR, 0666)
 	if err != nil {
 		log.Errorf("", "Can not open the file, err: %v\n",err)
 		return fmt.Errorf("Can not open the file.")
@@ -41,7 +42,7 @@ func (s *Service) Stop(request string, reply *string) error {
 	}
 
 	if strings.Contains(status, "running") {
-		StrReplace("running", "abort")
+		StrReplace("running", "abort", filePath)
 		m.StopSig <- os.Interrupt
 	} else {
 		log.Errorf("", "No running job can stop.")
@@ -52,10 +53,10 @@ func (s *Service) Stop(request string, reply *string) error {
 }
 
 //StrReplace Modify csv file data
-func StrReplace(src string, dest string) {
-	out, _ := os.OpenFile("/var/keentune/tuning_jobs.csv", os.O_RDWR, 0666)
+func StrReplace(src string, dest string, filePath string) {
+	out, _ := os.OpenFile(filePath, os.O_RDWR, 0666)
 	defer out.Close()
-	in, _ := os.Open("/var/keentune/tuning_jobs.csv")
+	in, _ := os.Open(filePath)
 	defer in.Close()
 
 	br := bufio.NewReader(in)

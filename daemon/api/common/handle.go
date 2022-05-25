@@ -70,11 +70,7 @@ func write(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fullName := getFullPath(req.Name)
-	if file.IsPathExist(fullName) {
-		err = fmt.Errorf("file '%v' already exists", fullName)
-		return
-	}
-
+		
 	parts := strings.Split(fullName, "/")
 	if !file.IsPathExist(strings.Join(parts[:len(parts)-1], "/")) {
 		os.MkdirAll(strings.Join(parts[:len(parts)-1], "/"), os.ModePerm)

@@ -69,27 +69,27 @@ func (tuner *Tuner) Tune() {
 		return
 	}
 
-	defer tuner.parseTuningError(err)
+	defer func() { tuner.parseTuningError(err) }()
 
 	if err = tuner.init(); err != nil {
-		err = fmt.Errorf("[%v] prepare for tuning: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("prepare for tuning: %v", err)
 		return
 	}
 
 	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("[%v] loop tuning: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("loop tuning: %v", err)
 		return
 	}
 
 	if err = tuner.dumpBest(); err != nil {
-		err = fmt.Errorf("[%v] dump best configuration: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("dump best configuration: %v", err)
 		return
 	}
 
 	if err = tuner.verifyBest(); err != nil {
-		err = fmt.Errorf("[%v] check best configuration: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("check best configuration: %v", err)
 		return
 	}
 }
@@ -210,7 +210,7 @@ func (tuner *Tuner) end() {
 	tuner.timeSpend.end += timeCost.Count
 
 	totalTime := utils.Runtime(tuner.StartTime).Count.Seconds()
-	
+
 	var endInfo = make(map[int]interface{})
 
 	if tuner.Flag == "tuning" {
