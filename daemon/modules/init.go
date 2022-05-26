@@ -153,7 +153,7 @@ func (tuner *Tuner) brainInit() error {
 	return nil
 }
 
-func requestInit(requireConf map[string]interface{}, job string) error {
+func requestInit(requi                                                                                                                                                                                                  reConf map[string]interface{}, job string) error {
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/init"
 	body, err := http.RemoteCall("POST", url, requireConf)
 	if err != nil {
@@ -266,6 +266,13 @@ func (tuner *Tuner) saveBrainInit() {
 			benchFile := fmt.Sprintf("%v/bench.json", config.GetTuningPath(tuner.Name))
 			ioutil.WriteFile(benchFile, bench, 0666)
 		}
+	} else if tuner.Flag == "training" {
+		knobs, err := json.Marshal(tuner.BrainParam)
+		if err != nil {
+			log.Warnf("", "save to knobs.json %v", err)
+		} else {
+			knobsFile := fmt.Sprintf("%v/knobs.json", config.GetSensitizePath(tuner.Name))
+			ioutil.WriteFile(knobsFile, knobs, 0666)
+		}
 	}
 }
-
