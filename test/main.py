@@ -5,6 +5,7 @@ import unittest
 from common import deleteDependentData
 from CLI_basic.main import RunBasicCase
 from CLI_reliability.main import RunReliabilityCase
+from MT_restful.main import RunModelCase
 
 os.chdir(os.path.abspath(os.path.join(os.getcwd(), "test")))
 
@@ -12,7 +13,8 @@ os.chdir(os.path.abspath(os.path.join(os.getcwd(), "test")))
 def RunAllCase():
     basic_suite = RunBasicCase()
     reliability_suite = RunReliabilityCase()
-    suite = unittest.TestSuite([basic_suite, reliability_suite])
+    model_suite = RunModelCase()
+    suite = unittest.TestSuite([basic_suite, reliability_suite, model_suite])
     return suite
 
 
