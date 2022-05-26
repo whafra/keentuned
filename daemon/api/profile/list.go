@@ -33,8 +33,8 @@ func (s *Service) List(flag string, reply *string) error {
 
 		activeFlag := false
 		for _, record := range records {
-			activeInfo := strings.Join(record, "\ttarget_info: ")
-			if strings.Contains(activeInfo, value) {
+			if len(record) == 2 && record[0] == value {
+				activeInfo := strings.Join(record, "\ttarget_info: ")
 				activeFlag = true
 				fileListInfo += utils.ColorString("GREEN", fmt.Sprintf("%s\t%v\n", "[active]", activeInfo))
 				break
