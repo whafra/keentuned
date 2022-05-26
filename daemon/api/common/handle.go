@@ -249,7 +249,7 @@ func execCmd(inputCmd string, result *string) error {
 			return fmt.Errorf("get result %v", string(bytes))
 		}
 
-		*result = msg[1]
+		*result = getMsg(msg[1], inputCmd)
 		return nil
 	}
 
@@ -272,7 +272,7 @@ func getMsg(origin, cmd string) string {
 
 	changeLinefeed := strings.ReplaceAll(pureMSg, "\n", "\\n")
 	changeTab := strings.ReplaceAll(changeLinefeed, "\t", " ")
-	return strings.ReplaceAll(strings.TrimSuffix(changeTab, "\\n"), "\"", "")
+	return strings.ReplaceAll(strings.TrimSuffix(changeTab, "\\n"), "\"", "'")
 }
 
 func getCmd(body io.ReadCloser) (string, error) {
