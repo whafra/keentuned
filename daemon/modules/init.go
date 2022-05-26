@@ -266,6 +266,14 @@ func (tuner *Tuner) saveBrainInit() {
 			benchFile := fmt.Sprintf("%v/bench.json", config.GetTuningPath(tuner.Name))
 			ioutil.WriteFile(benchFile, bench, 0666)
 		}
+	} else if tuner.Flag == "training" {
+		knobs, err := json.Marshal(tuner.BrainParam)
+		if err != nil {
+			log.Warnf("", "save to knobs.json %v", err)
+		} else {
+			knobsFile := fmt.Sprintf("%v/knobs.json", config.GetSensitizePath(tuner.Name))
+			ioutil.WriteFile(knobsFile, knobs, 0666)
+		}
 	}
 }
 
