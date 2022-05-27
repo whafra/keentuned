@@ -77,7 +77,7 @@ def runParamTune(name, iteration=1):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if '[BEST] Tuning improvement' in res_data:
+        if '[BEST] Tuning improvement' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
 
@@ -115,7 +115,7 @@ def runSensitizeCollect(name, iteration=10):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if 'Sensitization collection finished' in res_data:
+        if 'Sensitization collection finished' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
 
@@ -194,7 +194,7 @@ def getTuneTaskResult(path):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if '[BEST] Tuning improvement' in res_data:
+        if '[BEST] Tuning improvement' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
 
@@ -207,7 +207,7 @@ def getCollectTaskResult(path):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if 'Sensitization collection finished' in res_data:
+        if 'Sensitization collection finished' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
     word_list = ["Step1", "Step2", "Step3", "Step4", "Sensitization collection finished"]
@@ -218,7 +218,7 @@ def getTrainTaskResult(path):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if '"sensitize train" finish' in res_data:
+        if '"sensitize train" finish' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
     word_list = ["Step1", "Step2", "Step3", "Step4", '"sensitize train" finish']

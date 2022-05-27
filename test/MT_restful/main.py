@@ -5,11 +5,13 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from MT_restful.test_keentuned_apply_result import TestKeentunedApplyResult
+from MT_restful.test_keentuned_benchmark_result import TestKeentunedBenchmarkResult
 
 
 def RunModelCase():
     suite = unittest.TestSuite()
     suite.addTest(TestKeentunedApplyResult('test_keentuned_server_FUN_apply_result'))
+    suite.addTest(TestKeentunedBenchmarkResult('test_keentuned_server_FUN_benchmark_result'))
     return suite
 
 

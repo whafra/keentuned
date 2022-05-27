@@ -112,7 +112,7 @@ class TestParamTune(unittest.TestCase):
         while True:
             with open(path, 'r') as f:
                 res_data = f.read()
-            if "Time cost statistical information" in res_data:
+            if "Time cost statistical information" in res_data or "[ERROR]" in res_data:
                 break
             time.sleep(8)
         word_list = ["Step1", "Step6", "[BEST] Tuning improvement", "Time cost statistical information"]

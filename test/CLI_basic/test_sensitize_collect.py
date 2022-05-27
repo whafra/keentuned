@@ -37,7 +37,7 @@ class TestSensitizeCollect(unittest.TestCase):
         while True:
             with open(path, 'r') as f:
                 res_data = f.read()
-            if 'Sensitization collection finished' in res_data:
+            if 'Sensitization collection finished' in res_data or "[ERROR]" in res_data:
                 break
             time.sleep(8)
 
