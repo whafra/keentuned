@@ -3,6 +3,7 @@ package modules
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -32,6 +33,8 @@ func (tuner *Tuner) Train() {
 	if err = tuner.initiateSensitization(); err != nil {
 		return
 	}
+
+	tuner.copyKnobsFile()
 
 	log.Infof(log.SensitizeTrain, "\nStep2. Initiate sensitization success.\n")
 
@@ -148,5 +151,24 @@ func (tuner *Tuner) dumpSensitivityResult(resultMap map[string]interface{}, reco
 		return err
 	}
 
+	return nil
+}
+
+func (tuner *Tuner) copyKnobsFile() error {
+	tuneknobsFile := fmt.Sprintf("%v/knobs.json", config.GetTuningPath(tuner.Data))
+	sensiknobsFile := fmt.Sprintf("%v/knobs.json", config.GetSensitizePath(tuner.Job))
+
+	input, err := ioutil.ReadFile(tuneknobsFile)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	err = ioutil.WriteFile(sensiknobsFile, input, 0666)
+	if err != nil {
+		fmt.Println("Error creating", sensiknobsFile)
+		fmt.Println(err)
+		return err
+	}
 	return nil
 }
