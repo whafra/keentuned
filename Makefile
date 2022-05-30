@@ -1,4 +1,4 @@
-VERSION = 1.1.1
+VERSION = 1.1.3
 .PHONY: all clean daemon cli
 
 PKGPATH=pkg
