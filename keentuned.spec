@@ -1,22 +1,21 @@
 %define debug_package %{nil}
-%define anolis_release 6
-
-#
-# spec file for package golang-keentuned
-#
+%define anolis_release 2
 
 Name:           keentuned
-Version:        1.0.0
+Version:        1.2.0
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
-License:        MulanPSLv2
-Source:         %{name}-%{version}.tar.gz
-
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
-BuildRequires:  go >= 1.13
-
 Vendor:         Alibaba
+License:        MulanPSLv2
+Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{version}.tar.gz
+
+BuildRequires:  go >= 1.13
+BuildRequires:	systemd
+
+Requires(post): systemd
+Requires(preun): systemd
+Requires(postun): systemd
 
 %description
 KeenTune tuning tools rpm package
@@ -25,90 +24,77 @@ KeenTune tuning tools rpm package
 %setup -n %{name}-%{version}
 
 %build
-go env -w CGO_ENABLED=0
-go env -w GO111MODULE=on
-go env -w GOPROXY=https://goproxy.cn,direct
-cd daemon
-go build -ldflags=-linkmode=external -o keentuned
-mv -f keentuned ../
-cd ../cli
-go build -ldflags=-linkmode=external -o keentune
-mv -f keentune ../
-cd ../
+%make_build
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p ${RPM_BUILD_ROOT}/usr/bin/
-mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/
-mkdir -p ${RPM_BUILD_ROOT}/etc/keentune/conf/
-mkdir -p ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
-mkdir -p ${RPM_BUILD_ROOT}/usr/share/bash-completion/completions/
-
-cp -f keentune ${RPM_BUILD_ROOT}/usr/bin/keentune
-cp -f keentuned ${RPM_BUILD_ROOT}/usr/bin/keentuned
-cp -rf daemon/examples/. ${RPM_BUILD_ROOT}/etc/keentune
-cp -f ./keentuned.conf ${RPM_BUILD_ROOT}/etc/keentune/conf/
-cp -f ./keentuned.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
-cp -f ./keentune.bash ${RPM_BUILD_ROOT}/usr/share/bash-completion/completions/
-install -D -m644 man/keentune.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/keentune.8
-install -D -m644 man/keentuned.8 ${RPM_BUILD_ROOT}%{_mandir}/man8/keentuned.8
-install -D -m644 man/keentuned.conf.5 ${RPM_BUILD_ROOT}%{_mandir}/man5/keentuned.conf.5
-install -D -m644 man/keentune-benchmark.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-benchmark.7
-install -D -m644 man/keentune-profile.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-profile.7
-install -D -m644 man/keentune-detect.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-detect.7
-install -D -m644 man/keentune-param.7 ${RPM_BUILD_ROOT}%{_mandir}/man7/keentune-param.7
+%make_install
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf "$RPM_BUILD_ROOT"
 rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 %post
-systemctl daemon-reload
-
-%postun
-CONF_DIR=%{_sysconfdir}/keentune/conf
-if [ "$(ls -A $CONF_DIR)" = "" ]; then
-        rm -rf $CONF_DIR
+%systemd_post keentuned.service
+if [ -f "%{_prefix}/lib/systemd/system/keentuned.service" ]; then
+    systemctl enable keentuned.service || :
+    systemctl start keentuned.service || :
 fi
 
+%preun
+%systemd_preun keentuned.service
+
+%postun
+%systemd_postun_with_restart keentuned.service
+
 %files
-%defattr(0444,root,root, 0555)
-%attr(0555, root, root) /usr/bin/keentune
-%attr(0555, root, root) /usr/bin/keentuned
-%{_bindir}/%{name}
-%{_bindir}/keentune
-%{_sysconfdir}/keentune
+%defattr(0644,root,root, 0755)
 %license LICENSE
+%doc README.md docs/directory.md
+%attr(0755, root, root) %{_bindir}/keentune
+%attr(0755, root, root) %{_bindir}/keentuned
+%dir %{_sysconfdir}/keentune
+%dir %{_sysconfdir}/keentune/conf
+%{_sysconfdir}/keentune
 %{_prefix}/lib/systemd/system/keentuned.service
-%{_datadir}/bash-completion/completions/keentune.bash
-%{_mandir}/man8/keentune.8*
-%{_mandir}/man8/keentuned.8*
-%{_mandir}/man5/keentuned.conf.5*
-%{_mandir}/man7/keentune-benchmark.7*
-%{_mandir}/man7/keentune-profile.7*
-%{_mandir}/man7/keentune-detect.7*
-%{_mandir}/man7/keentune-param.7*
 
 %changelog
-* Tue Dec 21 2021 Lilinjie <lilinjie@uniontech.com> - 1.0.0-6
-- add tpce tpch benchmark files
+* Tue Apr 04 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.0
+- Add capabilities of target-group and bench-group
+- Fix some issues
+- Add 'keentune version' command
 
-* Wed Dec 15 2021 Runzhe Wang <15501019889@126.com> - 1.0.0-5
+* Thu May 05 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.1
+- add makefile
+- update spec file
+
+* Thu Mar 03 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.1.0
+- remove parameter fs.nr_open
+- Add support for GP (in iTuned) in sensitizing algorithms
+- Add support for lasso in sensitizing algorithms
+- refactor tornado module: replace await by threadpool
+- lazy load domain in keentune-target
+- fix other bugs
+- Add baseline reading before init brain
+- Supporting multiple param json for tuning
+- Fix rollback failure
+- Clean empty dir when uninstall
+- Verify input arguments of command 'param tune'
+- Supporting of multiple target tuning
+- Fix bug which cause keentune hanging after command 'param stop'
+- Add verification of conflicting commands such as 'param dump', 'param delete' when a tuning job is runing.
+- Remove version limitation of tornado
+- Refactor sysctl domain to improve stability of parameter setting
+- Fix some user experience issues
+
+* Wed Dec 15 2021 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.0.0
+- add tpce tpch benchmark files
 - fix bug: can not running in alinux2 and centos7
 - change modify codeup address to gitee
-
-* Fri Dec 03 2021 wenchao <yuxiongkong159@gmail.com> - 1.0.0-4
 - manage keentuned with systemctl
 - fix: show brain error in the keentuned log
 - fix: profile set supports absolute and relative paths
 - fix: show exact job abort log after the stop command
-
-* Wed Nov 24 2021 runzhe.wrz <15501019889@126.com> - 1.0.0-3
 - add nginx_conf parameter config file
-
-* Wed Nov 10 2021 wenchao <yuxiongkong159@gmail.com> - 1.0.0-2
 - use '%license' macro
 - update license to MulanPSLv2
-
-* Sun Aug  1 2021 wenchao <yuxiongkong159@gmail.com> - 1.0.0-1
 - Init Keentuned.
