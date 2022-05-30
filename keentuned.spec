@@ -1,27 +1,21 @@
 %define debug_package %{nil}
-%define anolis_release 1
-
-#
-# spec file for package golang-keentuned
-#
+%define anolis_release 4
 
 Name:           keentuned
-Version:        1.1.2
+Version:        1.1.3
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
+Vendor:         Alibaba
 License:        MulanPSLv2
 Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{version}.tar.gz
 
-BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 BuildRequires:  go >= 1.13
 BuildRequires:	systemd
 
 Requires(post): systemd
 Requires(preun): systemd
 Requires(postun): systemd
-
-Vendor:         Alibaba
 
 %description
 KeenTune tuning tools rpm package
@@ -41,16 +35,16 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 %post
 %systemd_post keentuned.service
+if [ -f "%{_prefix}/lib/systemd/system/keentuned.service" ]; then
+    systemctl enable keentuned.service || :
+    systemctl start keentuned.service || :
+fi
 
 %preun
 %systemd_preun keentuned.service
 
 %postun
-%systemd_postun keentuned.service
-CONF_DIR=%{_sysconfdir}/keentune/conf
-if [ "$(ls -A $CONF_DIR)" = "" ]; then
-        rm -rf $CONF_DIR
-fi
+%systemd_postun_with_restart keentuned.service
 
 %files
 %defattr(0644,root,root, 0755)
@@ -58,11 +52,28 @@ fi
 %doc README.md docs/directory.md
 %attr(0755, root, root) %{_bindir}/keentune
 %attr(0755, root, root) %{_bindir}/keentuned
+%dir %{_sysconfdir}/keentune
+%dir %{_sysconfdir}/keentune/conf
 %{_sysconfdir}/keentune
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
-* Mon May 09 2021 Runzhe Wang <15501019889@126.com> - 1.1.2
+* Tue May 24 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.1.3-4
+- Fix getting real IP failure during system initialization.
+
+* Mon May 23 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com - 1.1.3-3
+- modify servie type to idle
+
+* Fri May 20 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.3-2
+- rebuild
+
+* Thu May 19 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.3-1
+- update spec
+
+* Thu May 19 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com - 1.1.3
+- fix bug in service exit
+
+* Mon May 09 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com - 1.1.2
 - remove unsupported profile in anolis23
 - remove useless requires in .service file
 
@@ -70,7 +81,7 @@ fi
 - add makefile
 - update spec file
 
-* Wed Dec 15 2021 Runzhe Wang <15501019889@126.com> - 1.0.0
+* Wed Dec 15 2021 Runzhe Wang <runzhe.wrz@alibaba-inc.com - 1.0.0
 - add tpce tpch benchmark files
 - fix bug: can not running in alinux2 and centos7
 - change modify codeup address to gitee
