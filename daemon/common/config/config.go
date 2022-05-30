@@ -78,7 +78,7 @@ var (
 func init() {
 	conf := new(KeentunedConf)
 	if err := conf.Save(); err != nil {
-		fmt.Printf("init Keentuned conf err:%v\n", err)
+		fmt.Printf("%v init Keentuned conf: %v\n", utils.ColorString("red", "[ERROR]"), err)
 		os.Exit(1)
 	}
 
@@ -163,4 +163,5 @@ func changeStringToSlice(ipString string) ([]string, error) {
 
 	return validIPs, nil
 }
+
 
