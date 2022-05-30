@@ -87,7 +87,7 @@ func GetExternalIP() (string, error) {
 
 	for _, iface := range netInterfaces {
 		if iface.Flags&net.FlagUp != 0 {
-			addrs, _ := iface.Addrs()
+			addrs, err := iface.Addrs()
 			if err != nil {
 				return "", err
 			}
@@ -112,12 +112,13 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 	for _, v := range origin {
 		pureValue := strings.Trim(v, " ")
 		if pureValue == "localhost" || pureValue == "127.0.0.1" || pureValue == "::1" {
-			realIP, _ := GetExternalIP()
-			if realIP != "" && !orgMap[realIP] {
+			localIP := "localhost"
+			if !orgMap[localIP] {
 				valid = append(valid, pureValue)
-				orgMap[realIP] = true
+				orgMap[localIP] = true
 				continue
 			}
+			
 			invalid = append(invalid, pureValue)
 			continue
 		}

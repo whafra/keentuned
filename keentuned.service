@@ -7,7 +7,7 @@ Conflicts=cpupower.service
 [Service]
 EnvironmentFile=-/etc/keentune/conf/keentuned.conf
 ExecStart=/usr/bin/keentuned
-Type=simple
+Type=idle
 
 [Install]
 WantedBy=multi-user.target
