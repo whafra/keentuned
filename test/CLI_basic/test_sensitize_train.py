@@ -41,7 +41,7 @@ class TestSensitizeTrain(unittest.TestCase):
         while True:
             with open(path, 'r') as f:
                 res_data = f.read()
-            if '"sensitize train" finish' in res_data:
+            if '"sensitize train" finish' in res_data or "[ERROR]" in res_data:
                 break
             time.sleep(8)
 
