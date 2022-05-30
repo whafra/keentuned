@@ -15,13 +15,6 @@ import (
 	"time"
 )
 
-// Tuner define a tuning job include Algorithm, Benchmark, Group
-// type Seter struct {
-// 	Name     string
-// 	Group    []bool
-// 	ConfFile []string
-// }
-
 type Seter struct {
 	Name     string
 	Group    []bool
@@ -64,12 +57,15 @@ func (tuner *Tuner) Set() {
 	}
 	sucInfos, failedInfo, err := tuner.setConfiguration(requestInfoAll)
 	if err != nil {
-		log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo)
-		for index := range failedInfo {
-			log.Errorf(log.ProfSet, "Set failed:%v, details:%v", err, failedInfo[index])
+		var details string
+		for _, detail := range failedInfo {
+			details += fmt.Sprintln(detail)
 		}
+
+		log.Errorf(log.ProfSet, "Set failed: %v", details)
 		return
 	}
+
 	activeFile := config.GetProfileWorkPath("active.conf")
 
 	//先拼接，再写入
@@ -228,7 +224,7 @@ func (tuner *Tuner) analysisApplyResults(applyResultAll map[int]map[string]Resul
 		failedInfo[applyResultIndex] = strings.TrimSuffix(failedInfo[applyResultIndex], ";")
 	}
 	if len(successInfo) == 0 {
-		return nil, failedInfo, fmt.Errorf("all failed, details:%v", successInfo)
+		return nil, failedInfo, fmt.Errorf("all failed, details:%v", failedInfo)
 	}
 	if failFlag {
 		return successInfo, failedInfo, fmt.Errorf("partial failed")
@@ -243,7 +239,7 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 		config.IsInnerApplyRequests[index] = false
 	}()
 	var applyResult = make(map[string]ResultProfileSet)
-	if requestPriority, ok := request["data"];ok {
+	if requestPriority, ok := request["data"]; ok {
 		for priorityDomain := range requestPriority.(map[string]map[string]interface{}) {
 			uri := fmt.Sprintf("%s:%s/configure", ip, port)
 			resp, err := http.RemoteCall("POST", uri, utils.ConcurrentSecurityMap(request, []string{"target_id", "readonly"}, []interface{}{index, false}))
@@ -258,7 +254,7 @@ func (tuner *Tuner) set(request map[string]interface{}, wg *sync.WaitGroup, appl
 			setResult, _, err := GetApplyResult(resp, index)
 			if err != nil {
 				applyResult[priorityDomain] = ResultProfileSet{
-					Info:    fmt.Sprintf("target %v get apply result: [%v] %v;", index, priorityDomain, err),
+					Info:    fmt.Sprintf("target %v set '%v' %v;", index, priorityDomain, err),
 					Success: false,
 				}
 			} else {
@@ -313,3 +309,4 @@ func (tuner *Tuner) endSet() {
 
 	tuner.setTimeSpentDetail(totalTime)
 }
+
