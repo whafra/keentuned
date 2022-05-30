@@ -1,0 +1,38 @@
+{
+    "sysbench":{
+        "threads":{
+            "desc":"默认值：1",
+            "dtype":"int",
+            "range":[
+                1,
+                "#!cpu_core#*2"
+            ]
+        },
+        "thread-stack-size":{
+            "desc":"默认值：32K",
+            "dtype":"int",
+            "range":[
+                1,
+                33554432
+            ]
+        },
+        "tables":{
+            "desc":"默认值：3",
+            "dtype":"int",
+            "range":[
+                1,
+                10
+            ]
+        },
+        "table-size":{
+            "desc":"默认值：100000",
+            "dtype":"int",
+            "range":[
+                100,
+                1000000
+            ]
+        }
+        }
+}
+
+
