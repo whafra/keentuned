@@ -17,11 +17,30 @@ KeenTuned - system performance tuning daemon
 \fBKeenTuned\fP
 .SH DESCRIPTION
 \fBKeenTuned\fR KeenTuned is the management component of KeenTune, including CLI and Daemon. CLI provides command line interfaces to users, which includes three kinds of commands: basic commands, static tuning related commands, and dynamic tuning related commands. Keentuned，as the management and control module, is responsible for monitoring other components, receiving and parsing commands from CLI, and scheduling related components in workflows.
-
+.
+.SH "CLI"
+Command-line Interface. This part implements all the command-line functions of keentune, including dynamic and static tuning, sensitive parameter recognition. Determine whether the command-line parameters are compliant.
+.
+.SH "Daemon"
+The keentune daemon implementation. This part implements the launch of the keentuned service, registration of the rpc service and listens for the client connection, creating working directory. Is the core part of the program.
+.
 .SH "Run"
 .
 .TP
 \fBsystemctl start keentuned.service\fR
+
+.SH "FILES"
+.nf
+.I /etc/keentune
+.I /var/keentune
+
+.SH "SEE ALSO"
+.BR keentune(8)
+.BR keentuned.conf(5)
+.BR keentune-benchmark(7)
+.BR keentune-param(7)
+.BR keentune-profile(7)
+.BR keentune-detect(7)
 
 .SH "BUGS"
 Report bugs at: https://gitee.com/anolis/keentuned/issues
