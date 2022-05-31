@@ -15,19 +15,26 @@
 keentune-param - description of basic keentune param
 
 .SH DESCRIPTION
-The parameter is the configuration file where the target device runs during dynamic tuning.
+The parameter is the configuration file where the target device runs during dynamic tuning. The parameter configuration in the file acts on the python file of the benchmark. It corresponds mutually to the /usr/lib/python3.6/site-packages/target/domain/ of the target component.
 
 .SH PARAMETER
 At the moment we're providing the following pre-defined parameter:
 
 .TP
 .BI "iperf.json"
-
+For the iperf3 network performance tool tuning. The test environment requires both an iperf server and a client.
 .TP
 .BI "nginx.json"
-
+For nginx tuning. The test environment requires a nginx installation and starting the service.
 .TP
 .BI "sysctl.json"
+Tuning for equipment system information.
+.TP
+.BI "fio.json"
+Test IOPS and optimize hard disk data processing. Install fio before tuning test.
+.TP
+.BI "sysbench.json"
+In the current tuning instance, it is the performance test and optimization of the mysql database.
 
 .SH FILES
 .I /etc/keentune/parameter/
