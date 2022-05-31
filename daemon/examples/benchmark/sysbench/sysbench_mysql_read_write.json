@@ -1,0 +1,35 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path} {target_ip}",
+      "local_script_path": "benchmark/sysbench/sysbench_mysql_read_write.py",
+      "items": {
+        "TPS": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        },
+        "QPS": {
+          "negative": false,
+          "weight": 100,
+          "strict": false
+        },
+        "EPS": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        },
+        "Latency_avg": {
+          "negative": true,
+          "weight": 0,
+          "strict": false
+        },
+        "Latency_pct": {
+          "negative": true,
+          "weight": 0,
+          "strict": false
+        }
+      }
+    }
+  ]
+}
