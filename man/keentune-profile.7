@@ -15,7 +15,11 @@
 keentune-profile - description of basic keentune profile
 
 .SH DESCRIPTION
-Preset a number of typical high load scenarios and application experience optimization configuration, users can improve the environmental performance through one key setting.
+Preset a number of typical high load scenarios and application experience optimization configuration, users can improve the environmental performance through one key setting. These profiles work on the static tuning.
+
+These configuration files are stored in /etc/keentune/profile.
+
+You can dump the parameter tuning result to a profile. The file storage directory is located in /var/keentune/profile.
 
 .SH PROFILE
 At the moment we're providing the following pre-defined profiles:
@@ -36,7 +40,9 @@ At the moment we're providing the following pre-defined profiles:
 .BI "net_high_throuput.conf"
 
 .SH FILES
+.nf
 .I /etc/keentune/profile/
+.I /var/keentune/profile/
 
 .SH "SEE ALSO"
 .LP
