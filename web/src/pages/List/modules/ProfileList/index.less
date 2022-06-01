@@ -1,0 +1,20 @@
+.static_page {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+
+  /* table首列的间距 */
+  :global {
+    .ant-table-container table>thead>tr:first-child th:first-child,
+    .ant-table-container table>tbody>tr > td:first-child {
+      padding-left: 30px;
+    }
+  }
+  :global {
+    /* toolbar（表格上面的按钮位置）的位置反转 */
+    .ant-pro-table-list-toolbar-right {
+      flex-direction: row-reverse;
+    }
+  }
+
+}
