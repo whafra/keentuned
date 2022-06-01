@@ -295,6 +295,9 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 
 func (c *KeentunedConf) getBenchmark(cfg *ini.File) error {
 	bench := cfg.Section("benchmark")
+	if bench == nil {
+		return nil
+	}
 
 	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
 	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
@@ -360,7 +363,7 @@ func changeStringToSlice(ipString string) ([]string, error) {
 }
 
 func InitWorkDir() error {
-	cfg, err := ini.Load(keentuneConfigFile)
+	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
 	}
@@ -379,7 +382,7 @@ func getWorkDir(cfg *ini.File) {
 }
 
 func InitTargetGroup() error {
-	cfg, err := ini.Load(keentuneConfigFile)
+	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
 	}
@@ -398,7 +401,7 @@ func InitTargetGroup() error {
 }
 
 func InitBrainConf() error {
-	cfg, err := ini.Load(keentuneConfigFile)
+	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
 	}

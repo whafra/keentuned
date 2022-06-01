@@ -2,10 +2,12 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/utils"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/go-ini/ini"
 )
@@ -26,9 +28,29 @@ func ReSet() error {
 	return nil
 }
 
-func update(fileName string) error {
+func update(fileName, cmd string) error {
+	var err error
+	if fileName == "" || fileName == keentuneConfigFile {
+		KeenTune = new(KeentunedConf)
+		err = KeenTune.Save()
+		if err != nil {
+			return fmt.Errorf("reload Keentuned.conf: %v\n", err)
+		}
+
+	} else {
+		err = KeenTune.update(fileName, cmd)
+		if err != nil {
+			return fmt.Errorf("reload Keentuned.conf: %v\n", err)
+		}
+	}
+
+	initChanAndIPMap()
+	return nil
+}
+
+func (c *KeentunedConf) update(fileName, cmd string) error {
 	backupConf := new(KeentunedConf)
-	err := utils.DeepCopy(backupConf, KeenTune)
+	err := utils.DeepCopy(backupConf, c)
 	if err != nil {
 		return fmt.Errorf("deep copy: %v", err)
 	}
@@ -38,34 +60,60 @@ func update(fileName string) error {
 		return fmt.Errorf("failed to parse %s, %v", fileName, err)
 	}
 
+	err = c.updateDefault(cfg, cmd)
+	if err != nil {
+		return err
+	}
+
+	c.Target = Target{}
+	if err = c.getTargetGroup(cfg); err != nil {
+		return err
+	}
+
+	c.BenchGroup = []BenchGroup{}
+	if err = c.getBenchGroup(cfg); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *KeentunedConf) updateDefault(cfg *ini.File, cmd string) error {
 	empty := cfg.Section("")
+	if empty == nil {
+		return nil
+	}
+
+	// Required: algorithm
 	algo := empty.Key("ALGORITHM").MustString("")
-	if algo != "" {
-		KeenTune.Brain.Algorithm = algo
+	if algo == "" {
+		return fmt.Errorf("algorithm is required")
 	}
 
-	var targetGroupNames, benchGroupNames = make([]string, 0), make([]string, 0)
-	if hasGroupSections(cfg, &targetGroupNames, TargetSectionPrefix) {
-		KeenTune.Target = Target{}
-		if err = KeenTune.getTargetGroup(cfg); err != nil {
-			return err
+	if cmd == "tuning" {
+		c.Brain.Algorithm = algo
+		// Required: baseline_bench_round, tuning_bench_round, recheck_bench_round
+		c.BaseRound = empty.Key("BASELINE_BENCH_ROUND").MustInt(5)
+		c.ExecRound = empty.Key("TUNING_BENCH_ROUND").MustInt(3)
+		c.AfterRound = empty.Key("RECHECK_BENCH_ROUND").MustInt(10)
+
+		// Optional: bench_config
+		benchConf := empty.Key("BENCH_CONFIG").MustString("")
+		if benchConf != "" {
+			c.BenchConf = benchConf
+			return checkBenchConf(&c.BenchConf)
 		}
 	}
 
-	if hasGroupSections(cfg, &benchGroupNames, BenchSectionPrefix) {
-		KeenTune.BenchGroup = []BenchGroup{}
-		if err = KeenTune.getBenchGroup(cfg); err != nil {
-			return err
-		}
+	if cmd == "training" {
+		c.Sensitize.Algorithm = algo
+		// todo required: epoch ...
 	}
-
-	initChanAndIPMap()
 
 	return nil
 }
 
 func dump(jobName string, cmd string) error {
-
 	var jobFile string
 	if cmd == "tuning" {
 		jobFile = fmt.Sprintf("%v/%v/keentuned.conf", GetTuningPath(""), jobName)
@@ -108,10 +156,28 @@ func dump(jobName string, cmd string) error {
 	} else if cmd == "training" {
 		os.Mkdir(GetSensitizePath(jobName), 0755)
 	}
+
+	dumpDefaultConfig(newCfg)
 	return newCfg.SaveTo(jobFile)
 }
 
+func dumpDefaultConfig(cfg *ini.File) {
+	if !file.IsPathExist(keentuneConfigFile + ".bak") {
+		backup, _ := ioutil.ReadFile(keentuneConfigFile)
+		ioutil.WriteFile(keentuneConfigFile+".bak", backup, 0644)
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+	err := cfg.SaveTo(keentuneConfigFile)
+	if err != nil {
+		fmt.Printf("%v tuning save config to default file err: %v\n", utils.ColorString("yellow", "[Warning]"), err)
+	}
+}
+
 func Backup(fileName, jobName string, cmd string) error {
+	var err error
 	defer func() {
 		if cmd == "tuning" {
 			if file.IsPathExist(TuneTempConf) {
@@ -122,9 +188,13 @@ func Backup(fileName, jobName string, cmd string) error {
 				os.Remove(SensitizeTempConf)
 			}
 		}
+
+		if err != nil {
+			ReSet()
+		}
 	}()
 
-	err := update(fileName)
+	err = update(fileName, cmd)
 	if err != nil {
 		return fmt.Errorf("update %v", err)
 	}
@@ -136,3 +206,4 @@ func Backup(fileName, jobName string, cmd string) error {
 
 	return nil
 }
+
