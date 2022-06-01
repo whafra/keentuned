@@ -24,7 +24,12 @@ At the moment we're providing the following pre-defined detect:
 .BI "detect.json"
 Contains the command to query the cpu particle number, the memory size.
 
-.SH FILES
+.SH "EXAMPLE"
+.nf
+"cpu_core":"cat /proc/cpuinfo | grep process | wc -l"
+"mem_size":"free -m | awk 'NR==2' | awk '{print $2}'"
+
+.SH "FILES"
 .I /etc/keentune/detect/
 
 .SH "SEE ALSO"
