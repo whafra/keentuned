@@ -91,9 +91,18 @@ func (tuner *Tuner) initiateSensitization() error {
 }
 
 func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, error) {
+	/*
+		var sensitizeParams struct {
+			Success bool        `json:"suc"`
+			Result  []Parameter `json:"result"`
+			Msg     interface{} `json:"msg"`
+		}
+	*/
+
 	var sensitizeParams struct {
 		Success bool        `json:"suc"`
-		Result  []Parameter `json:"result"`
+		Head    string      `json:"head"`
+		Result  [][]float64 `json:"result"`
 		Msg     interface{} `json:"msg"`
 	}
 
@@ -114,34 +123,37 @@ func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, erro
 	if !sensitizeParams.Success {
 		return "", nil, fmt.Errorf("error msg:%v", sensitizeParams.Msg)
 	}
-
-	domainMap := make(map[string][]map[string]interface{})
-	resultMap := make(map[string]interface{})
-	var resultSlice [][]string
-	if len(sensitizeParams.Result) > 0 {
-		resultSlice = append(resultSlice, []string{"parameter name", "sensitivity ratio"})
-	}
-
-	for _, param := range sensitizeParams.Result {
-		paramInfo := map[string]interface{}{
-			param.ParaName: map[string]interface{}{"weight": param.Weight},
-		}
-
-		resultSlice = append(resultSlice, []string{param.ParaName, fmt.Sprint(param.Weight)})
-		domainMap[param.DomainName] = append(domainMap[param.DomainName], paramInfo)
-	}
-
-	for domain, paramSlice := range domainMap {
-		paramMap := make(map[string]interface{})
-		for _, info := range paramSlice {
-			for name, value := range info {
-				paramMap[name] = value
+	fmt.Println(sensitizeParams.Head)
+	return "", nil, fmt.Errorf("get sensitivity result is nil")
+	/*
+			domainMap := make(map[string][]map[string]interface{})
+			resultMap := make(map[string]interface{})
+			var resultSlice [][]string
+			if len(sensitizeParams.Result) > 0 {
+				resultSlice = append(resultSlice, []string{"parameter name", "sensitivity ratio"})
 			}
-		}
-		resultMap[domain] = paramMap
-	}
 
-	return utils.FormatInTable(resultSlice), resultMap, nil
+				for _, param := range sensitizeParams.Result {
+					paramInfo := map[string]interface{}{
+						param.ParaName: map[string]interface{}{"weight": param.Weight},
+					}
+
+					resultSlice = append(resultSlice, []string{param.ParaName, fmt.Sprint(param.Weight)})
+					domainMap[param.DomainName] = append(domainMap[param.DomainName], paramInfo)
+				}
+
+				for domain, paramSlice := range domainMap {
+					paramMap := make(map[string]interface{})
+					for _, info := range paramSlice {
+						for name, value := range info {
+							paramMap[name] = value
+						}
+					}
+					resultMap[domain] = paramMap
+				}
+
+		return utils.FormatInTable(resultSlice), resultMap, nil
+	*/
 }
 
 func (tuner *Tuner) dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {
