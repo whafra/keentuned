@@ -1,0 +1,14 @@
+{
+  "name": "keentune(轻豚)",
+  "short_name": "keentune(轻豚)",
+  "display": "standalone",
+  "start_url": "./?utm_source=homescreen",
+  "theme_color": "#002140",
+  "background_color": "#001529",
+  "icons": [
+    {
+      "src": "favicon.jpg",
+      "sizes": "192x192"
+    }
+  ]
+}

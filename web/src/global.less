@@ -1,0 +1,136 @@
+@import '~antd/es/style/themes/default.less';
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.colorWeak {
+  filter: invert(80%);
+}
+
+.ant-layout {
+  min-height: 100vh;
+}
+.ant-pro-sider.ant-layout-sider.ant-pro-sider-fixed {
+  left: unset;
+}
+
+canvas {
+  display: block;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* 设置背景图片 */
+section {  background: #fff !important; }
+section > div:nth-child(1) {
+  background: url(~@/assets/logo_background.jpg) 0% 0% / 100% no-repeat;
+  background-size: 100% auto;
+}
+
+/* header */
+.ant-pro-basicLayout .ant-layout-header.ant-pro-header-light {
+  height: 72px !important;
+  line-height: 72px !important;
+}
+.ant-pro-top-nav-header.light {
+  display: flex;
+  justify-content: center;
+}
+.ant-pro-top-nav-header-main {
+  width: 1280px;
+  padding-left: 0px !important;
+
+  // logo
+  .ant-pro-top-nav-header-logo img {
+    height: 48px;
+  }
+}
+
+/* main 覆盖原来框架样式 */
+.ant-pro-basicLayout-content {
+  margin: 0px !important;
+  // background-color: #fff;
+}
+
+/* 分页器：间距 */
+.ant-table-pagination.ant-pagination {
+  margin: 24px 0 !important;
+}
+/* 分页器：total位置样式 */
+.ant-pagination-total-text {
+  flex: 1 !important;
+  opacity: 0.6;
+}
+.ant-pro-table {
+  .ant-card {
+    border-radius: 5px;
+    .ant-card-body {
+      padding-bottom: 0px;
+    }
+  }
+}
+/* table operations */
+.ant-dropdown {
+  .menus_item_default { color: #1890ff; }
+  .menus_item_danger { color: #FF1818; }
+}
+.table-operate-dropdown-style {
+  padding: 0 8px !important;
+  /* ...的大小 */
+  .ant-pro-table-dropdown .anticon-ellipsis {
+    font-size: 30px;
+  }
+}
+/* table toolbar */
+.ant-pro-table-list-toolbar-container {
+  padding: 24px 0 24px 12px !important;
+}
+/* table 边距 */
+.ant-pro-table .ant-card .ant-card-body {
+  padding: 0 30px;
+}
+/* table-expanded-row */
+tr.ant-table-expanded-row > td {
+  padding: 0px !important;
+}
+/* table首列的间距失败*/
+// .ant-table-container table>thead>tr:first-child th:first-child,
+// .ant-table-container table>tbody>tr:first-child td:first-child {
+//   padding-left: 30px;
+// }
+
+@media (max-width: @screen-xs) {
+  .ant-table {
+    width: 100%;
+    overflow-x: auto;
+    &-thead > tr,
+    &-tbody > tr {
+      > th,
+      > td {
+        white-space: pre;
+        > span {
+          display: block;
+        }
+      }
+    }
+  }
+}
+
+// Compatible with IE11
+@media screen and(-ms-high-contrast: active), (-ms-high-contrast: none) {
+  body .ant-design-pro > .ant-layout {
+    min-height: 100vh;
+  }
+}
