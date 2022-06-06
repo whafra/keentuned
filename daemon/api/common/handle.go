@@ -70,7 +70,7 @@ func write(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fullName := getFullPath(req.Name)
-		
+
 	parts := strings.Split(fullName, "/")
 	if !file.IsPathExist(strings.Join(parts[:len(parts)-1], "/")) {
 		os.MkdirAll(strings.Join(parts[:len(parts)-1], "/"), os.ModePerm)
@@ -295,28 +295,35 @@ func getCmd(body io.ReadCloser) (string, error) {
 	}
 
 	if strings.Contains(reqInfo.Cmd, "param tune") {
-		return handleTuneCmd(reqInfo.Cmd)
+		return handleTuneCmd(reqInfo.Cmd, "tuning")
+	} else if strings.Contains(reqInfo.Cmd, "sensitize train") {
+		return handleTuneCmd(reqInfo.Cmd, "training")
 	}
 
 	return reqInfo.Cmd, nil
 }
 
-func handleTuneCmd(originCmd string) (string, error) {
+func handleTuneCmd(originCmd string, cmd string) (string, error) {
 	if !strings.Contains(originCmd, "--config") {
 		return originCmd, nil
 	}
 
-	matched, err := parseConfigFlag(originCmd)
+	matched, err := parseConfigFlag(originCmd, cmd)
 	if err != nil {
 		return matched, err
 	}
 
-	retCmd := strings.ReplaceAll(originCmd, matched, config.TuneTempConf)
+	var retCmd string
+	if cmd == "tuning" {
+		retCmd = strings.ReplaceAll(originCmd, matched, config.TuneTempConf)
+	} else if cmd == "training" {
+		retCmd = strings.ReplaceAll(originCmd, matched, config.SensitizeTempConf)
+	}
 
 	return retCmd, nil
 }
 
-func parseConfigFlag(originCmd string) (string, error) {
+func parseConfigFlag(originCmd string, cmd string) (string, error) {
 	configPart := strings.Split(originCmd, "--config")
 	if len(configPart) < 2 {
 		return "", fmt.Errorf("split --config length less than 2")
@@ -350,7 +357,12 @@ func parseConfigFlag(originCmd string) (string, error) {
 		return "", fmt.Errorf("config info not found in '%v'", originCmd)
 	}
 
-	err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
+	if cmd == "tuning" {
+		err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
+	} else if cmd == "training" {
+		err = ioutil.WriteFile(config.SensitizeTempConf, []byte(strings.Trim(matched, "\"")), 0666)
+	}
+
 	if err != nil {
 		return "", err
 	}
@@ -396,4 +408,3 @@ func parseFlag(originCmd, flagName string, short ...string) (string, error) {
 
 	return flagValue, nil
 }
-
