@@ -21,3 +21,12 @@ KeenTune中实现的智能控压优化算法包括：
 根据题目要求安装iperf工具或者sysbench工具，分别参考[《iperf3安装使用手册》](../benchmark-tools/iperf3_cn.md)[《sysbench安装使用手册》](../benchmark-tools/sysbench_cn.md)
 #### step 3. 使用KeenTune进行benchmark压力调整
 根据题目要求选择KeenTune中的BO算法，TPE算法和HORD算法对benchmark的压力参数进行调整。具体步骤参考[《KeenTune智能控压》](../pressure_control_cn.md)
+
+## 子题目
+本题目根据算法和benchmark不同分为以下六个子题目
++ 智能控压初识——iperf（Bayesian Optimization）
++ 智能控压初识——iperf（TPE）
++ 智能控压初识——iperf（HORD）
++ 智能控压初识——sysbench（Bayesian Optimization）
++ 智能控压初识——sysbench（TPE）
++ 智能控压初识——sysbench（HORD）

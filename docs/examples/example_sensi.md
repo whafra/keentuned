@@ -22,3 +22,10 @@ Nginx优化中操作系统内核参数的敏感性排序。
 
 #### step 3. 使用KeenTune运行敏感参数识别算法
 使用KeenTune选择敏感参数识别算法并运行，指定预置数据作为输入，通过输出结果筛选TOP10的内核参数。具体步骤参考[《KeenTune敏感参数识别》](../sensitization_cn.md)
+
+## 子题目
+本题目根据使用的数据不同分为以下4个子题目
++ Nginx敏感参数识别——http long
++ Nginx敏感参数识别——https long
++ Nginx敏感参数识别——http short
++ Nginx敏感参数识别——https short
