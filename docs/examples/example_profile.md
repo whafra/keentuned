@@ -12,17 +12,17 @@ KeenTune中提供了多个专家调优方案，可以对操作系统内核参数
 
 ---  
 ## 操作指导
-### step 1. KeenTune安装和配置
+#### step 1. KeenTune安装和配置
 安装和配置KeenTune，本题目中只需要安装keentune-target和keentuned，具体步骤参考[《KeenTune安装配置手册》](../install_cn.md)
 
-### step 2. 安装和运行Benchmark工具
+#### step 2. 安装和运行Benchmark工具
 安装对应的benchmark工具并运行
-+ 验证io_high_throughput.conf（IO高吞吐）优化效果，使用fio工具，参考《fio安装使用手册》
-+ 验证net_high_throuput.conf（网络高吞吐）优化效果，使用wrk工具，参考《wrk安装使用手册》  
-+ 验证net_low_latency.conf（网络低时延）优化效果，使用wrk工具，参考《wrk安装使用手册》  
++ 验证io_high_throughput.conf（IO高吞吐）优化效果，使用fio工具，参考[《fio安装使用手册》](../benchmark-tools/fio_cn.md)
++ 验证net_high_throuput.conf（网络高吞吐）优化效果，使用wrk工具，参考[《wrk安装使用手册》](../benchmark-tools/wrk_cn.md)
++ 验证net_low_latency.conf（网络低时延）优化效果，使用wrk工具，参考[《wrk安装使用手册》](../benchmark-tools/wrk_cn.md)
 
-### step 3. KeenTune设置专家调优方案
-使用KeenTune设置对应的专家调优方案到实验环境中，具体步骤参考《KeenTune专家调优手册》  
+#### step 3. KeenTune设置专家调优方案
+使用KeenTune设置对应的专家调优方案到实验环境中，具体步骤参考[《KeenTune专家调优手册》](../tuning_cn.md)
 
-### step 4. 验证优化结果
+#### step 4. 验证优化结果
 再次运行benchmark工具，观察优化效果  
