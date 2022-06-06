@@ -23,7 +23,10 @@ yum makecache
 ```sh
 yum install keentuned
 ```
-
+启动keentuned
+```sh
+systemctl start keentuned
+```
 ### 2. 通过源码安装
 准备golang编译环境
 ```sh
@@ -42,7 +45,10 @@ git clone https://gitee.com/anolis/keentuned.git
 cd keentuned
 ./keentuned_install.sh
 ```
-
+启动keentuned
+```
+keentuned
+```
 ---  
 ## Keentune-Target
 安装依赖
@@ -56,6 +62,10 @@ pip3 install tornado==6.1 pynginxconfig
 ```sh
 yum install keentune-target
 ```
+启动keentune-target
+```sh
+systemctl start keentune-target
+```
 ### 2. 通过源码安装
 下载Keentune-target源码
 ```sh
@@ -65,6 +75,10 @@ git clone https://gitee.com/anolis/keentune_target.git
 ```sh
 cd keentune_target
 sudo python3 setup.py install
+```
+启动keentune-target
+```sh
+keentune-target
 ```
 ---  
 ## Keentune-Brain
@@ -76,7 +90,11 @@ pip3 install numpy==1.19.5 POAP==0.1.26 tornado==6.1 hyperopt==0.2.5 ultraopt==0
 ```
 ### 1. 通过YUM安装
 ```sh
-yum install keentune-target
+yum install keentune-brain
+```
+启动keentune-brain
+```sh
+systemctl start keentune-brain
 ```
 ### 2. 通过源码安装
 下载Keentune-Brain源码
@@ -87,6 +105,10 @@ git clone https://gitee.com/anolis/keentune_brain.git
 ```sh
 cd keentune_brain
 sudo python3 setup.py install
+```
+启动keentune-brain
+```sh
+keentune-brain
 ```
 ---  
 ## Keentune-Bench
@@ -100,13 +122,21 @@ pip3 install tornado==6.1 pynginxconfig
 ```sh
 yum install keentune-bench
 ```
+启动keentune-bench
+```sh
+systemctl start keentune-bench
+```
 ### 2. 通过源码安装
 下载Keentune-Bench源码
 ```sh
-git clone https://gitee.com/anolis/keentune_target.git
+git clone https://gitee.com/anolis/keentune_bench.git
 ```
 运行安装脚本
 ```sh
-cd keentune_target
+cd keentune_bench
 sudo python3 setup.py install
+```
+启动keentune-bench
+```sh
+keentune-bench
 ```
