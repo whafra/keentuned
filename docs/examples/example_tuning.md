@@ -31,3 +31,12 @@ KeenTune中已经实现的参数优化域包括：
 
 #### step 5. 验证优化结果
 再次运行benchmark工具，观察优化效果
+
+## 子题目
+本题目根据使用的算法和调整的参数不同分为以下六个子题目  
++ 智能参数调优——内核参数（Bayesian Optimization）
++ 智能参数调优——内核参数（TPE）
++ 智能参数调优——内核参数（HORD）
++ 智能参数调优——Nginx参数（Bayesian Optimization）
++ 智能参数调优——Nginx参数（TPE）
++ 智能参数调优——Nginx参数（HORD）
