@@ -65,16 +65,17 @@ func (c *KeentunedConf) update(fileName, cmd string) error {
 		return err
 	}
 
-	c.Target = Target{}
-	if err = c.getTargetGroup(cfg); err != nil {
-		return err
-	}
+	if cmd == "tuning" {
+		c.Target = Target{}
+		if err = c.getTargetGroup(cfg); err != nil {
+			return err
+		}
 
-	c.BenchGroup = []BenchGroup{}
-	if err = c.getBenchGroup(cfg); err != nil {
-		return err
+		c.BenchGroup = []BenchGroup{}
+		if err = c.getBenchGroup(cfg); err != nil {
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -108,6 +109,11 @@ func (c *KeentunedConf) updateDefault(cfg *ini.File, cmd string) error {
 	if cmd == "training" {
 		c.Sensitize.Algorithm = algo
 		// todo required: epoch ...
+		epoch := empty.Key("EPOCH").MustInt(100)
+		if epoch == 0 {
+			return fmt.Errorf("EPOCH is required > 0")
+		}
+		c.Sensitize.BenchRound = epoch
 	}
 
 	return nil
@@ -206,4 +212,3 @@ func Backup(fileName, jobName string, cmd string) error {
 
 	return nil
 }
-

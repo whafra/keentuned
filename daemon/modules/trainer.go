@@ -9,14 +9,17 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
+	"os"
+	"strings"
 )
 
 // Tuner define a tuning job include Algorithm, Benchmark, Group
 type Trainer struct {
-	Data   string
-	Job    string
-	Trials int
-	Config string
+	Data       string
+	Job        string
+	Trials     int
+	Config     string
+	BenchRound int
 }
 
 // Tune : tuning main process
@@ -60,7 +63,7 @@ func (tuner *Tuner) CreateTrainJob() error {
 
 	jobInfo := []string{
 		tuner.Job, tuner.StartTime.Format(Format), NA, NA, fmt.Sprint(tuner.Trials), Run,
-		"0", log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
+		fmt.Sprint(tuner.BenchRound), log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
 	}
 	return file.Insert(getSensitizeJobFile(), jobInfo)
 }
@@ -91,13 +94,13 @@ func (tuner *Tuner) initiateSensitization() error {
 }
 
 func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, error) {
+
 	/*
 		var sensitizeParams struct {
 			Success bool        `json:"suc"`
 			Result  []Parameter `json:"result"`
 			Msg     interface{} `json:"msg"`
-		}
-	*/
+		}*/
 
 	var sensitizeParams struct {
 		Success bool        `json:"suc"`
@@ -123,37 +126,33 @@ func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, erro
 	if !sensitizeParams.Success {
 		return "", nil, fmt.Errorf("error msg:%v", sensitizeParams.Msg)
 	}
-	fmt.Println("%v", sensitizeParams)
-	return "", nil, fmt.Errorf("get sensitivity result is nil")
-	/*
-			domainMap := make(map[string][]map[string]interface{})
-			resultMap := make(map[string]interface{})
-			var resultSlice [][]string
-			if len(sensitizeParams.Result) > 0 {
-				resultSlice = append(resultSlice, []string{"parameter name", "sensitivity ratio"})
-			}
 
-				for _, param := range sensitizeParams.Result {
-					paramInfo := map[string]interface{}{
-						param.ParaName: map[string]interface{}{"weight": param.Weight},
-					}
+	sensiResultCsv := fmt.Sprintf("%v/sensi_result.csv", config.GetSensitizePath(tuner.Job))
+	sensiResultHeader := strings.Split(sensitizeParams.Head, ",")
+	if len(sensitizeParams.Result) == 0 || len(sensitizeParams.Result[0]) != len(sensiResultHeader) {
+		return "", nil, fmt.Errorf("error msg:Header does not match param")
+	}
 
-					resultSlice = append(resultSlice, []string{param.ParaName, fmt.Sprint(param.Weight)})
-					domainMap[param.DomainName] = append(domainMap[param.DomainName], paramInfo)
-				}
+	if !file.IsPathExist(sensiResultCsv) {
+		err := file.CreatCSV(sensiResultCsv, sensiResultHeader)
+		if err != nil {
+			fmt.Printf("%v create sensitize jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
+		}
+	}
+	var resultSlice [][]string
+	resultSlice = append(resultSlice, sensiResultHeader)
 
-				for domain, paramSlice := range domainMap {
-					paramMap := make(map[string]interface{})
-					for _, info := range paramSlice {
-						for name, value := range info {
-							paramMap[name] = value
-						}
-					}
-					resultMap[domain] = paramMap
-				}
+	for _, paramSlice := range sensitizeParams.Result {
+		var endInfo []string
+		for _, param := range paramSlice {
+			endInfo = append(endInfo, fmt.Sprint(param))
+		}
+		resultSlice = append(resultSlice, endInfo)
+		file.Insert(sensiResultCsv, endInfo)
+	}
+	return utils.FormatInTable(resultSlice), nil, nil
 
-		return utils.FormatInTable(resultSlice), resultMap, nil
-	*/
 }
 
 func (tuner *Tuner) dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {

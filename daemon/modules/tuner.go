@@ -218,8 +218,8 @@ func (tuner *Tuner) end() {
 		endInfo[tuneEndIdx] = start.Format(Format)
 		endInfo[tuneCostIdx] = endTime(int64(totalTime))
 	} else if tuner.Flag == "training" {
-               endInfo[trainEndIdx] = start.Format(Format)
-               endInfo[trainCostIdx] = endTime(int64(totalTime))
+		endInfo[trainEndIdx] = start.Format(Format)
+		endInfo[trainCostIdx] = endTime(int64(totalTime))
 	}
 
 	tuner.updateJob(endInfo)
@@ -315,4 +315,3 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
 }
-
