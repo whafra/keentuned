@@ -72,7 +72,7 @@ func (c *KeentunedConf) update(fileName, cmd string) error {
 		}
 
 		c.BenchGroup = []BenchGroup{}
-		if err = c.getBenchGroup(cfg); err != nil {
+		if err = c.getBenchGroup(cfg, true); err != nil {
 			return err
 		}
 	}
@@ -108,7 +108,6 @@ func (c *KeentunedConf) updateDefault(cfg *ini.File, cmd string) error {
 
 	if cmd == "training" {
 		c.Sensitize.Algorithm = algo
-		// todo required: epoch ...
 		epoch := empty.Key("EPOCH").MustInt(100)
 		if epoch == 0 {
 			return fmt.Errorf("EPOCH is required > 0")

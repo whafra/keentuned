@@ -236,12 +236,12 @@ func endTime(cost int64) string {
 	min := cost % 3600
 	m := min / 60
 	sec := min % 60
-
-	if h > 1 {
+		
+	if h >= 1 {
 		return fmt.Sprintf("%dh%dm%vs", h, m, sec)
 	}
 
-	if m > 1 {
+	if m >= 1 {
 		return fmt.Sprintf("%dm%vs", m, sec)
 	}
 

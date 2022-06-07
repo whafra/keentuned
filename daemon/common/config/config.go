@@ -172,7 +172,7 @@ func (c *KeentunedConf) Save() error {
 		return err
 	}
 
-	if err = c.getBenchGroup(cfg); err != nil {
+	if err = c.getBenchGroup(cfg, false); err != nil {
 		return err
 	}
 
@@ -257,7 +257,7 @@ func hasGroupSections(cfg *ini.File, groupNames *[]string, sectionPrefix string)
 	return len(*groupNames) != 0
 }
 
-func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
+func (c *KeentunedConf) getBenchGroup(cfg *ini.File, groupOnly bool) error {
 	var groupNames = make([]string, 0)
 	if !hasGroupSections(cfg, &groupNames, BenchSectionPrefix) {
 		return fmt.Errorf("bench-group is null, please configure first")
@@ -290,15 +290,15 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		c.addBenchIPMap(group.SrcIPs, ipExist, id)
 	}
 
+	if groupOnly {
+		return nil
+	}
+
 	return c.getBenchmark(cfg)
 }
 
 func (c *KeentunedConf) getBenchmark(cfg *ini.File) error {
-	bench := cfg.Section("benchmark")
-	if bench == nil {
-		return nil
-	}
-
+	bench := cfg.Section("benchmark")	
 	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
 	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
 	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
