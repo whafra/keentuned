@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	egTune          = "\tkeentune param tune --job tune_test --iteration 10\n\tkeentune param tune --job tune_test"
+	egTune          = "\tkeentune param tune --job tune_test --iteration 100"
 	egDump          = "\tkeentune param dump --job tune_test"
 	egParamDel      = "\tkeentune param delete --job tune_test"
 	egParamList     = "\tkeentune param list"
@@ -26,7 +26,7 @@ func createParamCmds() *cobra.Command {
 		Use:     "param [command]",
 		Short:   "Dynamic parameter tuning with AI algorithms",
 		Long:    "Dynamic parameter tuning with AI algorithms",
-		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s\n%s", egParamDel, egDump, egJobs, egParamList, egParamRollback, egParamStop, egTune),
+		Example: egTune,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if args[0] != "--help" && args[0] != "-h" && args[0] != "tune" && args[0] != "list" && args[0] != "jobs" && args[0] != "delete" && args[0] != "dump" && args[0] != "rollback" && args[0] != "stop" {

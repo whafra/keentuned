@@ -13,7 +13,7 @@ import (
 
 const (
 	egCollect       = "\tkeentune sensitize collect --data collect_test --iteration 10"
-	egTrain         = "\tkeentune sensitize train --data collect_test --output train_test --trials 2"
+	egTrain         = "\tkeentune sensitize train --data tune_test --output train_test --trials 2"
 	egDelete        = "\tkeentune sensitize delete --data collect_test"
 	egSensitiveList = "\tkeentune sensitize list"
 	egSensitiveStop = "\tkeentune sensitize stop"
@@ -24,7 +24,7 @@ func createSensitizeCmds() *cobra.Command {
 		Use:     "sensitize [command]",
 		Short:   "Sensitive parameter identification and explanation with AI algorithms",
 		Long:    "Sensitive parameter identification and explanation with AI algorithms",
-		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s", egCollect, egDelete, egSensitiveList, egSensitiveStop, egTrain),
+		Example: egTrain,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if args[0] != "--help" && args[0] != "-h" && args[0] != "collect" && args[0] != "list" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {

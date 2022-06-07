@@ -13,7 +13,7 @@ import (
 
 const (
 	egInfo         = "\tkeentune profile info --name cpu_high_load.conf"
-	egSet          = "\tkeentune profile set --group1 cpu_high_load.conf"
+	egSet          = "\tkeentune profile set cpu_high_load.conf"
 	egGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
 	egProfDelete   = "\tkeentune profile delete --name tune_test.conf"
 	egProfList     = "\tkeentune profile list"
@@ -25,7 +25,7 @@ func createProfileCmds() *cobra.Command {
 		Use:     "profile [command]",
 		Short:   "Static tuning with expert profiles",
 		Long:    "Static tuning with expert profiles",
-		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s", egProfDelete, egGenerate, egInfo, egProfList, egProfRollback, egSet),
+		Example: egSet,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 0 {
 				if args[0] != "--help" && args[0] != "-h" && args[0] != "generate" && args[0] != "list" && args[0] != "set" && args[0] != "delete" && args[0] != "info" && args[0] != "rollback" {
