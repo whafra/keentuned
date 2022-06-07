@@ -22,7 +22,7 @@ KeenTune中提供了多个专家调优方案，可以对操作系统内核参数
 + 验证net_low_latency.conf（网络低时延）优化效果，使用wrk工具，参考[《wrk安装使用手册》](../benchmark-tools/wrk_cn.md)
 
 #### step 3. KeenTune设置专家调优方案
-使用KeenTune设置对应的专家调优方案到实验环境中，具体步骤参考[《KeenTune专家调优手册》](../tuning_cn.md)
+使用KeenTune设置对应的专家调优方案到实验环境中，具体步骤参考[《KeenTune专家调优手册》](../profile_cn.md)
 
 #### step 4. 验证优化结果
 再次运行benchmark工具，观察优化效果  
