@@ -28,6 +28,22 @@ def warppingCheck():
 
 
 if __name__ == "__main__":
-    version_in_spec, release_in_spec = warppingCheck()
+    version_in_spec, _ = warppingCheck()
+    if os.path.exists("keentuned-{}".format(version_in_spec)):
+        os.system("rm -rf keentuned-{}".format(version_in_spec))
+    os.system("mkdir keentuned-{}".format(version_in_spec))
     os.system("go mod vendor")
-    os.system("tar -cvzf keentuned-{}.tar.gz cli daemon docs vendor go.mod go.sum keentuned.conf keentuned.service LICENSE Makefile README.md".format(version_in_spec))
+
+    os.system("cp -r cli keentuned-{}".format(version_in_spec))
+    os.system("cp -r daemon keentuned-{}".format(version_in_spec))
+    os.system("cp -r docs keentuned-{}".format(version_in_spec))
+    os.system("cp -r vendor keentuned-{}".format(version_in_spec))
+    os.system("cp go.mod keentuned-{}".format(version_in_spec))
+    os.system("cp go.sum keentuned-{}".format(version_in_spec))
+    os.system("cp keentuned.conf keentuned-{}".format(version_in_spec))
+    os.system("cp keentuned.service keentuned-{}".format(version_in_spec))
+    os.system("cp LICENSE keentuned-{}".format(version_in_spec))
+    os.system("cp Makefile keentuned-{}".format(version_in_spec))
+    os.system("cp README.md keentuned-{}".format(version_in_spec))
+
+    os.system("tar -cvzf keentuned-{}.tar.gz keentuned-{}".format(version_in_spec, version_in_spec))
