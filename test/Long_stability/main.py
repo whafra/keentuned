@@ -4,6 +4,7 @@ import unittest
 
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
+from common import deleteDependentData
 from Long_stability.test_long_stability import TestLongStability
 
 
