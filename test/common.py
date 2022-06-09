@@ -71,7 +71,8 @@ def deleteDependentData(param_name):
 
 def runParamTune(name, iteration=1):
     cmd = 'keentune param tune -i {} --job {}'.format(iteration, name)
-    _, output, _ = sysCommand(cmd)
+    status, output, _ = sysCommand(cmd)
+    assert status == 0
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
     while True:
@@ -109,7 +110,8 @@ def runProfileSet():
 
 def runSensitizeCollect(name, iteration=10):
     cmd = 'keentune sensitize collect -i {} --data {}'.format(iteration, name)
-    _, output, _ = sysCommand(cmd)
+    status, output, _ = sysCommand(cmd)
+    assert status == 0
     path = re.search(r'\s+"(.*?)"', output).group(1)
     time.sleep(3)
     while True:
