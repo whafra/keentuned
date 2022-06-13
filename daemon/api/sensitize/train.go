@@ -37,16 +37,13 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 
 func runTrain(flags TrainFlag) {
 	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
-	com.SetRunningTask(com.JobTraining, flags.Data)
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
-		config.ReSet()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
-		com.ClearTask()
 	}()
 
-	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data [%v] start.", flags.Data)
+	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data '%v' start, and algorithm is %v.", flags.Data, config.KeenTune.Sensitize.Algorithm)
 
 	if err := TrainImpl(flags, "training"); err != nil {
 		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
@@ -70,3 +67,4 @@ func TrainImpl(flag TrainFlag, cmd string) error {
 	tuner.Train()
 	return nil
 }
+

@@ -31,7 +31,7 @@ func (tuner *Tuner) Train() {
 		return
 	}
 
-	defer tuner.parseTuningError(err)
+	defer func() { tuner.parseTuningError(err) }()
 
 	if err = tuner.initiateSensitization(); err != nil {
 		return
