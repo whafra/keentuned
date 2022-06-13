@@ -102,7 +102,10 @@ func (tuner *Tuner) parseTuningError(err error) {
 		return
 	}
 
-	tuner.rollback()
+	if tuner.Flag == "tuning" {
+		tuner.rollback()
+	}
+	
 	if strings.Contains(err.Error(), "interrupted") {
 		tuner.updateStatus(Stop)
 		log.Infof(tuner.logName, "parameter optimization job abort!")
