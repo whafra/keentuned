@@ -241,3 +241,11 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 	return offline
 }
 
+func CheckBrainClient() error {
+	if isBrainOffline() {
+		return fmt.Errorf("brain client is offline, please get it ready")
+	}
+
+	return nil
+}
+

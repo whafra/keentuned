@@ -29,7 +29,7 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	if err := com.HeartbeatCheck(); err != nil {
+	if err := com.CheckBrainClient(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
 
