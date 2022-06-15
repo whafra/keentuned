@@ -61,12 +61,12 @@ func (tuner *Tuner) dump(option string) {
 	var suffix string
 	switch option {
 	case baseOpt:
-		if !config.KeenTune.DumpConf.BaseDump || tuner.isSensitize {
+		if !config.KeenTune.BaseDump || tuner.isSensitize {
 			return
 		}
 		suffix = "_base.json"
 	case processOpt:
-		if !config.KeenTune.DumpConf.ExecDump {
+		if !config.KeenTune.ExecDump {
 			return
 		}
 		suffix = fmt.Sprintf("_round_%v.json", tuner.Iteration)
@@ -75,7 +75,7 @@ func (tuner *Tuner) dump(option string) {
 	}
 
 	for index := range tuner.Group {
-		if config.KeenTune.DumpConf.BaseDump {
+		if config.KeenTune.BaseDump {
 			tuner.Group[index].Dump.Round = -1
 		}
 
@@ -211,3 +211,4 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 
 	return nil
 }
+

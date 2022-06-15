@@ -60,7 +60,7 @@ func (tuner *Tuner) benchmark() error {
 		round = int(tuner.Group[0].Dump.budget)
 	} else {
 		if tuner.isSensitize {
-			round = config.KeenTune.Sensitize.BenchRound
+			round = config.KeenTune.SensiBenchRound
 		} else {
 			round = config.KeenTune.ExecRound
 		}

@@ -51,7 +51,7 @@ func runTuning(flag TuneFlag) {
 		com.ClearTask()
 	}()
 
-	log.Infof(log.ParamTune, "Step1. Parameter auto tuning start, using algorithm = %v.\n", config.KeenTune.Algorithm)
+	log.Infof(log.ParamTune, "Step1. Parameter auto tuning start, using algorithm = %v.\n", config.KeenTune.TuneAlgorithm)
 	if err := TuningImpl(flag, "tuning"); err != nil {
 		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
 		return
@@ -76,13 +76,13 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 	}
 
 	if cmd == "tuning" {
-		tuner.Algorithm = config.KeenTune.Algorithm
+		tuner.Algorithm = config.KeenTune.TuneAlgorithm
 		tuner.Tune()
 		return nil
 	}
 
 	if cmd == "collect" {
-		tuner.Algorithm = config.KeenTune.Sensitize.Algorithm
+		tuner.Algorithm = config.KeenTune.SensiAlgorithm
 		tuner.Collect()
 		return nil
 	}

@@ -33,10 +33,11 @@ func runCollect(flag param.TuneFlag) {
 		com.ClearTask()
 	}()
 
-	log.Infof(log.SensitizeCollect, "Step1. Parameter auto Sensitize start, using algorithm = %v.", config.KeenTune.Sensitize.Algorithm)
+	log.Infof(log.SensitizeCollect, "Step1. Parameter auto Sensitize start, using algorithm = %v.", config.KeenTune.SensiAlgorithm)
 
 	if err := param.TuningImpl(flag, "collect"); err != nil {
 		log.Errorf(log.SensitizeCollect, "Sensitize Collect failed, msg:[%v]", err)
 		return
 	}
 }
+

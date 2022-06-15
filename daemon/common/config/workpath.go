@@ -7,11 +7,11 @@ import (
 )
 
 func GetTuningWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "parameter", fileName)
 }
 
 func GetGenerateWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter/generate", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "parameter/generate", fileName)
 }
 
 func GetBenchHomePath() string {
@@ -19,11 +19,11 @@ func GetBenchHomePath() string {
 }
 
 func GetProfileWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "profile", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "profile", fileName)
 }
 
 func GetSensitizePath() string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize", "")
+	return assembleFilePath(KeenTune.DumpHome, "sensitize", "")
 }
 
 func GetParamHomePath() string {
@@ -39,7 +39,7 @@ func GetProfileHomePath(fileName string) string {
 }
 
 func GetDumpCSVPath() string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "csv", "")
+	return assembleFilePath(KeenTune.DumpHome, "csv", "")
 }
 
 func assembleFilePath(prefix, partition, fileName string) string {
@@ -101,7 +101,7 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 	// Only a file name, work directory has priority
 	case 1:
 		if strings.Contains(parts[0], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpConf.DumpHome, class, parts[0])
+			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpHome, class, parts[0])
 			if file.IsPathExist(workPath) {
 				return workPath
 			}
@@ -109,12 +109,12 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 			return fmt.Sprintf("%s/%s/%s", KeenTune.Home, class, parts[0])
 		}
 
-		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpConf.DumpHome, class, parts[0], parts[0], extraSufix)
+		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpHome, class, parts[0], parts[0], extraSufix)
 	// File relative path, work directory has priority
 	default:
 		// If the first element of the split has the same name as the specified class, then it will Trim the class+"/"
 		if strings.Contains(parts[partLen-1], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
+			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
 			if file.IsPathExist(workPath) {
 				return workPath
 			}
@@ -122,7 +122,7 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 			return fmt.Sprintf("%s/%s/%s", KeenTune.Home, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
 		}
 
-		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
+		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
 	}
 }
 
