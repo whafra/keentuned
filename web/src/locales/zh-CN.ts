@@ -1,20 +1,14 @@
-import component from './zh-CN/component';
-import globalHeader from './zh-CN/globalHeader';
 import menu from './zh-CN/menu';
+import pages from './zh-CN/pages';
 import pwa from './zh-CN/pwa';
 import settingDrawer from './zh-CN/settingDrawer';
-import settings from './zh-CN/settings';
-import pages from './zh-CN/pages';
+
 
 export default {
   'navBar.lang': '语言',
   'layout.user.link.help': '帮助',
   'layout.user.link.privacy': '隐私',
   'layout.user.link.terms': '条款',
-  'app.copyright.produced': '蚂蚁集团体验技术部出品',
-  'app.preview.down.block': '下载此页面到本地项目',
-  'app.welcome.link.fetch-blocks': '获取全部区块',
-  'app.welcome.link.block-list': '基于 block 开发，快速构建标准页面',
 
   // --------------------
   'operations': '操作',
@@ -24,6 +18,7 @@ export default {
   'edit': '编辑',
   'set': '设置',
   'rollback': '回滚',
+  'rerun': '重跑',
   //
   'confirm.title': '删除提示',
   'confirm.content': '确定要删除吗？',
@@ -36,12 +31,13 @@ export default {
   'btn.update': '更新',
   'Input.placeholder': '请输入',
   'Input.rules.message': '仅允许包含字母、数字、下划线、中划线、点，最长32个字符',
-
-  ...pages,
-  ...globalHeader,
+  // 分页
+  'total': '共',
+  'records': '条记录 第',
+  'page': '页',
+  
   ...menu,
+  ...pages,
   ...settingDrawer,
-  ...settings,
   ...pwa,
-  ...component,
 };

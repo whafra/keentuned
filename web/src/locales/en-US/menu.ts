@@ -1,11 +1,6 @@
 export default {
   'menu.more-blocks': 'More Blocks',
   'menu.home': 'Home',
-  'menu.admin': 'Admin',
-  'menu.admin.sub-page': 'Sub-Page',
-  'menu.login': 'Login',
-  'menu.register': 'Register',
-  'menu.register-result': 'Register Result',
   //
   'menu.list': '列表',
   'menu.list.static-page': '静态调优任务记录',
