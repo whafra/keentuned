@@ -29,6 +29,7 @@ func registerRouter() {
 	http.HandleFunc("/status", status)
 	http.HandleFunc("/cmd", command)
 	http.HandleFunc("/write", write)
+	http.HandleFunc("/read", read)
 }
 
 func write(w http.ResponseWriter, r *http.Request) {
@@ -308,7 +309,7 @@ func handleTuneCmd(originCmd string, cmd string) (string, error) {
 		return originCmd, nil
 	}
 
-	matched, err := parseConfigFlag(originCmd, cmd)
+	matched, err := parseConfigFlag(originCmd)
 	if err != nil {
 		return matched, err
 	}
@@ -316,14 +317,17 @@ func handleTuneCmd(originCmd string, cmd string) (string, error) {
 	var retCmd string
 	if cmd == "tuning" {
 		retCmd = strings.ReplaceAll(originCmd, matched, config.TuneTempConf)
+		err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
+		config.SetCacheConfig(matched)
 	} else if cmd == "training" {
 		retCmd = strings.ReplaceAll(originCmd, matched, config.SensitizeTempConf)
+		err = ioutil.WriteFile(config.SensitizeTempConf, []byte(strings.Trim(matched, "\"")), 0666)
 	}
 
-	return retCmd, nil
+	return retCmd, err
 }
 
-func parseConfigFlag(originCmd string, cmd string) (string, error) {
+func parseConfigFlag(originCmd string) (string, error) {
 	configPart := strings.Split(originCmd, "--config")
 	if len(configPart) < 2 {
 		return "", fmt.Errorf("split --config length less than 2")
@@ -357,16 +361,6 @@ func parseConfigFlag(originCmd string, cmd string) (string, error) {
 		return "", fmt.Errorf("config info not found in '%v'", originCmd)
 	}
 
-	if cmd == "tuning" {
-		err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
-	} else if cmd == "training" {
-		err = ioutil.WriteFile(config.SensitizeTempConf, []byte(strings.Trim(matched, "\"")), 0666)
-	}
-
-	if err != nil {
-		return "", err
-	}
-
 	return matched, nil
 }
 
@@ -388,7 +382,7 @@ func parseFlag(originCmd, flagName string, short ...string) (string, error) {
 
 	values := strings.Split(flagParts[1], " ")
 	if len(values) == 0 {
-		return "", fmt.Errorf("--config is null")
+		return "", fmt.Errorf("%v is null", flagName)
 	}
 
 	var flagValue string
@@ -408,3 +402,4 @@ func parseFlag(originCmd, flagName string, short ...string) (string, error) {
 
 	return flagValue, nil
 }
+

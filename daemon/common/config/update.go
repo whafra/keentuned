@@ -12,6 +12,10 @@ import (
 	"github.com/go-ini/ini"
 )
 
+var (
+	tuneConfig string
+)
+
 func ReSet() error {
 	backupConf := new(KeentunedConf)
 	err := backupConf.Save()
@@ -49,12 +53,6 @@ func update(fileName, cmd string) error {
 }
 
 func (c *KeentunedConf) update(fileName, cmd string) error {
-	backupConf := new(KeentunedConf)
-	err := utils.DeepCopy(backupConf, c)
-	if err != nil {
-		return fmt.Errorf("deep copy: %v", err)
-	}
-
 	cfg, err := ini.InsensitiveLoad(fileName)
 	if err != nil {
 		return fmt.Errorf("failed to parse %s, %v", fileName, err)
@@ -211,3 +209,54 @@ func Backup(fileName, jobName string, cmd string) error {
 
 	return nil
 }
+
+func SetCacheConfig(info string) {
+	tuneConfig = info
+}
+
+func GetCacheConfig() string {
+	var retConfig string
+	retConfig = tuneConfig
+	tuneConfig = ""
+
+	return retConfig
+}
+
+func GetJobGroup(job string) (string, string, error) {
+	tmpConfig := new(KeentunedConf)
+	jobConf := GetTuningPath(job) + "/keentuned.conf"
+	cfg, err := ini.InsensitiveLoad(jobConf)
+	if err != nil {
+		return "", "", fmt.Errorf("failed to parse %s, %v", jobConf, err)
+	}
+
+	err = tmpConfig.getBenchGroup(cfg, true)
+	if err != nil {
+		return "", "", fmt.Errorf("parse bench group %v", err)
+	}
+
+	var benchGroup string
+	for index, bench := range tmpConfig.BenchGroup {
+		benchGroup += fmt.Sprintf("[bench-group-%v]\n", index+1)
+		benchGroup += fmt.Sprintf("BENCH_SRC_IP = %v\n", strings.Join(bench.SrcIPs, ","))
+		benchGroup += fmt.Sprintf("BENCH_SRC_PORT = %v\n", bench.SrcPort)
+		benchGroup += fmt.Sprintf("BENCH_DEST_IP = %v\n", bench.DestIP)
+		benchGroup += fmt.Sprintf("BENCH_DEST_PORT = %v\n", bench.DestPort)
+	}
+
+	err = tmpConfig.getTargetGroup(cfg)
+	if err != nil {
+		return "", "", fmt.Errorf("parse target group %v", err)
+	}
+
+	var targetGroup string
+	for _, group := range tmpConfig.Target.Group {
+		targetGroup += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
+		targetGroup += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+		targetGroup += fmt.Sprintf("TARGET_PORT = %v\n", group.Port)
+		targetGroup += fmt.Sprintf("PARAMETER = %v\n", group.ParamConf)
+	}
+
+	return benchGroup, targetGroup, nil
+}
+
