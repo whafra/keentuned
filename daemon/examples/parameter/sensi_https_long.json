@@ -13,6 +13,18 @@
         "net.ipv4.conf.all.secure_redirects":{
             "dtype":"string",
             "options":["0","1"]
+        },
+        "net.core.dev_weight":{
+            "dtype":"int",
+            "range":[16,1024]
+        },
+        "net.ipv4.tcp_ecn":{
+            "dtype":"string",
+            "options":["0","1","2"]
+        },
+        "net.ipv4.tcp_sack":{
+            "dtype":"string",
+            "options":["0","1"]
         }
     },
     "nginx":{
@@ -23,6 +35,14 @@
         "keepalive_requests": {
             "dtype": "int",
             "range": [10,1000]
+        },
+        "client_header_buffer_size": {
+            "dtype": "string",
+            "options": ["2k","4k","8k","16k","32k","64k"]
+        },
+        "sendfile": {
+            "dtype": "string",
+            "options": ["on","off"]
         }
     }
 }
