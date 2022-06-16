@@ -137,11 +137,12 @@ func readTuneInfo(job string, result *string) error {
 
 	resp.Iteration = iteration
 
-	matchedConfig, err := parseConfigFlag(cmd)
+	replacedCmd := strings.ReplaceAll(cmd,"'","\"")
+	matchedConfig, err := parseConfigFlag(replacedCmd)
 	if err != nil {
 		return err
 	}
-	for _, info := range strings.Split(matchedConfig, "\n") {
+	for _, info := range strings.Split(matchedConfig, "\\n") {
 		if strings.TrimSpace(info) == "" {
 			continue
 		}

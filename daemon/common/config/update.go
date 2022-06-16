@@ -211,7 +211,7 @@ func Backup(fileName, jobName string, cmd string) error {
 }
 
 func SetCacheConfig(info string) {
-	tuneConfig = info
+	tuneConfig = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(info,"\n","\\n"),"\"","'"),"''","'")
 }
 
 func GetCacheConfig() string {
