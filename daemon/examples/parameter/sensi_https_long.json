@@ -1,48 +1,44 @@
 {
     "sysctl":{
-        "net.core.optmem_max":{
+        "net.core.busy_poll":{
             "dtype":"int",
-            "range":[20480,204800],
-            "step":20480
+            "range":[0,200]
         },
-        "vm.watermark_scale_factor":{
+        "net.ipv4.tcp_keepalive_intvl":{
             "dtype":"int",
-            "range":[10,1000],
-            "step":10
+            "range":[30,300]
         },
-        "net.ipv4.conf.all.secure_redirects":{
-            "dtype":"string",
-            "options":["0","1"]
+        "net.ipv4.tcp_retries2":{
+            "dtype":"int",
+            "range":[3,30]
+        },
+        "fs.aio-max-nr":{
+            "dtype":"int",
+            "range":[102400,10240000]
         },
         "net.core.dev_weight":{
             "dtype":"int",
             "range":[16,1024]
         },
-        "net.ipv4.tcp_ecn":{
-            "dtype":"string",
-            "options":["0","1","2"]
+        "net.ipv4.tcp_keepalive_probes":{
+            "dtype":"int",
+            "range":[3,144]
         },
-        "net.ipv4.tcp_sack":{
+        "kernel.shmall":{
+            "dtype":"int",
+            "range":[1073741824,8589934592]
+        },
+        "vm.zone_reclaim_mode":{
+            "dtype":"string",
+            "options":["0","1","2","4"]
+        },
+        "net.ipv4.tcp_moderate_rcvbuf":{
             "dtype":"string",
             "options":["0","1"]
-        }
-    },
-    "nginx":{
-        "ssl_buffer_size": {
-            "dtype": "string",
-            "options": ["64","128","526","4k","64k","256k","1m","4m"]
         },
-        "keepalive_requests": {
-            "dtype": "int",
-            "range": [10,1000]
-        },
-        "client_header_buffer_size": {
-            "dtype": "string",
-            "options": ["2k","4k","8k","16k","32k","64k"]
-        },
-        "sendfile": {
-            "dtype": "string",
-            "options": ["on","off"]
+        "net.ipv4.conf.all.accept_redirects":{
+            "dtype":"string",
+            "options":["0","1"]
         }
     }
 }
