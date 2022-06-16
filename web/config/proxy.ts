@@ -9,12 +9,12 @@
 export default {
   dev: {
     '/var/': {
-      target: 'https://anolis-service-daily.oss-cn-zhangjiakou.aliyuncs.com/',
+      target: 'http://127.0.0.1:8082',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },
     '/cmd': {
-      target: 'http://60.205.156.17:9871',
+      target: 'http://127.0.0.1:8082',
       changeOrigin: true,
       pathRewrite: { '^': '' },
     },

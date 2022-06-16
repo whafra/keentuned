@@ -1,0 +1,91 @@
+@import '~antd/lib/style/themes/default.less';
+@pro-header-hover-bg: rgba(0, 0, 0, 0.025);
+
+.home_root {
+  display: flex;
+  justify-content: center;
+  //
+  position: relative;
+ 
+  .content {
+    width: 100%; // 1280px;
+    position: relative;
+    //
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+       
+      .KeenTune_logo {
+        height: 64px;
+        width: auto;
+        margin-left: -100px;
+        margin-bottom: 30px;
+      }
+    }
+
+    .home_link {
+      display: flex;
+      justify-content: center;
+      margin-top: 60px;
+      // margin-bottom: 60px;
+      & > span:nth-child(1) {
+        font-family: PingFangSC-Regular;
+        font-size: 16px;
+        color: #000;
+        letter-spacing: 0;
+      }
+      & > a {
+        font-family: PingFangSC-Regular;
+        font-size: 16px;
+        color: #0079FE;
+        letter-spacing: 0;
+        //
+        // cursor: pointer;
+      }
+    }
+
+
+    // .title {
+    //   font-family: PingFangSC-Semibold;
+    //   font-size: 34px;
+    //   color: #000000;
+    //   letter-spacing: 0;
+    //   margin: 60px 0px;
+    // }
+
+    .footer_position {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translate(-50%, 0);
+    }
+
+  }
+
+  .position_img {
+    position: absolute; top:20px; right:84px;
+    .action {
+      display: flex;
+      align-items: center;
+      height: 48px;
+      padding: 0 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      > span {
+        vertical-align: middle;
+      }
+      &:hover {
+        background: @pro-header-hover-bg;
+      }
+      &:global(.opened) {
+        background: @pro-header-hover-bg;
+      }
+    }
+  }
+
+}
