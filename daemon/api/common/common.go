@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -165,8 +164,11 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
-	primaryKeys := []string{flag.Name}
-	file.DeleteRow(tuningCsv, primaryKeys)
+	
+	if flag.Cmd == "param" {
+		primaryKeys := []string{flag.Name}
+		file.DeleteRow(tuningCsv, primaryKeys)
+	}
 
 	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
 	return nil
@@ -211,12 +213,7 @@ func (d *deleter) check(inputName string) error {
 		return nil
 	}
 
-	activeNameBytes, err := ioutil.ReadFile(activeFileName)
-	if err != nil {
-		return fmt.Errorf("read file :%v err:%v", activeFileName, err)
-	}
-
-	if strings.Contains(string(activeNameBytes), inputName) && string(activeNameBytes) != "" {
+	if file.HasRecord(activeFileName, "name", inputName) {
 		return fmt.Errorf("%v is active profile, please run \"keentune profile rollback\" before delete", inputName)
 	}
 
