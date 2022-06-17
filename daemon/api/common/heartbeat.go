@@ -29,14 +29,14 @@ func HeartbeatCheck() error {
 	}
 	log.Info("", "\tKeenTuned heartbeat check : keentuned and client connection success")
 
-	go monitorClientStatus(clientName)
+	go monitorClientStatus(IsClientOffline, clientName, nil)
 	return nil
 }
 
-func monitorClientStatus(clientName *string) {
+func monitorClientStatus(monitor interface{}, clientName *string, group []bool) {
 	signalChan := make(chan os.Signal, 1)
 
-	// notify sysem signal, such as ctrl + C
+	// notify system signal, such as ctrl + C
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	var faultCount int
@@ -45,9 +45,9 @@ func monitorClientStatus(clientName *string) {
 	for {
 		select {
 		case <-ticker.C:
-			if IsClientOffline(clientName) {
+			if monitorImply(monitor, clientName, group) {
 				faultCount++
-				log.Infof("", "keentuned detected that the client was offline for the %vth time", faultCount)
+				log.Infof("", "keentuned detected that '%v' was offline for the %vth time", *clientName, faultCount)
 			}
 
 			if faultCount == MaxReconnectionTime {
@@ -73,6 +73,17 @@ func monitorClientStatus(clientName *string) {
 	}
 }
 
+func monitorImply(monitor interface{}, clientName *string, group []bool) bool {
+	switch f := monitor.(type) {
+	case func(*string) bool:
+		return f(clientName)
+	case func([]bool, *string) bool:
+		return f(group, clientName)
+	}
+
+	return false
+}
+
 func IsClientOffline(clientName *string) bool {
 	var offline = false
 	offline = IsTargetOffline(clientName)
@@ -81,10 +92,8 @@ func IsClientOffline(clientName *string) bool {
 	offline = offline || benchStatus
 
 	// check brain
-	if isBrainOffline() {
-		*clientName += fmt.Sprintf("brain client")
-		offline = true
-	}
+	brainOffline := isBrainOffline(clientName)
+	offline = offline || brainOffline
 
 	*clientName = strings.TrimSuffix(*clientName, ", ")
 	return offline
@@ -147,10 +156,11 @@ func StartCheck() error {
 	return nil
 }
 
-func isBrainOffline() bool {
+func isBrainOffline(clientName *string) bool {
 	url := fmt.Sprintf("%v:%v/sensitize_list", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
 	_, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
+		*clientName += fmt.Sprintf("brain client")
 		return true
 	}
 
@@ -169,7 +179,7 @@ func ConnectTarget(group []bool) error {
 		return fmt.Errorf(*clientName)
 	}
 
-	go detectSettableTarget(group, clientName)
+	go monitorClientStatus(IsSetTargetOffline, clientName, group)
 	return nil
 }
 
@@ -181,38 +191,6 @@ func checkSettableTarget(group []bool) error {
 	}
 
 	return nil
-}
-
-func detectSettableTarget(group []bool, clientName *string) {
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	var faultCount int
-	ticker := time.NewTicker(time.Duration(config.KeenTune.HeartbeatTime) * time.Second)
-	for {
-		select {
-		case <-ticker.C:
-			if IsSetTargetOffline(group, clientName) {
-				faultCount++
-				log.Infof("", "keentuned detected that  settable target was offline for the %vth time", faultCount)
-			}
-
-			if faultCount == MaxReconnectionTime {
-				log.Info("", "Heartbeat Check settable target is offline")
-				config.ServeFinish <- true
-				return
-			}
-
-		case <-config.ProgramNeedExit:
-			log.Debug("", "Heartbeat Check program is finish")
-			config.ServeFinish <- true
-			return
-		case <-signalChan:
-			log.Debug("", "Heartbeat Check program is interrupt")
-			config.ServeFinish <- true
-			return
-		}
-	}
 }
 
 func IsSetTargetOffline(group []bool, clientName *string) bool {
@@ -242,10 +220,12 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 }
 
 func CheckBrainClient() error {
-	if isBrainOffline() {
+	clientName := new(string)
+	if isBrainOffline(clientName) {
 		return fmt.Errorf("brain client is offline, please get it ready")
 	}
 
+	go monitorClientStatus(isBrainOffline, clientName, nil)
 	return nil
 }
 
