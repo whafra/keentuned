@@ -22,7 +22,7 @@ type Trainer struct {
 	BenchRound int
 }
 
-// Tune : tuning main process
+// Tune : training main process
 func (tuner *Tuner) Train() {
 	var err error
 	tuner.logName = log.SensitizeTrain
@@ -57,8 +57,6 @@ func (tuner *Tuner) Train() {
 }
 
 func (tuner *Tuner) CreateTrainJob() error {
-	//cmd := fmt.Sprintf("keentune sensitize train --data %v --job %v --trials %v --config %v", tuner.Data, tuner.Job, tuner.Trials, tuner.Config)
-
 	log := fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", tuner.Job)
 
 	jobInfo := []string{
@@ -94,13 +92,6 @@ func (tuner *Tuner) initiateSensitization() error {
 }
 
 func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, error) {
-
-	/*
-		var sensitizeParams struct {
-			Success bool        `json:"suc"`
-			Result  []Parameter `json:"result"`
-			Msg     interface{} `json:"msg"`
-		}*/
 
 	var sensitizeParams struct {
 		Success bool        `json:"suc"`
