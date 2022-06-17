@@ -169,7 +169,7 @@ func readTuneInfo(job string, result *string) error {
 			if len(pathParts) < 1 {
 				return fmt.Errorf("bench_config '%v' is abnormal", flagParts[1])
 			}
-			resp.BenchGroup = pathParts[len(pathParts)-1]
+			resp.BenchGroup = fmt.Sprintf("BENCH_CONFIG = %v\n",pathParts[len(pathParts)-1])
 		}
 
 	}

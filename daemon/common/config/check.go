@@ -31,9 +31,7 @@ func checkBenchConf(conf *string) error {
 		return fmt.Errorf("bench file [%v] does not exist", *conf)
 	}
 
-	*conf = benchConf
-
-	reqData, err := ioutil.ReadFile(*conf)
+	reqData, err := ioutil.ReadFile(benchConf)
 	if err != nil {
 		return fmt.Errorf("read bench conf file err: %v", err)
 	}
@@ -374,3 +372,4 @@ func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 	}
 	return nil
 }
+

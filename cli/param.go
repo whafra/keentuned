@@ -79,6 +79,7 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
+			flag.Config = config.GetKeenTunedConfPath(flag.Config)
 			if !file.IsPathExist(flag.Config) {
 				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), flag.Config)
 				os.Exit(1)
@@ -90,7 +91,7 @@ func tuneCmd() *cobra.Command {
 		},
 	}
 
-	setTuneFlag("tune", cmd, &flag)
+	setTuneFlag(cmd, &flag)
 	return cmd
 }
 
@@ -254,3 +255,4 @@ func checkDumpParam(dump *DumpFlag) error {
 
 	return nil
 }
+

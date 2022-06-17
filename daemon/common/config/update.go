@@ -207,11 +207,28 @@ func Backup(fileName, jobName string, cmd string) error {
 		return fmt.Errorf("backup conf%v", err)
 	}
 
+	if fileName != TuneTempConf && cmd == "tuning" {
+		SetCacheConfig(KeenTune.getConfigFlag())
+	}
+
 	return nil
 }
 
+func (c *KeentunedConf) getConfigFlag() string {
+	var configFlag = "\""
+	configFlag += fmt.Sprintf("ALGORITHM = %v\n", c.Brain.Algorithm)
+	configFlag += fmt.Sprintf("BASELINE_BENCH_ROUND = %v\n", c.BaseRound)
+	configFlag += fmt.Sprintf("TUNING_BENCH_ROUND = %v\n", c.ExecRound)
+	configFlag += fmt.Sprintf("RECHECK_BENCH_ROUND = %v\n", c.AfterRound)
+	configFlag += fmt.Sprintf("BENCH_CONFIG = %v\n", c.BenchConf)
+	configFlag += getBenchConf(c.BenchGroup)
+	configFlag += getTargetConf(c.Group)
+	configFlag += "\""
+	return configFlag
+}
+
 func SetCacheConfig(info string) {
-	tuneConfig = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(info,"\n","\\n"),"\"","'"),"''","'")
+	tuneConfig = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(info, "\n", "\\n"), "\"", "'"), "''", "'")
 }
 
 func GetCacheConfig() string {
@@ -235,28 +252,36 @@ func GetJobGroup(job string) (string, string, error) {
 		return "", "", fmt.Errorf("parse bench group %v", err)
 	}
 
-	var benchGroup string
-	for index, bench := range tmpConfig.BenchGroup {
-		benchGroup += fmt.Sprintf("[bench-group-%v]\n", index+1)
-		benchGroup += fmt.Sprintf("BENCH_SRC_IP = %v\n", strings.Join(bench.SrcIPs, ","))
-		benchGroup += fmt.Sprintf("BENCH_SRC_PORT = %v\n", bench.SrcPort)
-		benchGroup += fmt.Sprintf("BENCH_DEST_IP = %v\n", bench.DestIP)
-		benchGroup += fmt.Sprintf("BENCH_DEST_PORT = %v\n", bench.DestPort)
-	}
-
 	err = tmpConfig.getTargetGroup(cfg)
 	if err != nil {
 		return "", "", fmt.Errorf("parse target group %v", err)
 	}
 
-	var targetGroup string
-	for _, group := range tmpConfig.Target.Group {
-		targetGroup += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
-		targetGroup += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
-		targetGroup += fmt.Sprintf("TARGET_PORT = %v\n", group.Port)
-		targetGroup += fmt.Sprintf("PARAMETER = %v\n", group.ParamConf)
+	return getBenchConf(tmpConfig.BenchGroup), getTargetConf(tmpConfig.Group), nil
+}
+
+func getBenchConf(benchGroup []BenchGroup) string {
+	var benchConf string
+	for index, bench := range benchGroup {
+		benchConf += fmt.Sprintf("[bench-group-%v]\n", index+1)
+		benchConf += fmt.Sprintf("BENCH_SRC_IP = %v\n", strings.Join(bench.SrcIPs, ","))
+		benchConf += fmt.Sprintf("BENCH_SRC_PORT = %v\n", bench.SrcPort)
+		benchConf += fmt.Sprintf("BENCH_DEST_IP = %v\n", bench.DestIP)
+		benchConf += fmt.Sprintf("BENCH_DEST_PORT = %v\n", bench.DestPort)
 	}
 
-	return benchGroup, targetGroup, nil
+	return benchConf
+}
+
+func getTargetConf(targetGroup []Group) string {
+	var targetConf string
+	for _, group := range targetGroup {
+		targetConf += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
+		targetConf += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+		targetConf += fmt.Sprintf("TARGET_PORT = %v\n", group.Port)
+		targetConf += fmt.Sprintf("PARAMETER = %v\n", group.ParamConf)
+	}
+
+	return targetConf
 }
 

@@ -160,3 +160,17 @@ func GetBenchJsonPath(fileName string) string {
 
 	return fmt.Sprintf("%v/%v", GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
 }
+
+func GetKeenTunedConfPath(origin string) string {
+	if origin == "" {
+		return keentuneConfigFile
+	}
+
+	if strings.HasPrefix(origin, "/") {
+		return origin
+	}
+
+	fullPath := fmt.Sprintf("%v/conf/%v", KeenTune.Home, strings.TrimPrefix(strings.TrimPrefix(origin, "keentune/"), "conf/"))
+	return fullPath
+}
+

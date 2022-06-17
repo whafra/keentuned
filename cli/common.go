@@ -43,17 +43,12 @@ func rollbackCmd(parentCmd string) *cobra.Command {
 	return cmd
 }
 
-func setTuneFlag(cmdName string, cmd *cobra.Command, flag *TuneFlag) {
+func setTuneFlag(cmd *cobra.Command, flag *TuneFlag) {
 	flags := cmd.Flags()
-	if cmdName == "tune" {
-		flags.StringVarP(&flag.Name, "job", "j", "", "name of the new dynamic parameter tuning job")
-		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of dynamic parameter tuning")
-	} else {
-		flags.StringVarP(&flag.Name, "data", "d", "", "sensitivity identification data name")
-		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of sensitivity identification data collection")
-	}
+	flags.StringVarP(&flag.Name, "job", "j", "", "name of the new dynamic parameter tuning job")
+	flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of dynamic parameter tuning")
 
-	flags.StringVar(&flag.Config, "config", "", "configuration specified for tuning")
+	flags.StringVar(&flag.Config, "config", "keentuned.conf", "configuration specified for tuning")
 
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
