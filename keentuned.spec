@@ -1,8 +1,8 @@
 %define debug_package %{nil}
-%define anolis_release 2
+%define anolis_release 1
 
 Name:           keentuned
-Version:        1.2.0
+Version:        1.2.1
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
@@ -58,7 +58,10 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
-* Tue Apr 04 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.0
+* Mon Jun 20 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.1-1
+- update docs
+
+* Mon Apr 04 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.0
 - Add capabilities of target-group and bench-group
 - Fix some issues
 - Add 'keentune version' command
