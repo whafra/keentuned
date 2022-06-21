@@ -74,8 +74,6 @@ class TestMultiTarget(unittest.TestCase):
             params = json.load(f)
 
         for data in params["parameters"]:
-            if data["name"] in ["kernel.msgmni", "kernel.sem", "kernel.nmi_watchdog", "kernel.shmall", "kernel.shmmni"]:
-                continue
             if data["domain"] == "sysctl":
                 param_name = data["name"]
                 param_value = str(data["value"])
