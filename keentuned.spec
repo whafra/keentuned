@@ -61,14 +61,14 @@ fi
 * Mon Jun 20 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.1-1
 - update docs
 
+* Thu May 05 2022 happy_orange <songnannan@linux.alibaba.com> - 1.2.0-2
+- add makefile
+- update spec file
+
 * Mon Apr 04 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.0
 - Add capabilities of target-group and bench-group
 - Fix some issues
 - Add 'keentune version' command
-
-* Thu May 05 2022 happy_orange <songnannan@linux.alibaba.com> - 1.1.1
-- add makefile
-- update spec file
 
 * Thu Mar 03 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.1.0
 - remove parameter fs.nr_open
