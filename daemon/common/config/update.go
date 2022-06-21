@@ -106,11 +106,11 @@ func (c *KeentunedConf) updateDefault(cfg *ini.File, cmd string) error {
 
 	if cmd == "training" {
 		c.Sensitize.Algorithm = algo
-		epoch := empty.Key("EPOCH").MustInt(100)
+		epoch := empty.Key("EPOCH").MustInt(20)
 		if epoch == 0 {
 			return fmt.Errorf("EPOCH is required > 0")
 		}
-		c.Sensitize.BenchRound = epoch
+		c.Sensitize.Epoch = epoch
 	}
 
 	return nil

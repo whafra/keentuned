@@ -30,6 +30,14 @@ type TrainCmdResp struct {
 	Data  string `json:"data"`
 }
 
+const (
+	trainJobHeaderLen = 11
+	trainTrialsIdx    = 4
+	trainEpochIdx     = 6
+	trainAlgoIdx      = 9
+	trainDataIdx      = 10
+)
+
 func read(w http.ResponseWriter, r *http.Request) {
 	var result = new(string)
 	w.Header().Set("content-type", "text/json")
@@ -73,6 +81,34 @@ func read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Type == "training" {
+		err = readTrainInfo(req.Name, result)
+		return
+	}
+}
+
+func readTrainInfo(job string, result *string) error {
+	record, err := file.GetOneRecord(sensitizeCsv, job, "name")
+	if err != nil {
+		return fmt.Errorf("search '%v' err: %v", job, err)
+	}
+
+	if len(record) != trainJobHeaderLen {
+		return fmt.Errorf("search '%v' record '%v' Incomplete", job, strings.Join(record, ","))
+	}
+
+	var resp TrainCmdResp
+	resp.Trial, _ = strconv.Atoi(record[trainTrialsIdx])
+	resp.Epoch, _ = strconv.Atoi(record[trainEpochIdx])
+	resp.Algo = record[trainAlgoIdx]
+	resp.Data = record[trainDataIdx]
+	bytes, err := json.Marshal(resp)
+	if err != nil {
+		return err
+	}
+
+	*result = string(bytes)
+	return nil
 }
 
 func parseBenchRound(info string, resp *TuneCmdResp) error {
@@ -98,6 +134,7 @@ func parseBenchRound(info string, resp *TuneCmdResp) error {
 		if err != nil {
 			return err
 		}
+
 		resp.RecheckRound = num
 	}
 
@@ -137,7 +174,7 @@ func readTuneInfo(job string, result *string) error {
 
 	resp.Iteration = iteration
 
-	replacedCmd := strings.ReplaceAll(cmd,"'","\"")
+	replacedCmd := strings.ReplaceAll(cmd, "'", "\"")
 	matchedConfig, err := parseConfigFlag(replacedCmd)
 	if err != nil {
 		return err
@@ -169,7 +206,7 @@ func readTuneInfo(job string, result *string) error {
 			if len(pathParts) < 1 {
 				return fmt.Errorf("bench_config '%v' is abnormal", flagParts[1])
 			}
-			resp.BenchGroup = fmt.Sprintf("BENCH_CONFIG = %v\n",pathParts[len(pathParts)-1])
+			resp.BenchGroup = fmt.Sprintf("BENCH_CONFIG = %v\n", pathParts[len(pathParts)-1])
 		}
 
 	}

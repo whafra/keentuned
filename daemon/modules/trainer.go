@@ -15,11 +15,11 @@ import (
 
 // Tuner define a tuning job include Algorithm, Benchmark, Group
 type Trainer struct {
-	Data       string
-	Job        string
-	Trials     int
-	Config     string
-	BenchRound int
+	Data   string
+	Job    string
+	Trials int
+	Config string
+	Epoch  int
 }
 
 // Tune : training main process
@@ -61,7 +61,7 @@ func (tuner *Tuner) CreateTrainJob() error {
 
 	jobInfo := []string{
 		tuner.Job, tuner.StartTime.Format(Format), NA, NA, fmt.Sprint(tuner.Trials), Run,
-		fmt.Sprint(tuner.BenchRound), log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
+		fmt.Sprint(tuner.Epoch), log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
 	}
 	return file.Insert(getSensitizeJobFile(), jobInfo)
 }
@@ -174,3 +174,4 @@ func (tuner *Tuner) copyKnobsFile() error {
 	}
 	return nil
 }
+

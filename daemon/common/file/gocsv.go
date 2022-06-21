@@ -303,3 +303,24 @@ func GetAllRecords(fileName string) ([][]string, error) {
 	return df.Records(), nil
 }
 
+func GetOneRecord(fileName, matched, primary string) ([]string, error) {
+	df, err := LoadCsv(fileName)
+	if err != nil {
+		return nil, err
+	}
+
+	records := df.Records()
+	if len(records) < 2 {
+		return nil, NotExist
+	}
+
+	rows := df.Col(primary).Records()
+	for r, record := range rows {
+		if record == matched {
+			return records[r], nil
+		}
+	}
+
+	return nil, NotExist
+}
+

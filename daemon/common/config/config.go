@@ -77,8 +77,8 @@ type DumpConf struct {
 }
 
 type Sensitize struct {
-	Algorithm  string
-	BenchRound int
+	Algorithm string `ini:"ALGORITHM"`
+	Epoch     int    `ini:"EPOCH"`
 }
 
 type LogConf struct {
@@ -189,7 +189,7 @@ func (c *KeentunedConf) Save() error {
 
 	sensitize := cfg.Section("sensitize")
 	c.Sensitize.Algorithm = sensitize.Key("ALGORITHM").MustString("random")
-	c.Sensitize.BenchRound = sensitize.Key("BENCH_ROUND").MustInt(2)
+	c.Sensitize.Epoch = sensitize.Key("EPOCH").MustInt(20)
 
 	c.GetLogConf(cfg)
 
@@ -298,7 +298,7 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File, groupOnly bool) error {
 }
 
 func (c *KeentunedConf) getBenchmark(cfg *ini.File) error {
-	bench := cfg.Section("benchmark")	
+	bench := cfg.Section("benchmark")
 	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
 	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
 	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
