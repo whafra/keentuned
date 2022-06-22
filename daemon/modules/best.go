@@ -89,6 +89,7 @@ func (tuner *Tuner) dumpBest() error {
 
 	suffix := "_best.json"
 	var fileList string
+	jobPath := config.GetTuningPath(tuner.Name)
 	for index := range tuner.Group {
 		err = tuner.Group[index].Dump.Save(tuner.Name, fmt.Sprintf("_group%v%v", index+1, suffix))
 		if err != nil {
@@ -96,7 +97,7 @@ func (tuner *Tuner) dumpBest() error {
 			continue
 		}
 		
-		fileList += fmt.Sprintf("\n\t%v/parameter/%v/%v_group%v%v", config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name, index+1, suffix)
+		fileList += fmt.Sprintf("\n\t%v/%v_group%v%v", jobPath, tuner.Name, index+1, suffix)
 	}
 
 	log.Infof(tuner.logName, "Step%v. Best configuration dump successfully. File list: %v\n", tuner.IncreaseStep(), fileList)
