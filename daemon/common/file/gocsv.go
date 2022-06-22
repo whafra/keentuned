@@ -317,7 +317,7 @@ func GetOneRecord(fileName, matched, primary string) ([]string, error) {
 	rows := df.Col(primary).Records()
 	for r, record := range rows {
 		if record == matched {
-			return records[r], nil
+			return records[r+1], nil
 		}
 	}
 
