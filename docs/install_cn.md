@@ -8,7 +8,7 @@ vi /etc/yum.repos.d/epel.repo
 ```sh
 [keentune]
 name=keentune-os
-baseurl=https://mirrors.openanolis.cn/anolis/8.4/Plus/x86_64/os/
+baseurl=https://mirrors.openanolis.cn/anolis/8.6/Plus/x86_64/os/
 gpgkey=https://mirrors.openanolis.cn/anolis/RPM-GPG-KEY-ANOLIS
 enabled=1
 ```
