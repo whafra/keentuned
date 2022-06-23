@@ -3,7 +3,7 @@ import React, { useCallback, useState, useEffect, forwardRef, useImperativeHandl
 import { FormattedMessage, history, request } from 'umi'; 
 import { Modal, message, Button, Space, Spin, Input, Table, Radio } from 'antd'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
-import { debounce, dataDealError } from '@/uitls/uitls'
+import { debounce, handleRes } from '@/uitls/uitls'
 import { getRequestData } from '../service'
 import styles from './index.less'
 
@@ -62,12 +62,12 @@ export default forwardRef((props: any, ref: any) => {
       let res = await getRequestData(q) || {}
       setLoading(false);
       if (res.suc) {
-        message.success(res.msg);
+        handleRes(res, '配置成功')
         // 初始化状态 && 刷新数据
         initialStatus()
         props.callback({})
       } else {
-        message.error(res.msg, 3);
+        handleRes(res, '配置失败')
       }
     } catch (err) {
       setLoading(false);

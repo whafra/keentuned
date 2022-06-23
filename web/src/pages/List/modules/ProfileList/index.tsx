@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Tooltip, message, Space, Popconfirm } from 'antd';
 import { FormattedMessage, useIntl, history } from 'umi';
-import { DeleteOutlined, CopyOutlined, FormOutlined, RedoOutlined, HighlightOutlined } from '@ant-design/icons';
+import { DeleteOutlined, CopyOutlined, FormOutlined, UndoOutlined, HighlightOutlined } from '@ant-design/icons';
 import type { ProColumns } from '@ant-design/pro-table';
 import ProTable, { TableDropdown } from '@ant-design/pro-table';
 //
@@ -11,7 +11,7 @@ import LogModal from '@/pages/List/LogModal'
 import SetModal from './Set'
 import CreateModal from './Create'
 import Count from './Count'
-import { dataDealError, useClientSize, dataDealWith, statusEnum, viewDetails } from '@/uitls/uitls'
+import { handleRes, useClientSize, dataDealWith, statusEnum, viewDetails } from '@/uitls/uitls'
 import { getRequestData } from './service'
 import { resetTableData } from './dataDealWith'
 import styles from './index.less';
@@ -108,11 +108,9 @@ export default () => {
       const res = await getRequestData(q) || {}
       setLoading(false);
       if (res.suc) {
-        message.success(res.msg);
         requestAllData()
-      } else {
-        message.error(res.msg);
-      }
+      } 
+      handleRes(res, operateType)
     } catch (err) { 
       setLoading(false);
     }
@@ -185,9 +183,9 @@ export default () => {
             
             {record.status === 'active'?
               <Tooltip placement="top" title={ formatMessage({ id: 'rollback', defaultMessage: 'Rollback' }) }>
-                <RedoOutlined onClick={()=> fn('rollback', record)} style={iconStyle}/>
+                <UndoOutlined onClick={()=> fn('rollback', record)} style={iconStyle}/>
               </Tooltip>
-            : <RedoOutlined style={disableStyle}/> }
+            : <UndoOutlined style={disableStyle}/> }
             
             <Tooltip placement="top" title={ formatMessage({ id: 'set' }) }>
               <HighlightOutlined onClick={()=> fn('set', record)} style={iconStyle}/>

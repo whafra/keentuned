@@ -5,6 +5,7 @@ import { Modal, message, Button, Space, Spin, Form, Input, InputNumber, Tooltip,
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import CodeEditer from '@/components/public/CodeEditer';
 import { ExampleInfo } from '@/components/public/ExampleInfo';
+import { handleRes } from '@/uitls/uitls'
 import { requestData } from '@/services';
 import styles from './index.less'
 import { isNull } from 'lodash';
@@ -19,7 +20,7 @@ export default forwardRef((props: any, ref: any) => {
   const [visible, setVisible] = useState(false);
   // 
   const [title, setTitle] = useState('');
-  const [data, setData] = useState<any>('');
+  const [rowName, setRowName] = useState('');
   const [form] = Form.useForm();
   // 展示示例
   const [showTargetExample, setShowTargetExample]= useState<any>(false) 
@@ -52,6 +53,7 @@ export default forwardRef((props: any, ref: any) => {
           setTitle(title);
           if (row) {
             const tempName = row?.name?.split('.conf')[0]
+            setRowName(tempName)
             form.setFieldsValue({
               name: title === 'copy'? `${tempName}_copy`: tempName,
               // info: row.target
@@ -67,15 +69,17 @@ export default forwardRef((props: any, ref: any) => {
     setLoading(true);
     form.validateFields().then(async ( values ) => {
       const { name } = values
-      const { suc, msg } = await requestData('POST', '/write', { ...values, name:`${name}.conf` })
-      if (suc) {
+      // 编辑操作修改name时，要把原来的名称传给后端
+      const q = (title === 'edit' && name !== rowName) ? { ...values, name:`${name}.conf`, replace: rowName }: {...values, name:`${name}.conf`}
+      const res = await requestData('POST', '/write', q)
+      if (res.suc) {
         // 重置状态 && 跳转页面
         initialStatus()
         props.callback()
       } else {
-        message.error(msg || '请求错误')
+        handleRes(res, '请求错误')
       }
-       setLoading(false);
+      setLoading(false);
     }).catch(( err ) => {
       setLoading(false);
     })
@@ -100,6 +104,17 @@ export default forwardRef((props: any, ref: any) => {
   useEffect(()=> {
     if (showTargetExample === 0) getFormData()
   }, [showTargetExample])
+
+  // name重名校验
+  const validatorName = (_: any, value: any) => {
+    // 编辑时排除与自己的校验
+    if (title === 'edit' && value ) { 
+      return (value !== rowName && dataSource?.filter((item: any)=> item.name === `${value}.conf`).length )? 
+      Promise.reject(new Error('Profile Name名字重复!')): Promise.resolve()
+    }
+    return (value && dataSource?.filter((item: any)=> item.name === `${value}.conf`).length ) ?
+    Promise.reject(new Error('Profile Name名字重复!')): Promise.resolve()
+  }
 
   const validatorFn = (_: any, value: any) => {
     if (!value) { return Promise.resolve() }
@@ -161,10 +176,7 @@ export default forwardRef((props: any, ref: any) => {
                 name="name"
                 rules={[
                   {required: true, message: formatMessage({id: 'Input.placeholder'})},
-                  {validator: (_, value) =>
-                    (title !== 'edit' && value && dataSource?.filter((item: any)=> item.name === `${value}.conf`).length ) ?
-                      Promise.reject(new Error('Profile Name名字重复!')): Promise.resolve(),
-                  }
+                  {validator: validatorName }
                 ]}
               >
                 <Input placeholder={formatMessage({id:'Input.placeholder'})} addonAfter=".conf" autoComplete="off" />

@@ -6,20 +6,26 @@ export const myIsNaN = (value: any)=>{
     return (typeof value === 'number' && !isNaN(value)) || /^\d+$/.test(value);
   }
 
-// 接口报错信息处理
-export const dataDealError = (res: any, title?: string)=>{
+// 接口报信息处理
+export const handleRes = (res: any, title?: string)=>{
   const reactNode = (
-  <>
-    {title}
-    <div>
-      {res?.msg?.split('\n').map((item: any, i: number)=>
-        <div key={i} style={{textAlign:'left'}}>
-          <pre style={{marginBottom:'0px' }}>{item}</pre>
-        </div>
-      )}
-    </div>
-  </>)
-  message.error(reactNode);
+    <>
+      {title}
+      <div>
+        {res?.msg?.split('\n').map((item: any, i: number)=>
+          <div key={i} style={{textAlign:'left'}}>
+            <pre style={{marginBottom:'0px' }}>{item}</pre>
+          </div>
+        )}
+      </div>
+    </>
+  )
+  
+  if (res.suc) {
+    message.success(reactNode);
+  } else {
+    message.error(reactNode);
+  }
 }
 
 export const useClientSize = () => {
@@ -65,7 +71,30 @@ export const dataDealWith = (data: string) => {
         return row
         })
     }
-    return dataSource
+    return dataSource.reverse()
+}
+
+/**
+ * 转换csv文件
+ * @param data csv文件里的字符串
+ * @returns { Array }
+ */
+ export const csvToJson = (data: string) => {
+  const list = data && data.split('\n')
+
+  let dataSource = []
+  if (Array.isArray(list)) {
+    const titleSet = list[0].split(',')
+    dataSource = list?.slice(1)?.filter((key: any)=> key).map((item: any, index: any)=> {
+      let row: any = {}
+      item.split(',').forEach((value: any, i: any) => {
+          row.id = index + 1
+          row[titleSet[i]] = value
+      });
+      return row
+    })
+  }
+  return dataSource
 }
 
 /**
@@ -79,29 +108,32 @@ export const dataDealWith = (data: string) => {
         },
  */
 export const timeFile = (data: string) => {
-    const list = data && data.split('\n')
+    const list = data && data.split('\n').filter(key=> key)
     // console.log('list:', list)
 
     let dataSource: any = []
     if (Array.isArray(list)) {
-        list?.filter((key: any)=> key).forEach((item: any, i: any)=> {
-            let algorithmItem: any = {}
-            let benchmarkItem: any = {}
-            let row = item.split(',');
-            algorithmItem = {
-                date: i + 1,
-                name: 'Algorithm time',
-                value: row[1] - row[0] + row[3] - row[2]
-            }
-            benchmarkItem = {
-                date: i + 1,
-                name: 'Benchmark time',
-                value: row[2] - row[1]
-            }
-            dataSource.push(algorithmItem);
-            dataSource.push(benchmarkItem);
-        })
+      // 去除文件列名行
+      const dataList = list.slice(1)
+      dataList?.forEach((item: any, i: any)=> {
+          let algorithmItem: any = {}
+          let benchmarkItem: any = {}
+          let row = item.split(',').map((key: any)=> Number(key));
+          algorithmItem = {
+              date: i + 1,
+              name: 'Algorithm time',
+              value: row[1] - row[0] + row[3] - row[2]
+          }
+          benchmarkItem = {
+              date: i + 1,
+              name: 'Benchmark time',
+              value: row[2] - row[1]
+          }
+          dataSource.push(algorithmItem);
+          dataSource.push(benchmarkItem);
+      })
     }
+    // console.log('dataSource:', dataSource)s
     return dataSource;
 }
 
@@ -118,6 +150,14 @@ export const statusEnum = {
     active: { text: 'active', status: 'Success' },
 }
 
+// 智能调优功能的算法
+export const tuningAlgorithm = ['TPE', 'HORD', 'Random'] // 'Bayesian Optimize'
+// 敏感参数功能算法
+export const sensitivityAlgorithm = ['lasso', 'univariate', 'shap']
+
+/**
+ * @function http响应报错处理，报错弹框提示！
+ **/ 
 export const handleError = (response: any)=> {
   // 500报错优化
   if (response && response.status === 500) {
@@ -127,10 +167,8 @@ export const handleError = (response: any)=> {
   } else if (response?.status && response.status !== 200) {
     const { status, url } = response;
     let arr = url.split('/');
-    // arr.splice(0, 3);
-    // let api = arr.join('/');
-    // console.log('response:', response)
-    const meg = response.statusText? `${arr[arr.length -1]} ${response.statusText}`: '查询数据失败！'
+    // 404报错， 文件 Not Found 提示！
+    const meg = response.statusText? `${arr[arr.length -1].split('?')[0]} ${response.statusText}`: '查询数据失败！'
     message.error(meg, 3);
 
   } else if (!response) {
@@ -139,7 +177,6 @@ export const handleError = (response: any)=> {
       message: '网络异常',
     });
   }
-
 }
 
 /** 防抖 */
