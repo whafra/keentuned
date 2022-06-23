@@ -25,20 +25,18 @@ e.g.
 
 #const
 FileName = "/dev/sdb"
-Block_Size = "512B"
-DEFAULT_rw = "read"
-SIZE = "110g"
+BlockSize = 512
+SIZE = 102400
 NumJobs = 16
-COMMAND = "-ioengine=psync -time_based=1 -rw=read -direct=1 -buffered=0 -thread -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read -numjobs=16 -size=110g -bs=512B"
+COMMAND = "-ioengine=psync -time_based=1 -rw=read -direct=1 -buffered=0 -thread -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read"
 
 class Benchmark():
-    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw, size=SIZE, numjobs=NumJobs, command=COMMAND):
+    def __init__(self, filename=FileName, bs=BlockSize, size=SIZE, numjobs=NumJobs, command=COMMAND):
         """Init benchmark
         """
         self.filename = filename
-        self.bs = bs
-        self.rw = rw
-        self.size = size
+        self.bs = str(bs) + 'B'
+        self.size = str(size) + 'M'
         self.numjobs = numjobs
         self.command = command
 
@@ -60,7 +58,7 @@ class Benchmark():
 
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        cmd = 'fio -filename={} {}'.format(self.filename,self.command)
+        cmd = 'fio -filename={} {} -numjobs={} -size={} -bs={}'.format(self.filename, self.command, self.numjobs, self.size, self.bs)
         logger.info(cmd)
         result = subprocess.run(
                     cmd,
