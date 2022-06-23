@@ -124,8 +124,7 @@ func Init() {
 
 	RealLocalIP, err = utils.GetExternalIP()
 	if err != nil || RealLocalIP == "" {
-		fmt.Printf("%v init Keentuned real local IP %v,err: %v\n", utils.ColorString("red", "[ERROR]"), RealLocalIP, err)
-		os.Exit(1)
+		RealLocalIP = "localhost"
 	}
 
 	initChanAndIPMap()
