@@ -76,15 +76,38 @@ func read(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Type == "tuning" {
+	switch strings.ToLower(req.Type) {
+	case "tuning":
 		err = readTuneInfo(req.Name, result)
 		return
-	}
-
-	if req.Type == "training" {
+	case "training":
 		err = readTrainInfo(req.Name, result)
 		return
+	case "param-bench":
+		err = readConfigParam(req.Name, result)
+		return
+	default:
+		err = fmt.Errorf("type '%v' is not supported", req.Type)
+		return
 	}
+}
+
+func readConfigParam(job string, result *string) error {
+	params, bench, err := config.GetJobParamConfig(job)
+	if err != nil {
+		return err
+	}
+	var resp struct {
+		Params string `json:"parameters"`
+		Bench  string `json:"benchmark"`
+	}
+
+	resp.Params = params
+	resp.Bench = bench
+
+	bytes, err := json.Marshal(resp)
+	* result = string(bytes)
+	return err
 }
 
 func readTrainInfo(job string, result *string) error {

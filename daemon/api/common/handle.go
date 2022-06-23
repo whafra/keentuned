@@ -60,8 +60,9 @@ func write(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Name string `json:"name"`
-		Info string `json:"info"`
+		Name    string `json:"name"`
+		Info    string `json:"info"`
+		Replace string `json:"replace"`
 	}
 
 	err = json.Unmarshal(bytes, &req)
@@ -80,6 +81,10 @@ func write(w http.ResponseWriter, r *http.Request) {
 	err = ioutil.WriteFile(fullName, []byte(req.Info), 0755)
 	if err != nil {
 		return
+	}
+
+	if req.Replace != "" && req.Replace != req.Name {
+		os.Remove(getFullPath(req.Replace))
 	}
 
 	*result = fmt.Sprintf("write file '%v' successfully.", req.Name)

@@ -419,3 +419,39 @@ func InitBrainConf() error {
 
 }
 
+func GetJobParamConfig(job string) (string, string, error) {
+	jobPath := GetTuningPath(job)
+	if !file.IsPathExist(jobPath) {
+		return "", "", fmt.Errorf("job '%v' does not exist", job)
+	}
+
+	confFile := fmt.Sprintf("%v/keentuned.conf", jobPath)
+	cfg, err := ini.InsensitiveLoad(confFile)
+	if err != nil {
+		return "", "", err
+	}
+
+	var groupNames = make([]string, 0)
+	if !hasGroupSections(cfg, &groupNames, TargetSectionPrefix) {
+		return "", "", fmt.Errorf("target-group not found")
+	}
+
+	var parameterConf, benchConf string
+	for _, groupName := range groupNames {
+		target := cfg.Section(groupName)
+		parameterConf += fmt.Sprintf("%v:", groupName)
+		parameter := target.Key("PARAMETER").MustString("")
+		confs := strings.Split(parameter, ",")
+		for _, conf := range confs {
+			fullPath := GetAbsolutePath(conf, "parameter", ".json", "_best.json")
+			parameterConf += fmt.Sprintf(" %v,", fullPath)
+		}
+		parameterConf = fmt.Sprintf("%v\n", strings.TrimSuffix(parameterConf, ","))
+	}
+
+	bench := cfg.Section("benchmark")
+	benchName := bench.Key("BENCH_CONFIG").MustString("")
+	benchConf = GetBenchJsonPath(benchName)
+	return strings.TrimSuffix(parameterConf, "\n"), benchConf, nil
+}
+
