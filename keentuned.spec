@@ -1,5 +1,5 @@
 %define debug_package %{nil}
-%define anolis_release 1
+%define anolis_release 2
 
 Name:           keentuned
 Version:        1.2.1
@@ -58,6 +58,9 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Mon Jun 20 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.2.1-2
+- fix: Clear task residue on startup
+
 * Mon Jun 20 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.2.1-1
 - update docs
 
