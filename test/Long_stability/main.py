@@ -18,7 +18,7 @@ if __name__ == '__main__':
     if sys.argv.__len__() <= 1:
         print("'time limit' is wanted, unit is hour: python3 main.py 24")
         exit(1)
-    TestLongStability.time_limit = sys.argv[1]
+    TestLongStability.time_limit = int(sys.argv[1])
     print("--------------- start to run long stable test cases ---------------")
     deleteDependentData("param1")
     deleteDependentData("sensitize1")
