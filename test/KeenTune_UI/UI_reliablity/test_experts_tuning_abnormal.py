@@ -33,18 +33,20 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.get("http://39.102.55.119:8082/list/static-page/")
         self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("1")
-        self.driver.find_element(By.ID, "info").send_keys("[my.con]")
+        self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
+        sleep(3)
         self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("11")
-        self.driver.find_element(By.ID, "info").send_keys("[my.con]")
+        self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
         return self.driver
 
     @classmethod
     def tearDownClass(self) -> None:
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
         sleep(0.5)
         self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
