@@ -48,8 +48,8 @@ func (tuner *Tuner) Set() error {
 
 	requestInfoAll, err := tuner.getConfigParamInfo(configFileALL)
 	if err != nil {
-		log.Errorf(log.ProfSet, "Get config file '%v' err %v", tuner.Setter.ConfFile[0], err)
-		return fmt.Errorf("get config file '%v' err %v", tuner.Setter.ConfFile[0], err)
+		log.Errorf(log.ProfSet, "Get config: %v", err)
+		return fmt.Errorf("Get config: %v", err)
 	}
 
 	if err = tuner.prepareBeforeSet(); err != nil {
@@ -154,7 +154,7 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]
 
 		resultMap, err := file.ConvertConfFileToJson(configFile)
 		if err != nil {
-			return nil, fmt.Errorf("convert file :%v err:%v", configFile, err)
+			return nil, fmt.Errorf("convert file '%v' %v", configFile, err)
 		}
 
 		var mergedParam = make([]config.DBLMap, config.PRILevel)
