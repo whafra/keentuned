@@ -10,11 +10,15 @@ from Long_stability.test_long_stability import TestLongStability
 
 def RunLongStableCase():
     suite = unittest.TestSuite()
-    suite.addTest(TestLongStability("test_long_stability"))
+    suite.addTest(TestLongStability("test_long_stability_RBT"))
     return suite
 
 
 if __name__ == '__main__':
+    if sys.argv.__len__() <= 1:
+        print("'time_limit' is wanted: python3 main.py 24")
+        exit(1)
+    TestLongStability.time_limit = sys.argv[1]
     print("--------------- start to run test cases ---------------")
     deleteDependentData("param1")
     deleteDependentData("sensitize1")

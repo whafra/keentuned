@@ -1,8 +1,8 @@
 import os
 import re
 import sys
-import logging
 import time
+import logging
 import unittest
 
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
@@ -59,8 +59,10 @@ class TestLongStability(unittest.TestCase):
         self.assertTrue(self.out.__contains__('profile rollback successfully'))
         self.profile_list("available")
 
-    def test_long_stability (self):
-        while True:
+    def test_long_stability_RBT(self):
+        start_time = time.time()
+        time_diff = 0
+        while time_diff < self.time_limit:
             result = runParamTune("param1", iteration=500)
             self.assertEqual(result, 0)
             time.sleep(5)
@@ -89,3 +91,4 @@ class TestLongStability(unittest.TestCase):
             self.assertTrue(self.out.__contains__('delete successfully'))
 
             logger.info("current round testcase finished")
+            time_diff = (time.time() - start_time) / 3600
