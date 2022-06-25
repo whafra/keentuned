@@ -125,7 +125,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         sleep(1)
         ele_copy_context_empty = self.driver.find_element(By.XPATH,
                                                  '//div[@class="ant-form-item-explain ant-form-item-explain-connected"]')
-
+        sleep(0.5)
         assert "请输入" in ele_copy_context_empty.text
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
@@ -145,6 +145,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
 
     def test_creatfile_name_empty(self):
+        sleep(1)
         self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "info").send_keys("[my.con]")
         self.driver.find_element(By.XPATH,
@@ -208,8 +209,10 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
         self.driver.find_element(By.ID, "info").send_keys("error_content")
+        sleep(1)
         ele_errorcontent = self.driver.find_element(By.XPATH,'//div[@class="ant-form-item-explain-error"]')
         sleep(1)
         assert "第 1 行数据格式不对!" in ele_errorcontent.text
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
+
