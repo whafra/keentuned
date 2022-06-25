@@ -27,9 +27,11 @@ class TestKeenTune_UI_normal(unittest.TestCase):
                 option.add_argument('headless')
                 option.add_argument('--start-maximized')
                 self.driver = webdriver.Chrome(chrome_options=option)
+                self.wait = WebDriverWait(self.driver,15,0.5)
             else:
                 self.driver = webdriver.Chrome()
                 self.driver.maximize_window()
+                self.wait = WebDriverWait(self.driver,15,0.5)
 
         self.driver.get("http://39.102.55.119:8082/list/static-page")
         return self.driver
