@@ -52,7 +52,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
         self.driver.find_element(By.ID, "name").send_keys("1")
-        self.driver.find_element(By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
         sleep(1)
         assert "1.conf" in ele_copy.text
@@ -61,8 +61,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//button[@class="ant-btn ant-btn-primary"]'))).click()
         self.driver.find_element(By.ID, "name").send_keys("11")
         self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         sleep(1)
         ele_creat = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)
@@ -73,24 +72,22 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         sleep(1)
         ele_checkfile = self.driver.find_element(By.XPATH,'//div[@class="CodeMirror-code"]')
         assert "[my.con]" in ele_checkfile.text
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button'))).click()
 
     def test_editor(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="2"]/td[4]//div[3]/span'))).click()        
         self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
         self.driver.find_element(By.ID, "name").send_keys("111")
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_editor = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)
         assert "111.conf" in ele_editor.text
 
     def test_set_group(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]//td[4]//div[5]'))).click()
-        self.driver.find_element(By.XPATH, '//label[@class="ant-radio-wrapper"]//span[2]').click()
-        self.driver.find_element(By.XPATH, '//div[3]/div/div[2]/button/span').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//label[@class="ant-radio-wrapper"]//span[2]'))).click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[3]/div/div[2]/button/span'))).click()
         sleep(1)
         ele_set = self.driver.find_element(By.XPATH,'//tr[@data-row-key="1"]/td[3]')
         assert "[target-group-1]" in ele_set.text
@@ -131,5 +128,5 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         sleep(1)
         ele = self.driver.find_element(By.XPATH, '//thead[@class="ant-table-thead"]')
         assert "Profile Name" not in ele.text
-        self.driver.find_element(By.XPATH, '//a[@class="ant-pro-table-column-setting-action-rest-button"]').click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//a[@class="ant-pro-table-column-setting-action-rest-button"]'))).click()
         assert "Profile Name" in ele.text
