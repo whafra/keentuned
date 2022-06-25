@@ -36,20 +36,16 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
-        sleep(3)
-        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
-        self.driver.find_element(By.ID, "name").send_keys("11")
-        self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
+        #sleep(5)
+        #self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
+        #self.driver.find_element(By.ID, "name").send_keys("11")
+        #self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
+        #self.driver.find_element(By.XPATH,
+        #                         '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
         return self.driver
 
     @classmethod
     def tearDownClass(self) -> None:
-        sleep(0.5)
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
-        sleep(0.5)
-        self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
         sleep(0.5)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
         sleep(0.5)
@@ -69,6 +65,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
 
     def test_group_empty(self):
+        sleep(1)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[5]').click()
         sleep(1)
         self.driver.find_element(By.XPATH, '//div[3]/div/div[2]/button/span').click()
@@ -77,7 +74,40 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请选择一个配置，再提交" in ele_group_error.text
         self.driver.find_element(By.XPATH,'//div[3]/div/div[1]/button/span').click()
 
+    def test_copyfile_name_exsit(self):
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
+        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
+        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
+        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        sleep(1)
+        ele_nameexit = self.driver.find_element(By.XPATH, '//div[@class="ant-form-item-explain-error"]')
+        assert "Profile Name名字重复!" in ele_nameexit.text
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
+    def test_creatfile_name_exsit(self):
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
+        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        sleep(1)
+        ele_nameexit = self.driver.find_element(By.XPATH,
+                                                    '//div[@class="ant-form-item-explain-error"]')
+        assert "Profile Name名字重复!" in ele_nameexit.text
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
+    def test_editorfile_exsit_name(self):
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]').click()
+        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
+        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
+        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        sleep(2)
+        ele_deletecontent = self.driver.find_element(By.XPATH,
+                                                     '//div[@class="ant-form-item-explain-error"]')
+        sleep(2)
+        assert "Profile Name名字重复!" in ele_deletecontent.text
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
+
     def test_copyfile_name_empty(self):
+        sleep(1)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
         self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
@@ -101,6 +131,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_copyfile_context_error(self):
+        sleep(1)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
         self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
@@ -112,16 +143,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
-    def test_copyfile_name_exsit(self):
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("1")
-        sleep(1)
-        ele_nameexit = self.driver.find_element(By.XPATH, '//div[@class="ant-form-item-explain-error"]')
-        assert "Profile Name名字重复!" in ele_nameexit.text
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_creatfile_name_empty(self):
         self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
@@ -146,15 +167,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
-    def test_creatfile_name_exsit(self):
-        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
-        self.driver.find_element(By.ID, "name").send_keys("1")
-        sleep(1)
-        ele_nameexit = self.driver.find_element(By.XPATH,
-                                                    '//div[@class="ant-form-item-explain-error"]')
-        assert "Profile Name名字重复!" in ele_nameexit.text
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_creatfile_content_error(self):
         self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
@@ -189,19 +201,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
-    def test_editorfile_exit_name(self):
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]').click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("11")
-        ele_deletecontent = self.driver.find_element(By.XPATH,
-                                                     '//div[@class="ant-form-item-explain-error"]')
-        sleep(1)
-        assert "Profile Name名字重复!" in ele_deletecontent.text
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_editorfile_error_content(self):
+        sleep(1)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]').click()
         self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
