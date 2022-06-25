@@ -42,6 +42,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
             if first_text != 'cpu_high_load.conf':
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]//td[4]//div[1]//div[1]/span'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-popover-buttons"]/button[2]/span'))).click()
+                sleep(1)
             else:
                 break
         self.driver.quit()
@@ -73,6 +74,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         ele_checkfile = self.driver.find_element(By.XPATH,'//div[@class="CodeMirror-code"]')
         assert "[my.con]" in ele_checkfile.text
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button'))).click()
+        sleep(1)
 
     def test_editor(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="2"]/td[4]//div[3]/span'))).click()        
@@ -104,6 +106,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
             if first_text != 'cpu_high_load.conf':
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]//td[4]//div[1]//div[1]/span'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-popover-buttons"]/button[2]/span'))).click()
+                sleep(1)
             else:
                 break
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
