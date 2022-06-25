@@ -194,9 +194,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]').click()
         self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
+        sleep(1)
         ele_deletecontent = self.driver.find_element(By.XPATH,
                                                     '//div[@class="ant-form-item-explain-error"]')
-        sleep(1)
         assert "请输入" in ele_deletecontent.text
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
