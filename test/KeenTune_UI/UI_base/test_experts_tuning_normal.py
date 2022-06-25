@@ -19,7 +19,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
             option.add_argument('--window-size=1920,1080')
             self.driver = webdriver.Chrome(options=option)
             self.driver.implicitly_wait(3)
-            self.wait = WebDriverWait(self.driver,20,0.5)
+            self.wait = WebDriverWait(self.driver,15,0.5)
 
         else:
             if no_ui:
