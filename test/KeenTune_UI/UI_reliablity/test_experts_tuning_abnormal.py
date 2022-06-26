@@ -47,7 +47,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
     def tearDownClass(self) -> None:
         self.driver.get("http://39.102.55.119:8082/list/static-page")
         for i in range(9):
-            first_text = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]//div[1]//span[1]').text
+            first_text = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//tr[@data-row-key="1"]//td[1]//div[1]//span[1]'))).text
             if first_text != 'cpu_high_load.conf':
                 self.wait.until(EC.element_to_be_clickable(
                     (By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]/span'))).click()
@@ -69,6 +69,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
             self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
 
+    def tearDown(self) -> None:
+        sleep(1)
+
     def test_group_empty(self):
         sleep(1)
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[5]'))).click()
@@ -77,7 +80,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         sleep(1)
         assert "请选择一个配置，再提交" in ele_group_error.text
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//div[3]/div/div[1]/button/span'))).click()
-        sleep(1)
 
     def test_copyfile_name_exsit(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
@@ -89,7 +91,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "Profile Name名字重复!" in ele_nameexit.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_creatfile_name_exsit(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
@@ -100,7 +101,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "Profile Name名字重复!" in ele_nameexit.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_editorfile_exsit_name(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
@@ -114,7 +114,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "Profile Name名字重复!" in ele_deletecontent.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_copyfile_name_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
@@ -126,7 +125,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_emptyname.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_copyfile_context_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
@@ -139,7 +137,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_copy_context_empty.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_copyfile_context_error(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
@@ -152,7 +149,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "第 1 行数据格式不对!" in ele_copy_context_error.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_creatfile_name_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
@@ -164,7 +160,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_nameempty.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_creatfile_content_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
@@ -177,7 +172,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_contentempty.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_creatfile_content_error(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
@@ -189,7 +183,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "第 1 行数据格式不对!" in ele_contenterror.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_editorfile_delete_name(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
@@ -201,7 +194,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_deletename.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_editorfile_delete_content(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
@@ -213,7 +205,6 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "请输入" in ele_deletecontent.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
     def test_editorfile_error_content(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
@@ -226,6 +217,5 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         assert "第 1 行数据格式不对!" in ele_errorcontent.text
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-        sleep(1)
 
 
