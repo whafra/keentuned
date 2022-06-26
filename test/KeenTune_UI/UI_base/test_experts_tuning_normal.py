@@ -40,7 +40,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
     def tearDownClass(self) -> None:
         self.driver.get("http://39.102.55.119:8082/list/static-page")
         for i in range(9):
-            first_text = self.driver.find_element(By.XPATH,'//tr[@data-row-key="1"]//td[1]//div[1]//span[1]').text
+            first_text = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//tr[@data-row-key="1"]//td[1]//div[1]//span[1]'))).text
             if first_text != 'cpu_high_load.conf':
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]//td[4]//div[1]//div[1]/span'))).click()
                 self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-popover-buttons"]/button[2]/span'))).click()
@@ -52,9 +52,9 @@ class TestKeenTune_UI_normal(unittest.TestCase):
 
     def test_copyfile(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("1")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("1")
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
         sleep(1)
@@ -62,8 +62,8 @@ class TestKeenTune_UI_normal(unittest.TestCase):
 
     def test_creatfile(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//button[@class="ant-btn ant-btn-primary"]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys("11")
-        self.driver.find_element(By.ID, "info").send_keys("[my.con]\ninnodb_file_per_table: 1")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("11")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys("[my.con]\ninnodb_file_per_table: 1")
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         sleep(1)
         ele_creat = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
@@ -80,9 +80,9 @@ class TestKeenTune_UI_normal(unittest.TestCase):
 
     def test_editor(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="2"]/td[4]//div[3]/span'))).click()        
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("111")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("111")
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_editor = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)

@@ -70,6 +70,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
 
     def test_group_empty(self):
+        sleep(1)
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[5]'))).click()
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//div[3]/div/div[2]/button/span'))).click()
         ele_group_error = self.driver.find_element(By.XPATH, '//div[@class="ant-message-notice-content"]//span[2]')
@@ -80,9 +81,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_copyfile_name_exsit(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("cpu_high_load")
         sleep(1)
         ele_nameexit = self.driver.find_element(By.XPATH, '//div[@class="ant-form-item-explain-error"]')
         assert "Profile Name名字重复!" in ele_nameexit.text
@@ -92,7 +93,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_creatfile_name_exsit(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("cpu_high_load")
         sleep(1)
         ele_nameexit = self.driver.find_element(By.XPATH,
                                                 '//div[@class="ant-form-item-explain-error"]')
@@ -103,9 +104,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_editorfile_exsit_name(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "name").send_keys("cpu_high_load")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("cpu_high_load")
         sleep(2)
         ele_deletecontent = self.driver.find_element(By.XPATH,
                                                      '//div[@class="ant-form-item-explain-error"]')
@@ -117,8 +118,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_copyfile_name_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         sleep(1)
         ele_emptyname = self.driver.find_element(By.XPATH,
                                                  '//div[@class="ant-form-item-explain ant-form-item-explain-connected"]')
@@ -129,8 +130,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_copyfile_context_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
-        self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         sleep(1)
         ele_copy_context_empty = self.driver.find_element(By.XPATH,
                                                           '//div[@class="ant-form-item-explain ant-form-item-explain-connected"]')
@@ -142,9 +143,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_copyfile_context_error(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
-        self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "info").send_keys("error_file_context")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys("error_file_context")
         sleep(1)
         ele_copy_context_error = self.driver.find_element(By.XPATH,
                                                           '//div[@class="ant-form-item-explain ant-form-item-explain-connected"]')
@@ -155,7 +156,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_creatfile_name_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
-        self.driver.find_element(By.ID, "info").send_keys("[my.con]")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys("[my.con]")
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         sleep(1)
@@ -167,7 +168,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_creatfile_content_empty(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys("content_empty")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("content_empty")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
         sleep(1)
@@ -180,8 +181,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_creatfile_content_error(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-primary"]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys("content_error")
-        self.driver.find_element(By.ID, "info").send_keys("content_error")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("content_error")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys("content_error")
         sleep(1)
         ele_contenterror = self.driver.find_element(By.XPATH,
                                                     '//div[@class="ant-form-item-explain-error"]')
@@ -192,8 +193,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_editorfile_delete_name(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
-        self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         ele_deletename = self.driver.find_element(By.XPATH,
                                                   '//div[@class="ant-form-item-explain-error"]')
         sleep(1)
@@ -204,8 +205,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_editorfile_delete_content(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
-        self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.BACKSPACE)
         sleep(1)
         ele_deletecontent = self.driver.find_element(By.XPATH,
                                                      '//div[@class="ant-form-item-explain-error"]')
@@ -216,9 +217,9 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
 
     def test_editorfile_error_content(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[3]'))).click()
-        self.driver.find_element(By.ID, "info").send_keys(Keys.CONTROL, "a")
-        self.driver.find_element(By.ID, "info").send_keys(Keys.BACKSPACE)
-        self.driver.find_element(By.ID, "info").send_keys("error_content")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.CONTROL, "a")
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys(Keys.BACKSPACE)
+        self.wait.until(EC.visibility_of_element_located((By.ID, "info"))).send_keys("error_content")
         sleep(1)
         ele_errorcontent = self.driver.find_element(By.XPATH, '//div[@class="ant-form-item-explain-error"]')
         sleep(1)
@@ -226,4 +227,5 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
         sleep(1)
+
 
