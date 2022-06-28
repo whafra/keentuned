@@ -3,7 +3,6 @@ package modules
 import (
 	"fmt"
 	"io/ioutil"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -114,7 +113,7 @@ func (tuner *Tuner) checkProfilePath() (map[int]string, error) {
 	filePathAll := make(map[int]string) //key为groupNo，value为.conf
 	for groupIndex, v := range tuner.Setter.Group {
 		if v {
-			filePath := com.GetProfilePath(tuner.Setter.ConfFile[groupIndex])
+			filePath := config.GetProfilePath(tuner.Setter.ConfFile[groupIndex])
 			if filePath != "" {
 				filePathAll[groupIndex] = filePath
 			} else {

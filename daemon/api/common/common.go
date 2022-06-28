@@ -7,17 +7,12 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	utilhttp "keentune/daemon/common/utils/http"
+	m "keentune/daemon/modules"
 	"net/http"
 	"os"
 	"strings"
 	"syscall"
 )
-
-type listInfo struct {
-	Name      string `json:"name"`
-	Scenario  string `json:"type"` // enum:"collect", "tuning"
-	Algorithm string `json:"algorithm"`
-}
 
 type deleter struct {
 	cmd      string
@@ -41,15 +36,17 @@ type DumpFlag struct {
 	Force  bool
 }
 
-var activeJob = ""
-var tuningCsv = "/var/keentune/tuning_jobs.csv"
-var sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
+var (	
+	tuningCsv    = "/var/keentune/tuning_jobs.csv"
+	sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
+	logHome      = "/var/log/keentune"
+)
 
 var (
-	JobTuning     = "tuning"
-	JobCollection = "collect"
-	JobTraining   = "train"
-	JobBenchmark  = "benchmark"
+	JobTuning    = "tuning"
+	JobProfile   = "profile"
+	JobTraining  = "train"
+	JobBenchmark = "benchmark"
 )
 
 func IsDataNameUsed(name string) bool {
@@ -86,25 +83,6 @@ func GetDataList() ([]string, string, string, error) {
 		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
 	}
 	return sensiList.Data, "", "", nil
-	/*
-		var dataDetailSlice [][]string
-		var dataList []string
-		var collectList string
-
-		if len(sensiList.Data) > 0 {
-			dataDetailSlice = append(dataDetailSlice, []string{"data name", "application scenario", "algorithm"})
-		}
-		/*
-			for _, value := range sensiList.Data {
-				dataDetailSlice = append(dataDetailSlice, []string{value.Name, value.Scenario, value.Algorithm})
-				dataList = append(dataList, value.Name)
-				if value.Scenario == "collect" {
-					collectList += fmt.Sprintf("\n\t%v", value.Name)
-				}
-			}
-
-		return sensiList, collectList, utils.FormatInTable(dataDetailSlice), nil
-	*/
 }
 
 func KeenTunedService(quit chan os.Signal) {
@@ -115,7 +93,8 @@ func KeenTunedService(quit chan os.Signal) {
 		select {
 		case sig := <-quit:
 			log.Info("", "keentune is interrupted")
-			if GetRunningTask() != "" {
+			if m.GetRunningTask() != "" {
+				killRunningJob()
 				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			if sig == syscall.SIGTERM {
@@ -145,7 +124,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 	case "param":
 		fullName = GetParameterPath(flag.Name)
 	case "profile":
-		fullName = GetProfilePath(flag.Name)
+		fullName = config.GetProfilePath(flag.Name)
 	default:
 		log.Errorf("", "%v is not supported", flag.Cmd)
 		return nil
@@ -164,10 +143,11 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
-	
+
 	if flag.Cmd == "param" {
 		primaryKeys := []string{flag.Name}
 		file.DeleteRow(tuningCsv, primaryKeys)
+		os.Remove(fmt.Sprintf("%v/%v.log", logHome, flag.Name))
 	}
 
 	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
@@ -196,7 +176,6 @@ func RunTrainDelete(flag DeleteFlag, reply *string) error {
 
 	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
 	return nil
-
 }
 
 func (d *deleter) check(inputName string) error {
@@ -224,23 +203,6 @@ func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
 
-func GetProfilePath(fileName string) string {
-	if file.IsPathExist(fileName) {
-		return fileName
-	}
-
-	workPath := config.GetProfileWorkPath(fileName)
-	if file.IsPathExist(workPath) {
-		return workPath
-	}
-
-	homePath := config.GetProfileHomePath(fileName)
-	if file.IsPathExist(homePath) {
-		return homePath
-	}
-
-	return ""
-}
 
 func GetParameterPath(fileName string) string {
 	workPath := config.GetTuningPath(fileName)
@@ -280,27 +242,26 @@ func GetSensitizePath(fileName string) string {
 	return ""
 }
 
-func GetRunningTask() string {
-	return activeJob
-}
-
-func SetRunningTask(class, name string) {
-	activeJob = fmt.Sprintf("%s %s", class, name)
-}
-
-func ClearTask() {
-	activeJob = ""
-}
-
-func IsJobRunning(name string) bool {
-	return GetRunningTask() == name
-}
-
 func IsApplying() bool {
-	job := GetRunningTask()
+	job := m.GetRunningTask()
 	if job == "" || len(strings.Split(job, " ")) < 2 {
 		return false
 	}
 
-	return (strings.Split(job, " ")[0] == JobCollection) || (strings.Split(job, " ")[0] == JobTuning)
+	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
 }
+
+func killRunningJob() {
+	m.ClearTask()
+
+	tuningJob := file.GetRecord(tuningCsv, "status", "running", "name")
+	if tuningJob != "" {
+		file.UpdateRow(tuningCsv, tuningJob, map[int]interface{}{m.TuneStatusIdx: m.Kill})
+	}
+
+	sensitizeJob := file.GetRecord(sensitizeCsv, "status", "running", "name")
+	if sensitizeJob != "" {
+		file.UpdateRow(sensitizeCsv, sensitizeJob, map[int]interface{}{m.TrainStatusIdx: m.Kill})
+	}
+}
+

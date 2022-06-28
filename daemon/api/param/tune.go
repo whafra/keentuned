@@ -39,14 +39,14 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 }
 
 func runTuning(flag TuneFlag) {
-	com.SetRunningTask(com.JobTuning, flag.Name)
+	m.SetRunningTask(com.JobTuning, flag.Name)
 	log.ParamTune = "param tune" + ":" + flag.Log
 	// create log file
 	ioutil.WriteFile(flag.Log, []byte{}, 0755)
 	defer func() {
+		m.ClearTask()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
-		com.ClearTask()
 	}()
 
 	log.Infof(log.ParamTune, "Step1. Parameter auto tuning start, using algorithm = %v.\n", config.KeenTune.Brain.Algorithm)
@@ -54,7 +54,6 @@ func runTuning(flag TuneFlag) {
 		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
 		return
 	}
-
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
@@ -119,3 +118,4 @@ func sortBenchItemNames(items map[string]m.ItemDetail) []string {
 	sort.Strings(sortNames)
 	return sortNames
 }
+

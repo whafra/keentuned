@@ -10,6 +10,9 @@ import (
 	"os"
 )
 
+type Service struct {
+}
+
 // Delete run sensitize delete service
 func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
 	defer func() {
@@ -30,3 +33,4 @@ func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
 
 	return com.RunTrainDelete(flag, reply)
 }
+

@@ -22,6 +22,7 @@ import (
 func main() {
 	config.Init()
 	log.Init()
+	m.ClearTask()
 
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)
@@ -115,3 +116,4 @@ func showStart() {
 
 	fmt.Println("KeenTune daemon running...")
 }
+

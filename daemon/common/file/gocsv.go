@@ -285,13 +285,13 @@ func getRecord(df dataframe.DataFrame, header1, value1, header2 string) (value2 
 	return value2
 }
 
-func GetRecord(fileName, header, value, primaryName string) string {
+func GetRecord(fileName, header1, value1, header2 string) string {
 	df, err := LoadCsv(fileName)
 	if err != nil {
 		return ""
 	}
 
-	return getRecord(df, header, value, primaryName)
+	return getRecord(df, header1, value1, header2)
 }
 
 func GetAllRecords(fileName string) ([][]string, error) {

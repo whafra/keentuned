@@ -54,48 +54,6 @@ func createSensitizeCmds() *cobra.Command {
 	return sensitizeCmd
 }
 
-/*
-func collectCmd() *cobra.Command {
-	var flag TuneFlag
-	cmd := &cobra.Command{
-		Use:     "collect",
-		Short:   "Collecting parameter and benchmark score as sensitivity identification data randomly",
-		Long:    "Collecting parameter and benchmark score as sensitivity identification data randomly",
-		Example: egCollect,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			err := initSensitizeConf()
-			if err != nil {
-				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
-			if err := checkTuningFlags("sensitize", &flag); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(flag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
-			}
-			if file.IsJobRunning(sensitizeCsv, flag.Name) {
-				fmt.Printf("Job %v is running, you can wait for it finishing or stop it.\n", flag.Name)
-				return
-			}
-
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-collect", time.Now().Unix())
-			RunCollectRemote(cmd.Context(), flag)
-			return
-		},
-	}
-
-	setTuneFlag("sensitize", cmd, &flag)
-	return cmd
-}
-*/
-
 func trainCmd() *cobra.Command {
 	var trainflags TrainFlag
 	cmd := &cobra.Command{
@@ -131,8 +89,9 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
-			if file.IsJobRunning(sensitizeCsv, trainflags.Job) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), trainflags.Job)
+			runningJob := new(string)
+			if HasTrainJobRunning(runningJob) {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), runningJob)
 				return
 			}
 
@@ -162,7 +121,6 @@ func trainCmd() *cobra.Command {
 				RunTrainRemote(cmd.Context(), trainflags)
 			}
 
-			//RunTrainRemote(cmd.Context(), trainflags)
 		},
 	}
 
@@ -221,34 +179,9 @@ func deleteSensitivityCmd() *cobra.Command {
 			if file.IsJobRunning(sensitizeCsv, flag.Name) {
 				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
-			} else {
-				/*
-					_, _, DataList, err := com.GetDataList()
-					if err != nil {
-						if find := strings.Contains(err.Error(), "connection refused"); find {
-							fmt.Println("brain access denied")
-							return
-						}
-						fmt.Println("Get sensitize Data List err:%v", err)
-						return
-					}
-
-						if find := strings.Contains(DataList, flag.Name); find {
-							fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
-							if !confirm() {
-								fmt.Println("[-] Give Up Delete")
-								return
-							}
-							flag.Cmd = "sensitize"
-							RunDeleteRemote(cmd.Context(), flag)
-						} else {
-							err := fmt.Sprintf("Sensitize delete failed: File %s is non-existent", flag.Name)
-							fmt.Printf("%s %s\n", ColorString("red", "[ERROR]"), err)
-						}
-				*/
-				RunDeleteRemote(cmd.Context(), flag)
 			}
 
+			RunDeleteRemote(cmd.Context(), flag)
 			return
 		},
 	}
@@ -267,3 +200,4 @@ func initSensitizeConf() error {
 	log.Init()
 	return nil
 }
+

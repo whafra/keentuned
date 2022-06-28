@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
+	m "keentune/daemon/modules"
 	"os"
 	"os/signal"
 	"strings"
@@ -64,7 +65,7 @@ func monitorClientStatus(clientName *string) {
 		case <-signalChan:
 			log.Debug("", "Heartbeat Check program is interrupt")
 
-			if GetRunningTask() != "" {
+			if m.GetRunningTask() != "" {
 				http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			config.ServeFinish <- true

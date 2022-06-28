@@ -1,21 +1,22 @@
 package param
 
 import (
-	"keentune/daemon/common/log"
 	"encoding/csv"
-	"os"
-	"io/ioutil"
-	"io"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
+	"os"
 )
 
 type tuningRecord struct {
-	name string
+	name      string
 	algorithm string
 	iteration string
-	status string
+	status    string
 	starttime string
-	endtime string
+	endtime   string
 }
 
 // Jobs run param jobs service
@@ -27,7 +28,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 	filepath := "/var/keentune/tuning_jobs.csv"
 	content, err := ioutil.ReadFile(filepath)
 	if string(content) == "" {
-		log.Infof(log.ParamJobs,"No job found")
+		log.Infof(log.ParamJobs, "No job found")
 		return nil
 	}
 
@@ -37,7 +38,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 		os.Exit(1)
 	}
 	defer file.Close()
-	
+
 	r := csv.NewReader(file)
 	var tuningData []tuningRecord
 	for {
@@ -48,28 +49,30 @@ func (s *Service) Jobs(flag string, reply *string) error {
 		var csvrecord tuningRecord
 		for index, value := range record {
 			switch index {
-			case 0:
+			case m.TuneNameIdx:
 				csvrecord.name = value
-			case 1:
+			case m.TuneStartIdx:
 				csvrecord.starttime = value
-			case 2:
+			case m.TuneEndIdx:
 				csvrecord.endtime = value
-			case 4:
+			case m.TuneAlgoIdx:
 				csvrecord.algorithm = value
-			case 5:
+			case m.TuneRoundIdx:
 				csvrecord.iteration = value
-			case 7:
+			case m.TuneStatusIdx:
 				csvrecord.status = value
 			}
 		}
 		tuningData = append(tuningData, csvrecord)
 	}
+	
 	for _, v := range tuningData {
 		var listInfo string
-		listInfo += fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v",v.name, v.algorithm, v.iteration, v.status, v. starttime, v.endtime) 
-	        log.Infof(log.ParamJobs,"%v", listInfo)
+		listInfo += fmt.Sprintf("%v\t%v\t%v\t%v\t%v\t%v", v.name, v.algorithm, v.iteration, v.status, v.starttime, v.endtime)
+		log.Infof(log.ParamJobs, "%v", listInfo)
 
 	}
 
 	return nil
 }
+
