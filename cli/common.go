@@ -160,8 +160,3 @@ func IsTuningJobFinish(name string, status *string) bool {
 	return *status == "finish"
 }
 
-func HasTrainJobRunning(job *string) bool {
-	*job = file.GetRecord(sensitizeCsv, "status", "running", "name")
-	return *job != ""
-}
-
