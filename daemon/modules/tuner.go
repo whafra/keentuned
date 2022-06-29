@@ -105,7 +105,7 @@ func (tuner *Tuner) parseTuningError(err error) {
 	if tuner.Flag == "tuning" {
 		tuner.rollback()
 	}
-	
+
 	if strings.Contains(err.Error(), "interrupted") {
 		tuner.updateStatus(Stop)
 		log.Infof(tuner.logName, "parameter optimization job abort!")
@@ -218,10 +218,10 @@ func (tuner *Tuner) end() {
 	var endInfo = make(map[int]interface{})
 
 	if tuner.Flag == "tuning" {
-		endInfo[tuneEndIdx] = start.Format(Format)
+		endInfo[TuneEndIdx] = start.Format(Format)
 		endInfo[tuneCostIdx] = endTime(int64(totalTime))
 	} else if tuner.Flag == "training" {
-		endInfo[trainEndIdx] = start.Format(Format)
+		endInfo[TrainEndIdx] = start.Format(Format)
 		endInfo[trainCostIdx] = endTime(int64(totalTime))
 	}
 
@@ -239,7 +239,7 @@ func endTime(cost int64) string {
 	min := cost % 3600
 	m := min / 60
 	sec := min % 60
-		
+
 	if h >= 1 {
 		return fmt.Sprintf("%dh%dm%vs", h, m, sec)
 	}
@@ -283,32 +283,6 @@ func (tuner *Tuner) setTimeSpentDetail(totalTime float64) {
 	tuner.timeSpend.detailInfo = utils.FormatInTable(detailSlice)
 }
 
-// Collect Sensitive parameters
-func (tuner *Tuner) Collect() {
-	var err error
-	tuner.logName = log.SensitizeCollect
-	tuner.isSensitize = true
-	defer func() {
-		tuner.end()
-		tuner.parseTuningError(err)
-	}()
-
-	if err = tuner.init(); err != nil {
-		err = fmt.Errorf("[%v] init Collect: %v", utils.ColorString("red", "ERROR"), err)
-		return
-	}
-
-	log.Infof(log.SensitizeCollect, "\nStep%v. Collect init success.", tuner.IncreaseStep(1))
-	log.Infof(log.SensitizeCollect, "\nStep%v. Start sensitization collection, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
-
-	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("[%v] loop collect: %v\n", utils.ColorString("red", "ERROR"), err)
-		return
-	}
-
-	log.Infof(log.SensitizeCollect, "\nStep%v. Sensitization collection finished, you can get the result by the command \"keentune sensitize train\" (see more details: keentune sensitize train -h).", tuner.IncreaseStep())
-}
-
 func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	if len(initVal) == 0 {
 		tuner.Step++
@@ -318,3 +292,4 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
 }
+

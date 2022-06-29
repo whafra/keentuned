@@ -21,16 +21,16 @@ type BenchmarkFlag struct {
 }
 
 func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
-	if com.GetRunningTask() != "" {
-		return fmt.Errorf("Job %v is running, please wait for it to finish or stop it and retry.", com.GetRunningTask())
+	if m.GetRunningTask() != "" {
+		return fmt.Errorf("Job %v is running, please wait for it to finish or stop it and retry.", m.GetRunningTask())
 	}
 
-	com.SetRunningTask(com.JobBenchmark, flag.Name)
+	m.SetRunningTask(com.JobBenchmark, flag.Name)
 
 	defer func() {
 		*reply = log.ClientLogMap[log.Benchmark]
 		log.ClearCliLog(log.Benchmark)
-		com.ClearTask()
+		m.ClearTask()
 	}()
 
 	inst, err := param.GetBenchmarkInst(flag.BenchConf)

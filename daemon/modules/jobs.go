@@ -2,9 +2,11 @@ package modules
 
 import (
 	"fmt"
+	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"os"
 )
 
 //  table header const
@@ -26,6 +28,8 @@ var TuneJobHeader = []string{
 	TabName, TabAlgo, TabStatus, TabRound, TabCurRound,
 	TabStart, TabEnd, TabCost, TabWSP, TabCmd, TabLog,
 }
+
+const activeJobCsv = "/var/keentune/runningJob.csv"
 
 //  table header const
 const (
@@ -65,17 +69,18 @@ const (
 	Stop   = "abort"
 	Finish = "finish"
 	Err    = "error"
+	Kill   = "kill"
 )
 
 // tune job column index
 const (
-	tuneNameIdx = iota
-	tuneAlgoIdx
-	tuneStatusIdx
-	tuneRoundIdx
+	TuneNameIdx = iota
+	TuneAlgoIdx
+	TuneStatusIdx
+	TuneRoundIdx
 	tuneCurRoundIdx
-	tuneStartIdx
-	tuneEndIdx
+	TuneStartIdx
+	TuneEndIdx
 	tuneCostIdx
 	tuneWSPIdx
 	tuneCmdIdx
@@ -84,22 +89,22 @@ const (
 
 // tune job column index
 const (
-	trainNameIdx = iota
-	trainStartIdx
-	trainEndIdx
+	TrainNameIdx = iota
+	TrainStartIdx
+	TrainEndIdx
 	trainCostIdx
-	trainTrials
-	trainStatusIdx
+	TrainTrialsIdx
+	TrainStatusIdx
 	trainEpoch
 	trainLogIdx
 	trainWSPIdx
-	trainAlgoIdx
+	TrainAlgoIdx
 	trainDataPath
 )
 
 func (tuner *Tuner) CreateTuneJob() error {
 	cmd := fmt.Sprintf("keentune param tune --job %v -i %v --config %v", tuner.Name, tuner.MAXIteration, config.GetCacheConfig())
-	
+
 	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", tuner.Name)
 
 	jobInfo := []string{
@@ -127,9 +132,23 @@ func (tuner *Tuner) updateJob(info map[int]interface{}) {
 
 func (tuner *Tuner) updateStatus(info string) {
 	if tuner.Flag == "tuning" {
-		tuner.updateJob(map[int]interface{}{tuneStatusIdx: info})
+		tuner.updateJob(map[int]interface{}{TuneStatusIdx: info})
 	} else if tuner.Flag == "training" {
-		tuner.updateJob(map[int]interface{}{trainStatusIdx: info})
+		tuner.updateJob(map[int]interface{}{TrainStatusIdx: info})
 	}
+}
+
+func GetRunningTask() string {
+	file, _ := ioutil.ReadFile(activeJobCsv)
+	return string(file)
+}
+
+func SetRunningTask(class, name string) {
+	content := fmt.Sprintf("%s %s", class, name)
+	ioutil.WriteFile(activeJobCsv, []byte(content), 0666)
+}
+
+func ClearTask() {
+	os.Remove(activeJobCsv)
 }
 

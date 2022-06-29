@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
 	"os"
 )
 
@@ -62,17 +63,17 @@ func (s *Service) Jobs(flag string, reply *string) error {
 		var sensirecord SensiRecord
 		for index, value := range record {
 			switch index {
-			case 0:
+			case m.TrainNameIdx:
 				sensirecord.name = value
-			case 1:
+			case m.TrainStartIdx:
 				sensirecord.starttime = value
-			case 2:
+			case m.TrainEndIdx:
 				sensirecord.endtime = value
-			case 4:
+			case m.TrainTrialsIdx:
 				sensirecord.trials = value
-			case 5:
+			case m.TrainStatusIdx:
 				sensirecord.status = value
-			case 10:
+			case m.TrainAlgoIdx:
 				sensirecord.algorithm = value
 			}
 		}
@@ -86,3 +87,4 @@ func (s *Service) Jobs(flag string, reply *string) error {
 
 	return nil
 }
+

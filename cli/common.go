@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"keentune/daemon/common/file"
 	"strings"
 
 	"keentune/daemon/common/config"
@@ -152,5 +153,15 @@ func ColorString(color string, content string) string {
 	default:
 		return content
 	}
+}
+
+func IsTuningJobFinish(name string, status *string) bool {
+	*status = file.GetRecord(tuningCsv, "name", name, "status")
+	return *status == "finish"
+}
+
+func HasTrainJobRunning(job *string) bool {
+	*job = file.GetRecord(sensitizeCsv, "status", "running", "name")
+	return *job != ""
 }
 

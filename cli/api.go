@@ -124,15 +124,6 @@ func RunGenerateRemote(ctx context.Context, flag GenFlag) {
 	remoteImpl("profile.Generate", flag)
 }
 
-func RunCollectRemote(ctx context.Context, flag TuneFlag) {
-	remoteImpl("sensitize.Collect", flag)
-
-	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
-	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
-	return
-}
-
 func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 	remoteImpl("sensitize.Train", flag)
 
@@ -143,17 +134,7 @@ func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 }
 
 func StopRemote(ctx context.Context, flag string) {
-	var job string
-	if flag == "param" {
-		job = "parameter optimization"
-	}
-
-	if flag == "sensitize" {
-		job = "sensibility identification"
-	}
-
 	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
-	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 }
 
 func RunJobsRemote(ctx context.Context, flag string) {
@@ -163,3 +144,4 @@ func RunJobsRemote(ctx context.Context, flag string) {
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
+

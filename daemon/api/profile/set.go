@@ -20,12 +20,14 @@ type Result struct {
 // Set run profile set service
 func (s *Service) Set(flag SetFlag, reply *string) error {
 	if com.IsApplying() {
-		return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
+		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
 	}
 
+	m.SetRunningTask(com.JobProfile, "set")
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
+		m.ClearTask()
 	}()
 
 	return SettingImpl(flag)

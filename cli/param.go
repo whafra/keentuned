@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
+	m "keentune/daemon/modules"
 	"os"
 	"strings"
 
@@ -74,9 +75,9 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			if file.IsJobRunning(tuningCsv, flag.Name) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
-				return
+			if m.GetRunningTask() != "" {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), m.GetRunningTask())
+				os.Exit(1)
 			}
 
 			flag.Config = config.GetKeenTunedConfPath(flag.Config)
@@ -187,10 +188,13 @@ func dumpCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-			if file.IsJobRunning(tuningCsv, dump.Name) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), dump.Name)
+
+			status := new(string)
+			if !IsTuningJobFinish(dump.Name, status) {
+				fmt.Printf("%v Job %v is %v, dump is not supported.\n", ColorString("yellow", "[Warning]"), *status, dump.Name)
 				return
 			}
+			
 			err := checkDumpParam(&dump)
 			if err != nil {
 				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)

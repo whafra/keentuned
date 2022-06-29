@@ -174,3 +174,22 @@ func GetKeenTunedConfPath(origin string) string {
 	return fullPath
 }
 
+func GetProfilePath(fileName string) string {
+	if file.IsPathExist(fileName) {
+		return fileName
+	}
+
+	workPath := GetProfileWorkPath(fileName)
+	if file.IsPathExist(workPath) {
+		return workPath
+	}
+
+	homePath := GetProfileHomePath(fileName)
+	if file.IsPathExist(homePath) {
+		return homePath
+	}
+
+	return ""
+}
+
+
