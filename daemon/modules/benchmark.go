@@ -52,12 +52,22 @@ func (tuner *Tuner) RunBenchmark(num int) (map[string][]float32, map[string]Item
 		}
 
 		//  collect score of each group
+		var benchName = make(map[string]string)
 		for groupID, groupScores := range groupsScores {
+			var multiBenchScore = make(map[string]float32)
 			for _, results := range groupScores {
 				for name, value := range results {
-					scores[groupID][name] = append(scores[groupID][name], value)
+					_, ok := benchName[name]
+					if !ok {
+						benchName[name] = name
+					}
+					multiBenchScore[name] += value
 					sumScore[groupID][name] += value
 				}
+			}
+
+			for name, _ := range benchName {
+				scores[groupID][name] = append(scores[groupID][name], multiBenchScore[name])
 			}
 		}
 	}

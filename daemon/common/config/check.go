@@ -239,7 +239,8 @@ func readParams(domains map[string]string, userParamMap DBLMap, mergedParam []DB
 	var err error
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
-		if !ok {
+		if !ok || priID < 0 || priID > 1 {
+			PriorityList[domainName] = 1
 			priID = 1
 		}
 
@@ -346,10 +347,10 @@ func isDataTypeOK(dtype string) bool {
 }
 
 func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
-	//var err error
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
-		if !ok {
+		if !ok || priID < 0 || priID > 1 {
+			PriorityList[domainName] = 1
 			priID = 1
 		}
 
@@ -374,3 +375,4 @@ func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 	}
 	return nil
 }
+
