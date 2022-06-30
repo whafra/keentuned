@@ -7,6 +7,7 @@ import (
 	"keentune/daemon/common/file"
 	m "keentune/daemon/modules"
 	"regexp"
+	"strings"
 )
 
 func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
@@ -29,12 +30,25 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 		return fmt.Errorf("--trials is out of range [1,10], input: %v", flag.Trials)
 	}
 
+	if IsMutexJobRunning(com.JobTuning) {
+		return fmt.Errorf("Another Job %v is running, you can wait for it finishing or stop it.", m.GetRunningTask())
+	}
+
 	flag.Config = config.GetKeenTunedConfPath(flag.Config)
 	if !file.IsPathExist(flag.Config) {
 		fmt.Printf("config file '%v' does not exist", flag.Config)
 	}
 
 	return nil
+}
+
+func IsMutexJobRunning(mutexJob string) bool {
+	job := m.GetRunningTask()
+	if job == "" {
+		return false
+	}
+
+	return strings.Split(job, " ")[0] == mutexJob
 }
 
 func checkData(cmd, name string) error {

@@ -135,6 +135,8 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 		if err := json.Unmarshal(body, &applyResp); err != nil {
 			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
+	case <-StopSig:
+		return nil, fmt.Errorf("get apply result is interrupted")
 	}
 
 	if !applyResp.Success {

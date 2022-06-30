@@ -48,7 +48,7 @@ func runTrain(flags TrainFlag) {
 	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data '%v' start, and algorithm is %v.", flags.Data, config.KeenTune.Sensitize.Algorithm)
 
 	if err := TrainImpl(flags, "training"); err != nil {
-		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
+		log.Errorf(log.SensitizeTrain, "Param Tune failed, msg: %v", err)
 		return
 	}
 	return

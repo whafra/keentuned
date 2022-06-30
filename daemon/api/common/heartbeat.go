@@ -66,7 +66,7 @@ func monitorClientStatus(monitor interface{}, clientName *string, group []bool) 
 			log.Debug("", "Heartbeat Check program is interrupt")
 
 			if m.GetRunningTask() != "" {
-				killRunningJob()
+				ResetJob()
 				http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			config.ServeFinish <- true
@@ -94,7 +94,7 @@ func IsClientOffline(clientName *string) bool {
 	offline = offline || benchStatus
 
 	// check brain
-	brainOffline := isBrainOffline(clientName)
+	brainOffline := IsBrainOffline(clientName)
 	offline = offline || brainOffline
 
 	*clientName = strings.TrimSuffix(*clientName, ", ")
@@ -158,7 +158,7 @@ func StartCheck() error {
 	return nil
 }
 
-func isBrainOffline(clientName *string) bool {
+func IsBrainOffline(clientName *string) bool {
 	url := fmt.Sprintf("%v:%v/sensitize_list", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
 	_, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
@@ -223,11 +223,11 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 
 func CheckBrainClient() error {
 	clientName := new(string)
-	if isBrainOffline(clientName) {
+	if IsBrainOffline(clientName) {
 		return fmt.Errorf("brain client is offline, please get it ready")
 	}
 
-	go monitorClientStatus(isBrainOffline, clientName, nil)
+	go monitorClientStatus(IsBrainOffline, clientName, nil)
 	return nil
 }
 

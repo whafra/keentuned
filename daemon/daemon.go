@@ -22,7 +22,7 @@ import (
 func main() {
 	config.Init()
 	log.Init()
-	m.ClearTask()
+	com.ResetJob()
 
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)

@@ -32,9 +32,12 @@ func (tuner *Tuner) setConfigure() error {
 
 func (tuner *Tuner) configure() error {
 	wg := sync.WaitGroup{}
+	sc := NewSafeChan()
+	defer sc.SafeStop()
 	var applySummary string
 	var targetFinishStatus = make([]string, len(config.KeenTune.IPMap))
 	start := time.Now()
+	var errDetail string
 	for groupID, group := range tuner.Group {
 		req := group.newRequester(groupID)
 		for index, ip := range group.IPs {
@@ -42,14 +45,18 @@ func (tuner *Tuner) configure() error {
 			req.id = index + 1
 			req.ip = ip
 			go func(req request) {
-				tuner.apply(&wg, targetFinishStatus, req)
+				err := tuner.apply(&wg, targetFinishStatus, req)
+				if err != nil && strings.Contains(err.Error(), "interrupted") {
+					log.Infof("", "safe stop id: %v", req.id)
+					sc.SafeStop()
+					errDetail = "apply is interrupted"
+				}
 			}(req)
 		}
 	}
 
 	wg.Wait()
 
-	var errDetail string
 	for _, status := range targetFinishStatus {
 		applySummary += fmt.Sprintf("\t%v", status)
 		if strings.Contains(status, "apply failed") {
@@ -72,7 +79,7 @@ func (tuner *Tuner) configure() error {
 	return nil
 }
 
-func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req request) {
+func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req request) error {
 	start := time.Now()
 	var errMsg error
 	req.ipIndex = config.KeenTune.IPMap[req.ip]
@@ -94,11 +101,12 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 	}
 
 	if errMsg != nil {
-		return
+		return errMsg
 	}
 
 	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("%v apply result: %v", identity, strings.TrimPrefix(applyResult, " "))
 	tuner.timeSpend.apply += utils.Runtime(start).Count
+	return nil
 }
 
 func (gp *Group) Set(req request) (string, error) {

@@ -36,7 +36,7 @@ type DumpFlag struct {
 	Force  bool
 }
 
-var (	
+var (
 	tuningCsv    = "/var/keentune/tuning_jobs.csv"
 	sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
 	logHome      = "/var/log/keentune"
@@ -94,7 +94,7 @@ func KeenTunedService(quit chan os.Signal) {
 		case sig := <-quit:
 			log.Info("", "keentune is interrupted")
 			if m.GetRunningTask() != "" {
-				killRunningJob()
+				ResetJob()
 				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			if sig == syscall.SIGTERM {
@@ -173,6 +173,7 @@ func RunTrainDelete(flag DeleteFlag, reply *string) error {
 	}
 	primaryKeys := []string{flag.Name}
 	file.DeleteRow(sensitizeCsv, primaryKeys)
+	os.Remove(fmt.Sprintf("%v/keentuned-sensitize-train-%v.log", logHome, flag.Name))
 
 	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
 	return nil
@@ -202,7 +203,6 @@ func (d *deleter) check(inputName string) error {
 func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
-
 
 func GetParameterPath(fileName string) string {
 	workPath := config.GetTuningPath(fileName)
@@ -251,7 +251,7 @@ func IsApplying() bool {
 	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
 }
 
-func killRunningJob() {
+func ResetJob() {
 	m.ClearTask()
 
 	tuningJob := file.GetRecord(tuningCsv, "status", "running", "name")
