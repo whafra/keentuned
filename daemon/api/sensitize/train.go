@@ -27,7 +27,7 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
 	}
 
-	if err := com.HeartbeatCheck(); err != nil {
+	if err := com.CheckBrainClient(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
 
@@ -36,9 +36,11 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 }
 
 func runTrain(flags TrainFlag) {
+	m.SetRunningTask(com.JobTraining, flags.Job)
 	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
+		m.ClearTask()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
 	}()

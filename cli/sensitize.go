@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -13,7 +12,6 @@ import (
 )
 
 const (
-	//egCollect       = "\tkeentune sensitize collect --data collect_test --iteration 10"
 	egTrain         = "\tkeentune sensitize train --data collect_test --job train_test --trials 2"
 	egDelete        = "\tkeentune sensitize delete --job collect_test"
 	egSensitiveJobs = "\tkeentune sensitize jobs"
@@ -61,72 +59,36 @@ func trainCmd() *cobra.Command {
 		Short:   "Deploy and start a sensitivity identification job",
 		Long:    "Deploy and start a sensitivity identification job",
 		Example: egTrain,
-
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := checkTrainingFlags("sensitize", &trainflags); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
-
 		Run: func(cmd *cobra.Command, args []string) {
-			err := initSensitizeConf()
-			if err != nil {
-				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
 			if strings.Trim(trainflags.Data, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return
 			}
+
+			err := initSensitizeConf()
+			if err != nil {
+				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}			
+
 			if strings.Trim(trainflags.Job, " ") == "" {
 				trainflags.Job = trainflags.Data
 			}
-			if trainflags.Trials > 10 || trainflags.Trials < 1 {
-				fmt.Printf("%v Incomplete or Unmatched command, trials is out of range [1,10]\n\n", ColorString("red", "[ERROR]"))
-				return
-			}
 
-			runningJob := new(string)
-			if HasTrainJobRunning(runningJob) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), runningJob)
-				return
-			}
-
-			if !file.IsPathExist(trainflags.Config) {
-				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), trainflags.Config)
-				os.Exit(1)
-			}
-
-			if !com.IsDataNameUsed(trainflags.Data) {
-				fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
+			if err := checkTrainingFlags("sensitize", &trainflags); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
 			}
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", trainflags.Job)
-
-			SensiName := fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(""), trainflags.Job)
-			_, err = os.Stat(SensiName)
-			if err == nil {
-				fmt.Printf("%s %s", ColorString("yellow", "[Warning]"), fmt.Sprintf(outputTips, "trained result"))
-				trainflags.Force = confirm()
-				if !trainflags.Force {
-					fmt.Printf("job File exist and you have given up to overwrite it\n")
-					os.Exit(1)
-				}
-				RunTrainRemote(cmd.Context(), trainflags)
-			} else {
-				RunTrainRemote(cmd.Context(), trainflags)
-			}
-
+			RunTrainRemote(cmd.Context(), trainflags)
 		},
 	}
 
 	flags := cmd.Flags()
 	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
-	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials")
+	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials, range [1,10]")
 	flags.StringVarP(&trainflags.Job, "job", "j", "", "job file of sensitive parameter identification and explanation")
 	flags.StringVar(&trainflags.Config, "config", "", "configuration specified for train")
 

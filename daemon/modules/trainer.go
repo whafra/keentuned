@@ -9,7 +9,6 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"os"
 	"strings"
 )
 
@@ -41,19 +40,13 @@ func (tuner *Tuner) Train() {
 
 	log.Infof(log.SensitizeTrain, "\nStep2. Initiate sensitization success.\n")
 
-	resultString, resultMap, err := tuner.getSensitivityResult()
+	resultString, err := tuner.getSensitivityResult()
 	if err != nil {
 		log.Errorf(log.SensitizeTrain, "Get sensitivity result failed, err:%v", err)
 		return
 	}
 
 	log.Infof(log.SensitizeTrain, "Step3. Get sensitive parameter identification results successfully, and the details are as follows.%v", resultString)
-
-	if err = tuner.dumpSensitivityResult(resultMap, tuner.Job); err != nil {
-		return
-	}
-
-	log.Infof(log.SensitizeTrain, "\nStep4. Dump sensitivity result to %v successfully, and \"sensitize train\" finish.\n", fmt.Sprintf("%s/sensi-%s.json", config.GetSensitizePath(""), tuner.Job))
 }
 
 func (tuner *Tuner) CreateTrainJob() error {
@@ -91,8 +84,7 @@ func (tuner *Tuner) initiateSensitization() error {
 	return nil
 }
 
-func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, error) {
-
+func (tuner *Tuner) getSensitivityResult() (string, error) {
 	var sensitizeParams struct {
 		Success bool        `json:"suc"`
 		Head    string      `json:"head"`
@@ -106,44 +98,74 @@ func (tuner *Tuner) getSensitivityResult() (string, map[string]interface{}, erro
 	case resultBytes := <-config.SensitizeResultChan:
 		log.Debugf(log.SensitizeTrain, "get sensitivity result:%s", resultBytes)
 		if len(resultBytes) == 0 {
-			return "", nil, fmt.Errorf("get sensitivity result is nil")
+			return "", fmt.Errorf("get sensitivity result is nil")
 		}
 
 		if err := json.Unmarshal(resultBytes, &sensitizeParams); err != nil {
-			return "", nil, err
+			return "", err
 		}
+	case <-StopSig:
+		return "", fmt.Errorf("training is interrupted")
 	}
 
 	if !sensitizeParams.Success {
-		return "", nil, fmt.Errorf("error msg:%v", sensitizeParams.Msg)
+		return "", fmt.Errorf("error msg:%v", sensitizeParams.Msg)
 	}
 
 	sensiResultCsv := fmt.Sprintf("%v/sensi_result.csv", config.GetSensitizePath(tuner.Job))
 	sensiResultHeader := strings.Split(sensitizeParams.Head, ",")
 	if len(sensitizeParams.Result) == 0 || len(sensitizeParams.Result[0]) != len(sensiResultHeader) {
-		return "", nil, fmt.Errorf("error msg:Header does not match param")
+		return "", fmt.Errorf("error msg:Header does not match param")
 	}
 
 	if !file.IsPathExist(sensiResultCsv) {
 		err := file.CreatCSV(sensiResultCsv, sensiResultHeader)
 		if err != nil {
-			fmt.Printf("%v create sensitize jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
-			os.Exit(1)
+			return "", fmt.Errorf("create sensitize jobs csv file: %v", err)
 		}
 	}
-	var resultSlice [][]string
-	resultSlice = append(resultSlice, sensiResultHeader)
 
-	for _, paramSlice := range sensitizeParams.Result {
+	resultSlice := saveSensitiveResult(sensitizeParams.Result, sensiResultHeader, sensiResultCsv)
+	return utils.FormatInTable(resultSlice), nil
+
+}
+
+func saveSensitiveResult(result [][]float64, sensiResultHeader []string, sensiResultCsv string) [][]string {
+	transposeCol := len(result) + 1
+	transposeRow := len(sensiResultHeader) + 1
+	var resultSlice = make([][]string, transposeRow)
+	initSensitiveTable(transposeCol, resultSlice, sensiResultHeader)
+
+	for colIdx, paramSlice := range result {
 		var endInfo []string
-		for _, param := range paramSlice {
+		for rowIdx, param := range paramSlice {
 			endInfo = append(endInfo, fmt.Sprint(param))
+			if len(paramSlice) != transposeRow-1 {
+				continue
+			}
+			resultSlice[rowIdx+1][colIdx+1] = fmt.Sprint(param)
 		}
-		resultSlice = append(resultSlice, endInfo)
 		file.Insert(sensiResultCsv, endInfo)
 	}
-	return utils.FormatInTable(resultSlice), nil, nil
+	return resultSlice
+}
 
+func initSensitiveTable(transposeCol int, resultSlice [][]string, sensiResultHeader []string) {
+	var transposeHeader []string
+	for i := 0; i < transposeCol; i++ {
+		if i == 0 {
+			transposeHeader = append(transposeHeader, "param name")
+			continue
+		}
+		transposeHeader = append(transposeHeader, fmt.Sprintf("round %v", i))
+	}
+
+	resultSlice[0] = transposeHeader
+
+	for row, paramName := range sensiResultHeader {
+		resultSlice[row+1] = make([]string, transposeCol)
+		resultSlice[row+1][0] = paramName
+	}
 }
 
 func (tuner *Tuner) dumpSensitivityResult(resultMap map[string]interface{}, recordName string) error {

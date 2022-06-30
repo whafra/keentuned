@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
-	m "keentune/daemon/modules"
 	"os"
 	"strings"
 
@@ -62,12 +61,6 @@ func tuneCmd() *cobra.Command {
 		Short:   "Deploy and start a parameter tuning job",
 		Long:    "Deploy and start a parameter tuning job",
 		Example: egTune,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if err := checkTuningFlags("tune", &flag); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
@@ -75,14 +68,14 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			if m.GetRunningTask() != "" {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), m.GetRunningTask())
-				os.Exit(1)
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%v init work dir: %v, check keentuned.conf and retry.\n", ColorString("red", "[ERROR]"), err)
+				return
 			}
 
-			flag.Config = config.GetKeenTunedConfPath(flag.Config)
-			if !file.IsPathExist(flag.Config) {
-				fmt.Printf("%v config file '%v' is non-existent\n", ColorString("red", "[ERROR]"), flag.Config)
+			if err := checkTuningFlags("tune", &flag); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
 			}
 
@@ -194,7 +187,7 @@ func dumpCmd() *cobra.Command {
 				fmt.Printf("%v Job %v is %v, dump is not supported.\n", ColorString("yellow", "[Warning]"), *status, dump.Name)
 				return
 			}
-			
+
 			err := checkDumpParam(&dump)
 			if err != nil {
 				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)
