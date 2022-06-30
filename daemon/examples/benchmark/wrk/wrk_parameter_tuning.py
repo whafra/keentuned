@@ -12,9 +12,9 @@ wrk benchmark
 
 logger = logging.getLogger(__name__)
 
-# const
+# baseline parameters
 DEFAULT_DURATION = 30
-DEFAULT = "--threads 32 --connections 400"
+DEFAULT = "--threads 32 --connections 3200"
 
 
 class Benchmark:
@@ -26,8 +26,8 @@ class Benchmark:
             default (string): Number of threads to use and Connections to keep open.
             duration (int, optional): Duration of test.
         """
-
-        self.CMD = "wrk {} --duration {} -H 'Connection: close' --latency http://{}/0kb.bin ".format(default, duration, url)
+        # Modify the test command based on the actual scenario
+        self.CMD = "wrk {} --duration {} --latency https://{}:443/0kb.bin ".format(default, duration, url)
 
     def __transfMeasurement(self,value,measurement):
         if measurement == '':
@@ -117,7 +117,6 @@ class Benchmark:
                 "Requests_sec": Requests_sec,
                 "Transfer_sec": Transfer_sec,
             }
-            time.sleep(60)
 
             result_str = ", ".join(["{} = {}".format(k,v) for k,v in result.items()])
             print(result_str)
@@ -131,7 +130,7 @@ class Benchmark:
 
 if __name__ == "__main__":
     if sys.argv.__len__() <= 1:
-        print("'Target ip' is wanted: python3 wrk_nginx_long.py [Target ip]")
+        print("'Target ip' is wanted: python3  wrk_parameter_tuning.py [Target ip]")
         exit(1)
     bench = Benchmark(sys.argv[1])
     suc, res = bench.run()
