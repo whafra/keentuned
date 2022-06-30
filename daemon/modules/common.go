@@ -21,6 +21,7 @@ const (
 const (
 	BackupNotFound = "Can not find backup file"
 	FileNotExist   = "do not exists"
+	NoNeedRollback = "don't need rollback"
 )
 
 func (tuner *Tuner) isInterrupted() bool {
@@ -121,7 +122,7 @@ func parseMsg(msg interface{}) int {
 		var count int
 		for _, value := range info {
 			message := fmt.Sprint(value)
-			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) {
+			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) || strings.Contains(message, NoNeedRollback) {
 				count++
 			}
 		}
@@ -131,7 +132,7 @@ func parseMsg(msg interface{}) int {
 		}
 		return SUCCESS
 	case string:
-		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) {
+		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) || strings.Contains(info, NoNeedRollback) {
 			return WARNING
 		}
 		return SUCCESS
