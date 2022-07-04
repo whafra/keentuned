@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// Tuner define a tuning job include Algorithm, Benchmark, Group
+// Tuner define a tuning job include Explainer, Benchmark, Group
 type Trainer struct {
 	Data   string
 	Job    string
@@ -143,7 +143,7 @@ func saveSensitiveResult(result [][]float64, sensiResultHeader []string, sensiRe
 			if len(paramSlice) != transposeRow-1 {
 				continue
 			}
-			resultSlice[rowIdx+1][colIdx+1] = fmt.Sprint(param)
+			resultSlice[rowIdx+1][colIdx+1] = fmt.Sprintf("%.4f",param)
 		}
 		file.Insert(sensiResultCsv, endInfo)
 	}

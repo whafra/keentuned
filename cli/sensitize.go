@@ -41,7 +41,6 @@ func createSensitizeCmds() *cobra.Command {
 
 	var sesiCmds []*cobra.Command
 
-	//sesiCmds = append(sesiCmds, decorateCmd(collectCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(jobSensitivityCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(trainCmd()))
 	sesiCmds = append(sesiCmds, decorateCmd(deleteSensitivityCmd()))
@@ -70,7 +69,7 @@ func trainCmd() *cobra.Command {
 			if err != nil {
 				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
-			}			
+			}
 
 			if strings.Trim(trainflags.Job, " ") == "" {
 				trainflags.Job = trainflags.Data
@@ -124,7 +123,7 @@ func deleteSensitivityCmd() *cobra.Command {
 				return
 			}
 			flag.Cmd = "sensitize"
-			err := initSensitizeConf()
+			err := config.InitWorkDir()
 			if err != nil {
 				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)

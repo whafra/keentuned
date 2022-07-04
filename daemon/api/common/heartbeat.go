@@ -159,7 +159,7 @@ func StartCheck() error {
 }
 
 func IsBrainOffline(clientName *string) bool {
-	url := fmt.Sprintf("%v:%v/sensitize_list", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+	url := fmt.Sprintf("%v:%v/avaliable", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
 	_, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
 		*clientName += fmt.Sprintf("brain client")

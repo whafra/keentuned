@@ -70,7 +70,7 @@ func (c *KeentunedConf) update(fileName, cmd string) error {
 		}
 
 		c.BenchGroup = []BenchGroup{}
-		if err = c.getBenchGroup(cfg, true); err != nil {
+		if err = c.getBenchGroup(cfg); err != nil {
 			return err
 		}
 	}
@@ -95,22 +95,15 @@ func (c *KeentunedConf) updateDefault(cfg *ini.File, cmd string) error {
 		c.BaseRound = empty.Key("BASELINE_BENCH_ROUND").MustInt(5)
 		c.ExecRound = empty.Key("TUNING_BENCH_ROUND").MustInt(3)
 		c.AfterRound = empty.Key("RECHECK_BENCH_ROUND").MustInt(10)
-
-		// Optional: bench_config
-		benchConf := empty.Key("BENCH_CONFIG").MustString("")
-		if benchConf != "" {
-			c.BenchConf = benchConf
-			return checkBenchConf(&c.BenchConf)
-		}
 	}
 
 	if cmd == "training" {
-		c.Sensitize.Algorithm = algo
+		c.Explainer = algo
 		epoch := empty.Key("EPOCH").MustInt(20)
 		if epoch == 0 {
 			return fmt.Errorf("EPOCH is required > 0")
 		}
-		c.Sensitize.Epoch = epoch
+		c.Epoch = epoch
 	}
 
 	return nil
@@ -139,7 +132,7 @@ func dump(jobName string, cmd string) error {
 		sec.NewKey("BENCH_SRC_IP", strings.Join(bench.SrcIPs, ","))
 		sec.NewKey("BENCH_SRC_PORT", bench.SrcPort)
 		sec.NewKey("BENCH_DEST_IP", bench.DestIP)
-		sec.NewKey("BENCH_DEST_PORT", bench.DestPort)
+		sec.NewKey("BENCH_CONFIG", bench.BenchConf)
 	}
 
 	for index, target := range KeenTune.Target.Group {
@@ -220,7 +213,6 @@ func (c *KeentunedConf) getConfigFlag() string {
 	configFlag += fmt.Sprintf("BASELINE_BENCH_ROUND = %v\n", c.BaseRound)
 	configFlag += fmt.Sprintf("TUNING_BENCH_ROUND = %v\n", c.ExecRound)
 	configFlag += fmt.Sprintf("RECHECK_BENCH_ROUND = %v\n", c.AfterRound)
-	configFlag += fmt.Sprintf("BENCH_CONFIG = %v\n", c.BenchConf)
 	configFlag += getBenchConf(c.BenchGroup)
 	configFlag += getTargetConf(c.Group)
 	configFlag += "\""
@@ -247,7 +239,7 @@ func GetJobGroup(job string) (string, string, error) {
 		return "", "", fmt.Errorf("failed to parse %s, %v", jobConf, err)
 	}
 
-	err = tmpConfig.getBenchGroup(cfg, true)
+	err = tmpConfig.getBenchGroup(cfg)
 	if err != nil {
 		return "", "", fmt.Errorf("parse bench group %v", err)
 	}
@@ -267,7 +259,7 @@ func getBenchConf(benchGroup []BenchGroup) string {
 		benchConf += fmt.Sprintf("BENCH_SRC_IP = %v\n", strings.Join(bench.SrcIPs, ","))
 		benchConf += fmt.Sprintf("BENCH_SRC_PORT = %v\n", bench.SrcPort)
 		benchConf += fmt.Sprintf("BENCH_DEST_IP = %v\n", bench.DestIP)
-		benchConf += fmt.Sprintf("BENCH_DEST_PORT = %v\n", bench.DestPort)
+		benchConf += fmt.Sprintf("BENCH_CONFIG = %v\n", bench.BenchConf)
 	}
 
 	return benchConf

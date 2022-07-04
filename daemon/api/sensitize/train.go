@@ -22,13 +22,13 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
+	if err := com.CheckBrainClient(); err != nil {
+		return fmt.Errorf("check %v", err)
+	}
+
 	err := config.Backup(flags.Config, flags.Job, "training")
 	if err != nil {
 		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
-	}
-
-	if err := com.CheckBrainClient(); err != nil {
-		return fmt.Errorf("check %v", err)
 	}
 
 	go runTrain(flags)
@@ -45,7 +45,7 @@ func runTrain(flags TrainFlag) {
 		<-config.ServeFinish
 	}()
 
-	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data '%v' start, and algorithm is %v.", flags.Data, config.KeenTune.Sensitize.Algorithm)
+	log.Infof(log.SensitizeTrain, "Step1. Sensitize train data '%v' start, and algorithm is %v.", flags.Data, config.KeenTune.Explainer)
 
 	if err := TrainImpl(flags, "training"); err != nil {
 		log.Errorf(log.SensitizeTrain, "Param Tune failed, msg: %v", err)
@@ -60,12 +60,12 @@ func TrainImpl(flag TrainFlag, cmd string) error {
 		StartTime: time.Now(),
 		Step:      1,
 		Flag:      cmd,
-		Algorithm: config.KeenTune.Sensitize.Algorithm,
+		Algorithm: config.KeenTune.Explainer,
 	}
 	tuner.Trials = flag.Trials
 	tuner.Data = flag.Data
 	tuner.Job = flag.Job
-	tuner.Epoch = config.KeenTune.Sensitize.Epoch
+	tuner.Epoch = config.KeenTune.Epoch
 	tuner.Train()
 	return nil
 }

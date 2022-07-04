@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"keentune/daemon/common/file"
+	"os"
 	"strings"
 
 	"keentune/daemon/common/config"
@@ -108,6 +109,11 @@ func versionCmd() *cobra.Command {
 		Long:    "Print the version number of keentune",
 		Example: egBenchmark,
 		Run: func(cmd *cobra.Command, args []string) {
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
 			flag.VersionNum = config.KeenTune.VersionConf
 			fmt.Printf("keentune version %v\n", flag.VersionNum)
 		},

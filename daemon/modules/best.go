@@ -31,7 +31,7 @@ func (tuner *Tuner) getBest() error {
 
 	tuner.bestInfo.Round = bestConfig.Iteration
 	tuner.bestInfo.Score = bestConfig.Score
-	tuner.bestInfo.Parameters=bestConfig.Candidate
+	tuner.bestInfo.Parameters = bestConfig.Candidate
 
 	return nil
 }
@@ -73,7 +73,7 @@ func (tuner *Tuner) verifyBest() error {
 }
 
 func (tuner *Tuner) dumpBest() error {
-	if !config.KeenTune.DumpConf.BestDump {
+	if !config.KeenTune.BestDump {
 		return nil
 	}
 
@@ -96,7 +96,7 @@ func (tuner *Tuner) dumpBest() error {
 			log.Warnf(tuner.logName, "dump best.json failed, %v", err)
 			continue
 		}
-		
+
 		fileList += fmt.Sprintf("\n\t%v/%v_group%v%v", jobPath, tuner.Name, index+1, suffix)
 	}
 
