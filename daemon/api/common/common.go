@@ -65,7 +65,7 @@ func IsDataNameUsed(name string) bool {
 }
 
 func GetDataList() ([]string, string, string, error) {
-	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/sensitize_list", nil)
+	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
 	if err != nil {
 		return nil, "", "", err
 	}
@@ -80,7 +80,7 @@ func GetDataList() ([]string, string, string, error) {
 	}
 
 	if !sensiList.Success {
-		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
+		return nil, "", "", fmt.Errorf("remotecall avaliable return suc is false")
 	}
 	return sensiList.Data, "", "", nil
 }
@@ -262,6 +262,31 @@ func ResetJob() {
 	sensitizeJob := file.GetRecord(sensitizeCsv, "status", "running", "name")
 	if sensitizeJob != "" {
 		file.UpdateRow(sensitizeCsv, sensitizeJob, map[int]interface{}{m.TrainStatusIdx: m.Kill})
+	}
+}
+
+func SetAvailableDomain() {
+	url := fmt.Sprintf("%s:%s/avaliable", config.KeenTune.Target.Group[0].IPs[0], config.KeenTune.Target.Group[0].Port)
+	resp, err := utilhttp.RemoteCall("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	var ret struct {
+		Domains []string `json:"result"`
+	}
+
+	err = json.Unmarshal(resp, &ret)
+	if err != nil {
+		return
+	}
+
+	for _, domain := range ret.Domains {
+		if domain == config.NginxDomain {
+			config.PriorityList[domain] = 0
+			continue
+		}
+		config.PriorityList[domain] = 1
 	}
 }
 

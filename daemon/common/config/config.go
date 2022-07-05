@@ -13,46 +13,53 @@ import (
 
 // KeentunedConf
 type KeentunedConf struct {
-	Default   `ini:"keentuned"`
-	Bench     `ini:"benchmark"`
-	Target    `ini:"-"`
-	Brain     `ini:"brain"`
-	Version   `ini:"version"`
-	DumpConf  `ini:"dump"`
-	Sensitize `ini:"sensitize"`
-	LogConf   `ini:"log"`
-}
-
-type Version struct {
-	VersionConf string `ini:"VERSION_NUM"`
+	Default `ini:"keentuned"`
+	Bench   `ini:"benchmark"`
+	Target  `ini:"-"`
+	Brain   `ini:"brain"`
 }
 
 type Brain struct {
 	BrainIP   string `ini:"BRAIN_IP"`
 	BrainPort string `ini:"BRAIN_PORT"`
-	Algorithm string `ini:"ALGORITHM"`
+	Algorithm string `ini:"AUTO_TUNING_ALGORITHM"`
+	Explainer string `ini:"SENSITIZE_ALGORITHM"`
+	Epoch     int    `ini:"-"`
 }
 
 type Default struct {
 	Home          string `ini:"KEENTUNED_HOME"`
 	Port          string `ini:"PORT"`
 	HeartbeatTime int    `ini:"HEARTBEAT_TIME"`
+	DumpHome      string `ini:"DUMP_HOME"`
+	// dump control ...
+	BaseDump bool `ini:"DUMP_BASELINE_CONFIGURATION"`
+	ExecDump bool `ini:"DUMP_TUNING_CONFIGURATION"`
+	BestDump bool `ini:"DUMP_BEST_CONFIGURATION"`
+
+	// log ...
+	LogFileLvl  string `ini:"LOGFILE_LEVEL"`
+	FileName    string `ini:"LOGFILE_NAME"`
+	Interval    int    `ini:"LOGFILE_INTERVAL"`
+	BackupCount int    `ini:"LOGFILE_BACKUP_COUNT"`
+	VersionConf string `ini:"VERSION_NUM"`
+
+	// benchmark round ...
+	BaseRound  int `ini:"BASELINE_BENCH_ROUND"`
+	ExecRound  int `ini:"TUNING_BENCH_ROUND"`
+	AfterRound int `ini:"RECHECK_BENCH_ROUND"`
 }
 
 type Bench struct {
 	BenchGroup []BenchGroup   `ini:"-"`
-	BaseRound  int            `ini:"BASELINE_BENCH_ROUND"`
-	ExecRound  int            `ini:"TUNING_BENCH_ROUND"`
-	AfterRound int            `ini:"RECHECK_BENCH_ROUND"`
-	BenchConf  string         `ini:"BENCH_CONFIG"`
 	BenchIPMap map[string]int `ini:"-"`
 }
 
 type BenchGroup struct {
-	SrcIPs   []string
-	SrcPort  string
-	DestIP   string
-	DestPort string
+	SrcIPs    []string
+	SrcPort   string
+	DestIP    string
+	BenchConf string
 }
 
 type Group struct {
@@ -67,25 +74,6 @@ type Group struct {
 type Target struct {
 	Group []Group
 	IPMap map[string]int
-}
-
-type DumpConf struct {
-	BaseDump bool   `ini:"DUMP_BASELINE_CONFIGURATION"`
-	ExecDump bool   `ini:"DUMP_TUNING_CONFIGURATION"`
-	BestDump bool   `ini:"DUMP_BEST_CONFIGURATION"`
-	DumpHome string `ini:"DUMP_HOME"`
-}
-
-type Sensitize struct {
-	Algorithm string `ini:"ALGORITHM"`
-	Epoch     int    `ini:"EPOCH"`
-}
-
-type LogConf struct {
-	LogFileLvl  string `ini:"LOGFILE_LEVEL"`
-	FileName    string `ini:"LOGFILE_NAME"`
-	Interval    int    `ini:"LOGFILE_INTERVAL"`
-	BackupCount int    `ini:"LOGFILE_BACKUP_COUNT"`
 }
 
 // DBLMap Double Map
@@ -163,40 +151,44 @@ func (c *KeentunedConf) Save() error {
 		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
 	}
 
-	keentune := cfg.Section("keentuned")
-	c.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
-	c.Port = keentune.Key("PORT").MustString("9871")
-	c.HeartbeatTime = keentune.Key("HEARTBEAT_TIME").MustInt(30)
+	c.getDefault(cfg)
 
 	if err = c.getTargetGroup(cfg); err != nil {
 		return err
 	}
 
-	if err = c.getBenchGroup(cfg, false); err != nil {
+	if err = c.getBenchGroup(cfg); err != nil {
 		return err
 	}
 
 	brain := cfg.Section("brain")
 	c.BrainIP = brain.Key("BRAIN_IP").MustString("")
 	c.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
-	c.Brain.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
+	c.Brain.Algorithm = brain.Key("AUTO_TUNING_ALGORITHM").MustString("tpe")
 
-	dump := cfg.Section("dump")
-	c.DumpConf.BaseDump = dump.Key("DUMP_BASELINE_CONFIGURATION").MustBool(false)
-	c.DumpConf.ExecDump = dump.Key("DUMP_TUNING_CONFIGURATION").MustBool(false)
-	c.DumpConf.BestDump = dump.Key("DUMP_BEST_CONFIGURATION").MustBool(false)
-	c.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
-
-	sensitize := cfg.Section("sensitize")
-	c.Sensitize.Algorithm = sensitize.Key("ALGORITHM").MustString("random")
-	c.Sensitize.Epoch = sensitize.Key("EPOCH").MustInt(20)
-
-	c.GetLogConf(cfg)
-
-	version := cfg.Section("version")
-	c.VersionConf = version.Key("VERSION_NUM").MustString("")
+	c.Explainer = brain.Key("SENSITIZE_ALGORITHM").MustString("shap")
+	c.Epoch = brain.Key("EPOCH").MustInt(20)
 
 	return nil
+}
+
+func (c *KeentunedConf) getDefault(cfg *ini.File) {
+	keentune := cfg.Section("keentuned")
+	c.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
+	c.Port = keentune.Key("PORT").MustString("9871")
+	c.HeartbeatTime = keentune.Key("HEARTBEAT_TIME").MustInt(30)
+
+	c.BaseDump = keentune.Key("DUMP_BASELINE_CONFIGURATION").MustBool(false)
+	c.ExecDump = keentune.Key("DUMP_TUNING_CONFIGURATION").MustBool(false)
+	c.BestDump = keentune.Key("DUMP_BEST_CONFIGURATION").MustBool(false)
+	c.DumpHome = keentune.Key("DUMP_HOME").MustString("")
+	c.VersionConf = keentune.Key("VERSION_NUM").MustString("")
+
+	c.BaseRound = keentune.Key("BASELINE_BENCH_ROUND").MustInt(1)
+	c.ExecRound = keentune.Key("TUNING_BENCH_ROUND").MustInt(1)
+	c.AfterRound = keentune.Key("RECHECK_BENCH_ROUND").MustInt(1)
+
+	c.GetLogConf(cfg)
 }
 
 func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
@@ -257,7 +249,7 @@ func hasGroupSections(cfg *ini.File, groupNames *[]string, sectionPrefix string)
 	return len(*groupNames) != 0
 }
 
-func (c *KeentunedConf) getBenchGroup(cfg *ini.File, groupOnly bool) error {
+func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 	var groupNames = make([]string, 0)
 	if !hasGroupSections(cfg, &groupNames, BenchSectionPrefix) {
 		return fmt.Errorf("bench-group is null, please configure first")
@@ -284,27 +276,17 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File, groupOnly bool) error {
 		}
 
 		group.DestIP = bench.Key("BENCH_DEST_IP").MustString("localhost")
-		group.DestPort = bench.Key("BENCH_DEST_PORT").MustString("9875")
+		group.BenchConf = bench.Key("BENCH_CONFIG").MustString("bench_wrk_nginx_long.json")
+
+		if err = checkBenchConf(&group.BenchConf); err != nil {
+			return err
+		}
 
 		c.Bench.BenchGroup = append(c.Bench.BenchGroup, group)
 		c.addBenchIPMap(group.SrcIPs, ipExist, id)
 	}
 
-	if groupOnly {
-		return nil
-	}
-
-	return c.getBenchmark(cfg)
-}
-
-func (c *KeentunedConf) getBenchmark(cfg *ini.File) error {
-	bench := cfg.Section("benchmark")
-	c.BaseRound = bench.Key("BASELINE_BENCH_ROUND").MustInt(5)
-	c.ExecRound = bench.Key("TUNING_BENCH_ROUND").MustInt(3)
-	c.AfterRound = bench.Key("RECHECK_BENCH_ROUND").MustInt(10)
-	c.BenchConf = bench.Key("BENCH_CONFIG").MustString("bench_wrk_nginx_long.json")
-
-	return checkBenchConf(&c.BenchConf)
+	return nil
 }
 
 func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
@@ -322,11 +304,11 @@ func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]stri
 }
 
 func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
-	logInst := cfg.Section("log")
-	c.LogConf.LogFileLvl = logInst.Key("LOGFILE_LEVEL").MustString("DEBUG")
-	c.LogConf.FileName = logInst.Key("LOGFILE_NAME").MustString("keentuned.log")
-	c.LogConf.Interval = logInst.Key("LOGFILE_INTERVAL").MustInt(2)
-	c.LogConf.BackupCount = logInst.Key("LOGFILE_BACKUP_COUNT").MustInt(14)
+	logInst := cfg.Section("keentuned")
+	c.LogFileLvl = logInst.Key("LOGFILE_LEVEL").MustString("DEBUG")
+	c.FileName = logInst.Key("LOGFILE_NAME").MustString("keentuned.log")
+	c.Interval = logInst.Key("LOGFILE_INTERVAL").MustInt(2)
+	c.BackupCount = logInst.Key("LOGFILE_BACKUP_COUNT").MustInt(14)
 }
 
 func (c *KeentunedConf) addTargetIPMap(ips []string, ipExist map[string]bool, id *int) {
@@ -377,8 +359,8 @@ func getWorkDir(cfg *ini.File) {
 	keentune := cfg.Section("keentuned")
 	KeenTune.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
 
-	dump := cfg.Section("dump")
-	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
+	KeenTune.DumpHome = keentune.Key("DUMP_HOME").MustString("")
+	KeenTune.VersionConf = keentune.Key("VERSION_NUM").MustString("")
 }
 
 func InitTargetGroup() error {
@@ -411,7 +393,7 @@ func InitBrainConf() error {
 	brain := cfg.Section("brain")
 	KeenTune.BrainIP = brain.Key("BRAIN_IP").MustString("")
 	KeenTune.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
-	KeenTune.Brain.Algorithm = brain.Key("ALGORITHM").MustString("tpe")
+	KeenTune.Brain.Algorithm = brain.Key("AUTO_TUNING_ALGORITHM").MustString("tpe")
 
 	getWorkDir(cfg)
 	KeenTune.GetLogConf(cfg)

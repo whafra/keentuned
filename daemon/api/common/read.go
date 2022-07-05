@@ -219,19 +219,6 @@ func readTuneInfo(job string, result *string) error {
 		if err != nil {
 			return err
 		}
-
-		if strings.Contains(strings.ToLower(info), "bench_config") {
-			flagParts := strings.Split(info, "=")
-			if len(flagParts) != 2 {
-				return fmt.Errorf("bench_config not found")
-			}
-			pathParts := strings.Split(flagParts[1], "/")
-			if len(pathParts) < 1 {
-				return fmt.Errorf("bench_config '%v' is abnormal", flagParts[1])
-			}
-			resp.BenchGroup = fmt.Sprintf("BENCH_CONFIG = %v\n", pathParts[len(pathParts)-1])
-		}
-
 	}
 
 	benchGroup, targetGroup, err := config.GetJobGroup(job)
@@ -239,7 +226,7 @@ func readTuneInfo(job string, result *string) error {
 		return err
 	}
 
-	resp.BenchGroup += benchGroup
+	resp.BenchGroup = benchGroup
 	resp.TargetGroup = targetGroup
 
 	bytes, err := json.Marshal(resp)

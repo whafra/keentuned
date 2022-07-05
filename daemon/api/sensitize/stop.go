@@ -37,6 +37,7 @@ func stop() {
 	}
 
 	if strings.Split(job, " ")[0] == com.JobTraining {
+		m.ClearTask()
 		m.StopSig <- os.Interrupt
 	}
 }

@@ -94,7 +94,7 @@ func mkWorkDir() {
 }
 
 func showStart() {
-	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
+	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpHome)
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
 

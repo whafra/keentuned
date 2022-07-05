@@ -238,6 +238,7 @@ func readParams(domains map[string]string, userParamMap DBLMap, mergedParam []DB
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
 		if !ok {
+			PriorityList[domainName] = 1
 			priID = 1
 		}
 
@@ -348,6 +349,7 @@ func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
 		if !ok {
+			PriorityList[domainName] = 1
 			priID = 1
 		}
 

@@ -23,6 +23,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
 	}
 
+	com.SetAvailableDomain()
 	m.SetRunningTask(com.JobProfile, "set")
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfSet]
