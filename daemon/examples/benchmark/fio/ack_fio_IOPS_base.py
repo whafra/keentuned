@@ -88,6 +88,10 @@ class Benchmark():
                 "BW": bw,
             }
 
+            #Add null value judgment
+            if result["IOPS"] is None:
+                result["IOPS"] = 0
+
             result_str = ", ".join(["{} = {}".format(k,v) for k,v in result.items()])
             print(result_str)
             return True, result_str
