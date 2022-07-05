@@ -16,13 +16,13 @@ KeenTuned - system performance tuning daemon
 .SH SYNOPSIS
 \fBKeenTuned\fP
 .SH DESCRIPTION
-\fBKeenTuned\fR KeenTuned is the management component of KeenTune, including CLI and Daemon. CLI provides command line interfaces to users, which includes three kinds of commands: basic commands, static tuning related commands, and dynamic tuning related commands. Keentuned，as the management and control module, is responsible for monitoring other components, receiving and parsing commands from CLI, and scheduling related components in workflows.
+\fBKeenTuned\fR KeenTuned is the management component of KeenTune, including CLI and Daemon. CLI provides to users the command line interfaces, including three types of commands: basic commands, static tuning commands, and dynamic tuning commands.
 .
 .SH "CLI"
-Command-line Interface. This part implements all the command-line functions of keentune, including dynamic and static tuning, sensitive parameter recognition. Determine whether the command-line parameters are compliant.
+Command-line Interface. It implements all the command-line functions of keentune, including dynamic and static tuning, sensitive parameter identification, and check the compliance for the command-line parameters.
 .
 .SH "Daemon"
-The keentune daemon implementation. This part implements the launch of the keentuned service, registration of the rpc service and listens for the client connection, creating working directory. Is the core part of the program.
+KeenTune Daemon. This is the core component of KeenTune. It implements the launching of the keentuned service and the registration of the rpc service, listens to client connections, and creates working directories.
 .
 .SH "Run"
 .

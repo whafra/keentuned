@@ -4,7 +4,7 @@ keentuned.conf - keentuned configuration file
 .SH SYNOPSIS
 .B /etc/keentune/conf/keentuned.conf
 .SH DESCRIPTION
-This man page documents format of the keentuned configuration file.
+This man page documents the format of the keentuned configuration file.
 The \fIkeentuned.conf\fR file uses the ini\-file format.
 .
 .SH "[keentuned]"
@@ -23,7 +23,7 @@ KeenTuned access port
 Heartbeat detection interval(unit: seconds), recommended value 30
 .
 .SH "[brain]"
-Attributes used to connect brain environment
+Attributes used to connect the brain environment
 .
 .TP
 \fBBRAIN_IP = localhost\fR
@@ -35,14 +35,14 @@ Brain machine access port
 .
 .TP
 \fBALGORITHM = tpe\fR
-Brain optimization algorithm, available value: tpe, hord, random
+Brain optimization algorithm. available algorithms: tpe, hord, random
 .
 .SH "[target-group-1]"
-Attributes used to connect target group environment
+Attributes used to connect the target group environment
 .
 .TP
 \fBTARGET_IP = localhost\fR
-Target tuned machine ips, e.g. "ip1,ip2,...,ipn", Multiple groups TARGET_IP cannot be duplicated
+Target tuned machine ips, e.g. "ip1,ip2,...,ipn". Multiple groups TARGET_IP cannot be duplicated
 .
 .TP
 \fBTARGET_PORT = 9873\fR
@@ -52,7 +52,7 @@ Target tuned machine access port
 \fBPARAMETER = sysctl.json\fR
 .
 .SH "[bench-group-1]"
-Attributes used to connect benchmark environment
+Attributes used to connect the benchmark environment
 .
 .TP
 \fBBENCH_SRC_IP = localhost\fR
@@ -66,7 +66,7 @@ Benchmark machine access port
 .
 .TP
 \fBBASELINE_BENCH_ROUND = 5\fR
-Benchmark execution rounds of baseline
+Benchmark execution rounds with baseline configurations
 .
 .TP
 \fBTUNING_BENCH_ROUND = 3\fR
@@ -83,25 +83,25 @@ Benchmark execution rounds after tuning for recheck
 .
 .TP
 \fBDUMP_BASELINE_CONFIGURATION = false\fR
-Baseline configuration storage enable
+Enable saving baseline configuration
 .
 .TP
 \fBDUMP_TUNING_CONFIGURATION = false\fR
-Configuring storage enable in tuning execution
+Enable saving configurations tuning execution
 .
 .TP
 \fBDUMP_BEST_CONFIGURATION = true\fR
-Best configuration storage enable
+Enable save best configuration
 .
 .TP
 \fBDUMP_HOME = /var/keentune\fR
-Dump home is the output folder for keentuned exec result
+The output folder for keentuned exec result
 .
 .SH "[sensitize]"
 .
 .TP
 \fBALGORITHM = random\fR
-algorithm of sensitive parameter tuning, at present, scope enum: random, lhs
+Algorithm for collecting tuning data for sensitive parameter identification, scope enum: random, lhs
 .
 .TP
 \fBBENCH_ROUND = 3\fR

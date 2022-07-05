@@ -12,16 +12,16 @@
 .\"
 .TH "keentune" "8" "28 April 2022" "OpenAnolis KeenTune SIG" "KeenTune"
 .SH NAME
-keentune - command line tool for Dynamic and Static tunning
+keentune - command line tool for Dynamic and Static tuning
 .SH SYNOPSIS
 \fBkeentune\fP [\fIoptions\fP]
 .SH DESCRIPTION
-\fBkeentune\fR is a dual-wheel drive intelligent optimization product of operating system with AI algorithm and expert knowledge base. It provides lightweight and cross-platform one-click performance tuning for the mainstream operating system, so that the application can play the optimal performance in the intelligent customized operating environment\.
+\fBkeentune\fR is a dual-engine intelligent tuning product for operating system optimization built with AI algorithms and expert knowledge. It provides lightweight and cross-platform one-click performance tuning for mainstream operating systems to support upstream applications running with optimal performance in the customized operating environment\.
 .
 .SH OPTIONS
 .
 .SS "Dynamic tuning"
-Provide a set of configuration parameters for the kernel, compiler, runtime, and TOP application, identify the sensitive parameters using the AI algorithm, and perform the optimal configuration of the parameter combination\.
+Provide a set of configuration parameters for the kernel, compiler, runtime, and upstream application, identify sensitive parameters using AI algorithms, and recommend the optimal configuration for parameters and their combination\.
 .
 .TP
 \fBparam delete --job\fR
@@ -29,7 +29,7 @@ Delete the dynamic parameter tuning job\.
 .
 .TP
 \fBparam jobs\fR
-List parameter optimizing jobs\.
+List parameter optimization jobs\.
 .
 .TP
 \fBparam list\fR
@@ -37,7 +37,7 @@ List parameter and benchmark configuration files\.
 .
 .TP
 \fBparam rollback\fR
-Restore initial state\.
+Restore the initial state\.
 .
 .TP
 \fBparam stop\fR
@@ -52,7 +52,7 @@ Deploy and start a parameter tuning job\.
 Dump the parameter tuning result to a profile\.
 .
 .SS "Static tuning"
-Preset multiple typical high-load scenarios and application experience optimization configuration, users can improve environmental performance through one-click setting; this function can also be applied to expand the experience setting of small-scale environment tuning in large clusters\.
+Preset multiple typical high-load scenarios and optimized configurations from expert experiences. Users can improve the operating performance through one-click setting. This mode also supports applying the empirically optimized configurations for small-scale environments to large-scale clusters\.
 .
 .TP
 \fBprofile delete --name\fR
@@ -60,7 +60,7 @@ Delete a profile\.
 .
 .TP
 \fBprofile generate --name\fR
-Generate a parameter configuration file from profile\.
+Generate a parameter configuration file from a profile\.
 .
 .TP
 \fBprofile info --name\fR
@@ -72,26 +72,26 @@ List all profiles\.
 .
 .TP
 \fBprofile rollback\fR
-Restore initial state\.
+Restore the initial state\.
 .
 .TP
 \fBprofile set --name\fR
 Apply a profile to the target machine\.
 .
 .SS "Sensitize parameter collection"
-Sensitive parameter identification and explanation with AI algorithms
+Sensitive parameter identification and explanation with AI algorithms\.
 .
 .TP
 \fBsensitize collect\fR
-Collecting parameter and benchmark score as sensitivity identification data randomly\.
+Collect random parameter values and benchmark scores as the input data for sensitivity identification\.
 .
 .TP
 \fBsensitize delete\fR
-Delete the sensitivity identification data\.
+Delete the data collected for sensitivity identification\.
 .
 .TP
 \fBsensitize list\fR
-List available sensitivity identification data\.
+List the available data for sensitivity identification\.
 .
 .TP
 \fBsensitize stop\fR
