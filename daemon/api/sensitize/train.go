@@ -65,7 +65,6 @@ func TrainImpl(flag TrainFlag, cmd string) error {
 	tuner.Trials = flag.Trials
 	tuner.Data = flag.Data
 	tuner.Job = flag.Job
-	tuner.Epoch = config.KeenTune.Epoch
 	tuner.Train()
 	return nil
 }

@@ -39,7 +39,6 @@ const (
 	TabTrainCost   = "total_time"
 	TabTrainRound  = "trials"
 	TabTrainStatus = "status"
-	TabTrainEpoch  = "epoch"
 	TabTrainLog    = "log"
 	TabTrainWSP    = "workspace"
 	TabTrainAlgo   = "algorithm"
@@ -48,7 +47,7 @@ const (
 
 var SensitizeJobHeader = []string{
 	TabTrainName, TabTrainStart, TabTrainEnd, TabTrainCost, TabTrainRound,
-	TabTrainStatus, TabTrainEpoch, TabTrainLog, TabTrainWSP, TabTrainAlgo,
+	TabTrainStatus, TabTrainLog, TabTrainWSP, TabTrainAlgo,
 	TabTrainPath,
 }
 
@@ -95,7 +94,6 @@ const (
 	trainCostIdx
 	TrainTrialsIdx
 	TrainStatusIdx
-	trainEpoch
 	trainLogIdx
 	trainWSPIdx
 	TrainAlgoIdx

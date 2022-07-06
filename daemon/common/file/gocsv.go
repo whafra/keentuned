@@ -26,7 +26,7 @@ func LoadCsv(fileName string) (dataframe.DataFrame, error) {
 	}
 
 	defer f.Close()
-	df := dataframe.ReadCSV(f)
+	df := dataframe.ReadCSV(f, dataframe.DetectTypes(false))
 	if df.Err != nil {
 		return dataframe.DataFrame{}, df.Err
 	}
@@ -160,7 +160,7 @@ func UpdateRow(fileName, jobName string, info map[int]interface{}) error {
 	header := records[0]
 	newDF := df.Set(
 		series.Ints([]int{rowIdx - 1}),
-		dataframe.LoadRecords([][]string{header, flush}),
+		dataframe.LoadRecords([][]string{header, flush}, dataframe.DetectTypes(false)),
 	)
 
 	f, err := os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC, 0666)

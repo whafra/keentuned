@@ -14,7 +14,7 @@ import (
 // KeentunedConf
 type KeentunedConf struct {
 	Default `ini:"keentuned"`
-	Bench   `ini:"benchmark"`
+	Bench   `ini:"-"`
 	Target  `ini:"-"`
 	Brain   `ini:"brain"`
 }
@@ -24,7 +24,6 @@ type Brain struct {
 	BrainPort string `ini:"BRAIN_PORT"`
 	Algorithm string `ini:"AUTO_TUNING_ALGORITHM"`
 	Explainer string `ini:"SENSITIZE_ALGORITHM"`
-	Epoch     int    `ini:"-"`
 }
 
 type Default struct {
@@ -167,7 +166,6 @@ func (c *KeentunedConf) Save() error {
 	c.Brain.Algorithm = brain.Key("AUTO_TUNING_ALGORITHM").MustString("tpe")
 
 	c.Explainer = brain.Key("SENSITIZE_ALGORITHM").MustString("shap")
-	c.Epoch = brain.Key("EPOCH").MustInt(20)
 
 	return nil
 }
@@ -219,6 +217,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		if err != nil || groupNo <= 0 {
 			return fmt.Errorf("target-group is error, please check configure first")
 		}
+
 		group.GroupNo = groupNo
 		group.ParamConf = target.Key("PARAMETER").MustString("sysctl.json")
 		paramFiles := strings.Split(group.ParamConf, ",")
