@@ -25,17 +25,15 @@ type TuneCmdResp struct {
 
 type TrainCmdResp struct {
 	Trial int    `json:"trial"`
-	Epoch int    `json:"epoch"`
 	Algo  string `json:"algorithm"`
 	Data  string `json:"data"`
 }
 
 const (
-	trainJobHeaderLen = 11
+	trainJobHeaderLen = 10
 	trainTrialsIdx    = 4
-	trainEpochIdx     = 6
-	trainAlgoIdx      = 9
-	trainDataIdx      = 10
+	trainAlgoIdx      = 8
+	trainDataIdx      = 9
 )
 
 func read(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +120,6 @@ func readTrainInfo(job string, result *string) error {
 
 	var resp TrainCmdResp
 	resp.Trial, _ = strconv.Atoi(record[trainTrialsIdx])
-	resp.Epoch, _ = strconv.Atoi(record[trainEpochIdx])
 	resp.Algo = record[trainAlgoIdx]
 	resp.Data = record[trainDataIdx]
 	bytes, err := json.Marshal(resp)

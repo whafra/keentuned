@@ -18,7 +18,6 @@ type Trainer struct {
 	Job    string
 	Trials int
 	Config string
-	Epoch  int
 }
 
 // Tune : training main process
@@ -54,7 +53,7 @@ func (tuner *Tuner) CreateTrainJob() error {
 
 	jobInfo := []string{
 		tuner.Job, tuner.StartTime.Format(Format), NA, NA, fmt.Sprint(tuner.Trials), Run,
-		fmt.Sprint(tuner.Epoch), log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
+		log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
 	}
 	return file.Insert(getSensitizeJobFile(), jobInfo)
 }
@@ -73,6 +72,7 @@ func (tuner *Tuner) initiateSensitization() error {
 		"resp_ip":   ip,
 		"resp_port": config.KeenTune.Port,
 		"trials":    tuner.Trials,
+		"explainer": tuner.Algorithm,
 	}
 
 	err = http.ResponseSuccess("POST", uri, reqInfo)
@@ -143,7 +143,7 @@ func saveSensitiveResult(result [][]float64, sensiResultHeader []string, sensiRe
 			if len(paramSlice) != transposeRow-1 {
 				continue
 			}
-			resultSlice[rowIdx+1][colIdx+1] = fmt.Sprintf("%.4f",param)
+			resultSlice[rowIdx+1][colIdx+1] = fmt.Sprintf("%.4f", param)
 		}
 		file.Insert(sensiResultCsv, endInfo)
 	}
