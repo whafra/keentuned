@@ -10,13 +10,8 @@ import (
 // Rollback run param rollback service
 func (s *Service) Rollback(flag com.RollbackFlag, reply *string) error {
 	if com.IsApplying() {
-<<<<<<< HEAD
-                return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
-        }
-=======
 		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
 	}
->>>>>>> master-uibackend-0414
 
 	defer func() {
 		*reply = log.ClientLogMap[log.ParamRollback]

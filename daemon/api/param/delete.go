@@ -1,6 +1,7 @@
 package param
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
@@ -12,8 +13,6 @@ type Service struct {
 
 // Delete run param delete service
 func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
-<<<<<<< HEAD
-=======
 	clientName := new(string)
 	if com.IsBrainOffline(clientName) {
 		return fmt.Errorf("brain client is offline, please get it ready")
@@ -25,7 +24,6 @@ func (s *Service) Delete(flag com.DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete %v failed, err:%v", flag.Name, err)
 	}
 
->>>>>>> master-uibackend-0414
 	return com.RunDelete(flag, reply)
 }
 

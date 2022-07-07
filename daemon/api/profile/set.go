@@ -27,18 +27,6 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	if com.IsApplying() {
 		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
 	}
-<<<<<<< HEAD
-	if err := com.ConnectTarget(flag.Group); err != nil {
-		log.Errorf(log.ProfSet, "Check %v", err)
-		return fmt.Errorf("Check %v", err)
-	}
-	runSeting(flag, reply)
-	return nil
-}
-
-func runSeting(flag SetFlag, reply *string) {
-=======
->>>>>>> master-uibackend-0414
 
 	com.SetAvailableDomain()
 	m.SetRunningTask(com.JobProfile, "set")
@@ -47,14 +35,6 @@ func runSeting(flag SetFlag, reply *string) {
 		log.ClearCliLog(log.ProfSet)
 		m.ClearTask()
 	}()
-<<<<<<< HEAD
-	
-	if err := SetingImpl(flag, "tuning"); err != nil {
-		log.Errorf(log.ProfSet, "Profile Set failed, msg: %v", err)
-		return
-	}
-=======
->>>>>>> master-uibackend-0414
 
 	return SettingImpl(flag)
 }

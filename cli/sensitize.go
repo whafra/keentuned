@@ -51,50 +51,6 @@ func createSensitizeCmds() *cobra.Command {
 	return sensitizeCmd
 }
 
-<<<<<<< HEAD
-func collectCmd() *cobra.Command {
-	var flag TuneFlag
-	cmd := &cobra.Command{
-		Use:     "collect",
-		Short:   "Collecting parameter and benchmark score as sensitivity identification data randomly",
-		Long:    "Collecting parameter and benchmark score as sensitivity identification data randomly",
-		Example: egCollect,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			err := initSensitizeConf()
-			if err != nil {
-				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
-                                os.Exit(1)
-                        }
-
-			if err := checkTuningFlags("sensitize", &flag); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
-		Run: func(cmd *cobra.Command, args []string) {
-			if strings.Trim(flag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
-			}
-
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-collect", time.Now().Unix())
-			RunCollectRemote(cmd.Context(), flag)
-			return
-		},
-	}
-
-	setTuneFlag("sensitize", cmd, &flag)
-	return cmd
-}
-
-=======
->>>>>>> master-uibackend-0414
 func trainCmd() *cobra.Command {
 	var trainflags TrainFlag
 	cmd := &cobra.Command{
@@ -109,19 +65,9 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
-<<<<<<< HEAD
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"),com.GetRunningTask())
-                                os.Exit(1)
-                        }
-
-			if !com.IsDataNameUsed(trainflags.Data) {
-				fmt.Printf("%v check input: --data file [%v] does not exist\n", ColorString("red", "[ERROR]"), trainflags.Data)
-=======
 			err := initSensitizeConf()
 			if err != nil {
 				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
->>>>>>> master-uibackend-0414
 				os.Exit(1)
 			}
 

@@ -118,20 +118,10 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 	for _, v := range origin {
 		pureValue := strings.Trim(v, " ")
 		if pureValue == "localhost" || pureValue == "127.0.0.1" || pureValue == "::1" {
-<<<<<<< HEAD
 			localIP := "localhost"
 			if !orgMap[localIP] {
 				valid = append(valid, localIP)
 				orgMap[localIP] = true
-=======
-			realIP, err := GetExternalIP()
-			if err != nil {
-				fmt.Printf("get external ip err: %v\n", err)
-			}
-			if realIP != "" && !orgMap[realIP] {
-				valid = append(valid, pureValue)
-				orgMap[realIP] = true
->>>>>>> master-uibackend-0414
 				continue
 			}
 			invalid = append(invalid, pureValue)

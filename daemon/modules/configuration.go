@@ -120,10 +120,6 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 		if len(detail) != 0 {
 			return nil, fmt.Errorf("%s", detail)
 		}
-<<<<<<< HEAD
-		
-=======
->>>>>>> master-uibackend-0414
 		return nil, fmt.Errorf("%v", applyShortRet.Msg)
 	}
 

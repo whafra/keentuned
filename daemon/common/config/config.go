@@ -362,16 +362,8 @@ func getWorkDir(cfg *ini.File) {
 	keentune := cfg.Section("keentuned")
 	KeenTune.Home = file.DecoratePath(keentune.Key("KEENTUNED_HOME").MustString("/etc/keentune"))
 
-<<<<<<< HEAD
-	dump := cfg.Section("dump")
-	KeenTune.DumpConf.DumpHome = dump.Key("DUMP_HOME").MustString("")
-
-	version := cfg.Section("version")
-	KeenTune.VersionConf = version.Key("VERSION_NUM").MustString("")
-=======
 	KeenTune.DumpHome = keentune.Key("DUMP_HOME").MustString("")
 	KeenTune.VersionConf = keentune.Key("VERSION_NUM").MustString("")
->>>>>>> master-uibackend-0414
 }
 
 func InitTargetGroup() error {
