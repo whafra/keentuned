@@ -1,25 +1,44 @@
 package sensitize
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	m "keentune/daemon/modules"
 	"os"
 	"strings"
-	"fmt"
-        "keentune/daemon/common/log"
 )
 
 // Stop run sensitize stop service
 func (s *Service) Stop(request string, reply *string) error {
-	job := com.GetRunningTask()
-	if job == "" {
-                log.Errorf("", "No running job can stop.")
-                return fmt.Errorf("No running job can stop.")
-        }
+	filePath := "/var/keentune/sensitize_jobs.csv"
+	trainJob := file.GetRecord(filePath, "status", "running", "name")
 
-	if job != "" && (strings.Split(job, " ")[0] == com.JobCollection || strings.Split(job, " ")[0] == com.JobTraining) {
-		m.StopSig <- os.Interrupt
+	if trainJob != "" {
+		file.UpdateRow(filePath, trainJob, map[int]interface{}{m.TrainStatusIdx: m.Stop})
+
+		stop()
+		log.Warnf("", "Abort sensibility identification job '%v'.", trainJob)
+		*reply = fmt.Sprintf("%v Abort sensibility identification job '%v'.\n", utils.ColorString("yellow", "[Warning]"), trainJob)
+	} else {
+		log.Infof("", "No training job needs to stop.")
+		*reply = utils.ColorString("red", fmt.Sprintln("No training job needs to stop."))
 	}
 
 	return nil
 }
+
+func stop() {
+	job := m.GetRunningTask()
+	if job == "" {
+		return
+	}
+
+	if strings.Split(job, " ")[0] == com.JobTraining {
+		m.ClearTask()
+		m.StopSig <- os.Interrupt
+	}
+}
+

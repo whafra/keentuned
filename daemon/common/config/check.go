@@ -31,9 +31,7 @@ func checkBenchConf(conf *string) error {
 		return fmt.Errorf("bench file [%v] does not exist", *conf)
 	}
 
-	*conf = benchConf
-
-	reqData, err := ioutil.ReadFile(*conf)
+	reqData, err := ioutil.ReadFile(benchConf)
 	if err != nil {
 		return fmt.Errorf("read bench conf file err: %v", err)
 	}
@@ -239,7 +237,11 @@ func readParams(domains map[string]string, userParamMap DBLMap, mergedParam []DB
 	var err error
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
+<<<<<<< HEAD
 		if !ok || priID < 0 || priID > 1 {
+=======
+		if !ok {
+>>>>>>> master-uibackend-0414
 			PriorityList[domainName] = 1
 			priID = 1
 		}
@@ -349,7 +351,11 @@ func isDataTypeOK(dtype string) bool {
 func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
+<<<<<<< HEAD
 		if !ok || priID < 0 || priID > 1 {
+=======
+		if !ok {
+>>>>>>> master-uibackend-0414
 			PriorityList[domainName] = 1
 			priID = 1
 		}

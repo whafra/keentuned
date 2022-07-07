@@ -22,7 +22,11 @@ import (
 func main() {
 	config.Init()
 	log.Init()
+<<<<<<< HEAD
 	com.ClearTask()
+=======
+	com.ResetJob()
+>>>>>>> master-uibackend-0414
 
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)
@@ -61,11 +65,29 @@ func mkWorkDir() {
 	if !file.IsPathExist(config.GetTuningWorkPath("")) {
 		os.MkdirAll(config.GetTuningWorkPath(""), os.ModePerm)
 	}
-
-	if !file.IsPathExist(config.GetSensitizePath()) {
-		os.MkdirAll(config.GetSensitizePath(), os.ModePerm)
+	if !file.IsPathExist(config.GetTuningPath("")) {
+		os.MkdirAll(config.GetTuningPath(""), os.ModePerm)
 	}
 
+	if !file.IsPathExist(config.GetSensitizePath("")) {
+		os.MkdirAll(config.GetSensitizePath(""), os.ModePerm)
+	}
+	tuningCsv := config.GetDumpPath("tuning_jobs.csv")
+	if !file.IsPathExist(tuningCsv) {
+		err := file.CreatCSV(tuningCsv, m.TuneJobHeader)
+		if err != nil {
+			fmt.Printf("%v create tuning jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
+		}
+	}
+	sensitizeCsv := config.GetDumpPath("sensitize_jobs.csv")
+	if !file.IsPathExist(sensitizeCsv) {
+		err := file.CreatCSV(sensitizeCsv, m.SensitizeJobHeader)
+		if err != nil {
+			fmt.Printf("%v create sensitize jobs csv file: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
+		}
+	}
 	activeConf := config.GetProfileWorkPath("active.conf")
 	if !file.IsPathExist(activeConf) {
 		fp, _ := os.Create(activeConf)
@@ -76,7 +98,7 @@ func mkWorkDir() {
 }
 
 func showStart() {
-	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpConf.DumpHome)
+	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpHome)
 
 	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
 

@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -62,6 +61,7 @@ func tuneCmd() *cobra.Command {
 		Short:   "Deploy and start a parameter tuning job",
 		Long:    "Deploy and start a parameter tuning job",
 		Example: egTune,
+<<<<<<< HEAD
 		PreRun: func(cmd *cobra.Command, args []string) {
 			if com.GetRunningTask() != "" {
                                 fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
@@ -73,6 +73,8 @@ func tuneCmd() *cobra.Command {
 				os.Exit(1)
 			}
 		},
+=======
+>>>>>>> master-uibackend-0414
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
@@ -80,13 +82,24 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-param-tune", time.Now().Unix())
+			err := config.InitWorkDir()
+			if err != nil {
+				fmt.Printf("%v init work dir: %v, check keentuned.conf and retry.\n", ColorString("red", "[ERROR]"), err)
+				return
+			}
+
+			if err := checkTuningFlags("tune", &flag); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
+			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
 			RunTuneRemote(cmd.Context(), flag)
 		},
 	}
 
-	setTuneFlag("tune", cmd, &flag)
+	setTuneFlag(cmd, &flag)
 	return cmd
 }
 
@@ -112,7 +125,7 @@ func jobCmd() *cobra.Command {
 		Long:    "List parameter optimizing jobs",
 		Example: egJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunJobsRemote(cmd.Context())
+			RunJobsRemote(cmd.Context(), "param")
 			return
 		},
 	}
@@ -133,6 +146,7 @@ func deleteParamJobCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
+			flag.Cmd = "param"
 
 			err := config.InitWorkDir()
 			if err != nil {
@@ -146,22 +160,25 @@ func deleteParamJobCmd() *cobra.Command {
                         }
 
 			//Determine whether job already exists
-			JobPath := com.GetParameterPath(flag.Name)
+			JobPath := config.GetTuningPath(flag.Name)
 			_, err = os.Stat(JobPath)
-			if err == nil {
+			if err != nil {
+				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+				os.Exit(1)
+			}
+			//Determine whether job can be deleted
+			if file.IsJobRunning(tuningCsv, flag.Name) {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
+				return
+			} else {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
 				if !confirm() {
 					fmt.Println("[-] Give Up Delete")
 					return
 				}
-				flag.Cmd = "param"
 				RunDeleteRemote(cmd.Context(), flag)
-			} else {
-				fmt.Printf("%v param.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
-				os.Exit(1)
+				return
 			}
-
-			return
 		},
 	}
 
@@ -184,10 +201,18 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 
+<<<<<<< HEAD
 			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
                                 fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), dump.Name)
                                 os.Exit(1)
                         }
+=======
+			status := new(string)
+			if !IsTuningJobFinish(dump.Name, status) {
+				fmt.Printf("%v Job %v is %v, dump is not supported.\n", ColorString("yellow", "[Warning]"), *status, dump.Name)
+				return
+			}
+>>>>>>> master-uibackend-0414
 
 			err := checkDumpParam(&dump)
 			if err != nil {
@@ -212,7 +237,7 @@ func checkDumpParam(dump *DumpFlag) error {
 	}
 
 	workPath := config.GetProfileWorkPath("")
-	job := config.GetTuningWorkPath(dump.Name)
+	job := config.GetTuningPath(dump.Name)
 	if !file.IsPathExist(job) {
 		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
 	}

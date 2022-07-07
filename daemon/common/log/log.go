@@ -67,7 +67,7 @@ const (
 	ProfRollback = "profile rollback"
 
 	SensitizeDel  = "sensitize delete"
-	SensitizeList = "sensitize list"
+	SensitizeJobs = "sensitize jobs"
 	Benchmark     = "benchmark"
 )
 
@@ -89,19 +89,19 @@ func getLevel(lvl string) logrus.Level {
 }
 
 func Init() {
-	fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogConf.LogFileLvl)}
+	fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogFileLvl)}
 	cLogger = &logrus.Logger{Level: getLevel(ConsoleLevel)}
 	fLogInst = Logger{entry: logrus.NewEntry(fLogger)}
 	cLogInst = Logger{entry: logrus.NewEntry(cLogger)}
 
-	fileName := fmt.Sprintf("%v/log/keentune/%s", "/var", config.KeenTune.LogConf.FileName)
+	fileName := fmt.Sprintf("%v/log/keentune/%s", "/var", config.KeenTune.FileName)
 
 	// 1 set log segmentation method
 	writer, err := rotatelogs.New(
 		fileName+".%Y-%m-%d",
 		rotatelogs.WithLinkName(fileName),
-		rotatelogs.WithRotationTime(time.Duration(config.KeenTune.LogConf.Interval*24)*time.Hour),
-		rotatelogs.WithRotationCount(uint(config.KeenTune.LogConf.BackupCount)),
+		rotatelogs.WithRotationTime(time.Duration(config.KeenTune.Interval*24)*time.Hour),
+		rotatelogs.WithRotationCount(uint(config.KeenTune.BackupCount)),
 	)
 	if err != nil {
 		fmt.Printf("failed to create rotatelogs: %s", err)

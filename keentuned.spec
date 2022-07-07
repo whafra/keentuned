@@ -1,8 +1,19 @@
 %define debug_package %{nil}
+<<<<<<< HEAD
 %define anolis_release 2
 
 Name:           keentuned
 Version:        1.2.1
+=======
+%define anolis_release 0
+
+#
+# spec file for package golang-keentuned
+#
+
+Name:           keentuned
+Version:        1.3.0
+>>>>>>> master-uibackend-0414
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools

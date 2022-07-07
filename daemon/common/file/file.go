@@ -129,7 +129,11 @@ func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]s
 func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, error) {
 	paramBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read file :%v err:%v\n", fileName, err)
+		return nil, fmt.Errorf("read file err: %v", err)
+	}
+
+	if len(paramBytes) == 0 {
+		return nil, fmt.Errorf("read file is empty")
 	}
 
 	var resultMap = make(map[string]map[string]interface{})
@@ -155,7 +159,15 @@ func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, 
 		domainMap[commonDomain] = append(domainMap[commonDomain], param)
 	}
 
+	if len(domainMap) ==0 {		
+		return nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
+	}
+
 	for domain, paramSlice := range domainMap {
+		if len(paramSlice) == 0 {
+			return nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
+		}
+
 		var paramMap = make(map[string]interface{})
 		for _, paramInfo := range paramSlice {
 			name, ok := paramInfo["name"].(string)
@@ -275,3 +287,4 @@ func GetPlainName(fileName string) string {
 	parts := strings.Split(fileName, "/")
 	return parts[len(parts)-1]
 }
+

@@ -6,6 +6,7 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
+	m "keentune/daemon/modules"
 	"os"
 	"os/signal"
 	"strings"
@@ -64,7 +65,8 @@ func monitorClientStatus(monitor interface{}, clientName *string, group []bool) 
 		case <-signalChan:
 			log.Debug("", "Heartbeat Check program is interrupt")
 
-			if GetRunningTask() != "" {
+			if m.GetRunningTask() != "" {
+				ResetJob()
 				http.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
 			}
 			config.ServeFinish <- true
@@ -92,7 +94,11 @@ func IsClientOffline(clientName *string) bool {
 	offline = offline || benchStatus
 
 	// check brain
+<<<<<<< HEAD
 	brainOffline := isBrainOffline(clientName)
+=======
+	brainOffline := IsBrainOffline(clientName)
+>>>>>>> master-uibackend-0414
 	offline = offline || brainOffline
 
 	*clientName = strings.TrimSuffix(*clientName, ", ")
@@ -156,8 +162,13 @@ func StartCheck() error {
 	return nil
 }
 
+<<<<<<< HEAD
 func isBrainOffline(clientName *string) bool {
 	url := fmt.Sprintf("%v:%v/sensitize_list", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+=======
+func IsBrainOffline(clientName *string) bool {
+	url := fmt.Sprintf("%v:%v/avaliable", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+>>>>>>> master-uibackend-0414
 	_, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
 		*clientName += fmt.Sprintf("brain client")
@@ -221,11 +232,19 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 
 func CheckBrainClient() error {
 	clientName := new(string)
+<<<<<<< HEAD
 	if isBrainOffline(clientName) {
 		return fmt.Errorf("brain client is offline, please get it ready")
 	}
 
 	go monitorClientStatus(isBrainOffline, clientName, nil)
+=======
+	if IsBrainOffline(clientName) {
+		return fmt.Errorf("brain client is offline, please get it ready")
+	}
+
+	go monitorClientStatus(IsBrainOffline, clientName, nil)
+>>>>>>> master-uibackend-0414
 	return nil
 }
 

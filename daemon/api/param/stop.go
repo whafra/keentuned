@@ -1,25 +1,43 @@
 package param
 
 import (
+	"fmt"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	m "keentune/daemon/modules"
 	"os"
 	"strings"
-	"fmt"
-        "keentune/daemon/common/log"
 )
 
 // Stop run param stop service
 func (s *Service) Stop(request string, reply *string) error {
-	job := com.GetRunningTask()
-	if job == "" {
-                log.Errorf("", "No running job can stop.")
-                return fmt.Errorf("No running job can stop.")
-        }
+	filePath := "/var/keentune/tuning_jobs.csv"
+	tuneJob := file.GetRecord(filePath, "status", "running", "name")
 
-	if job != "" && (strings.Split(job, " ")[0] == com.JobTuning || strings.Split(job, " ")[0] == com.JobBenchmark) {
-		m.StopSig <- os.Interrupt
+	if tuneJob != "" {
+		file.UpdateRow(filePath, tuneJob, map[int]interface{}{m.TuneStatusIdx: m.Stop})
+		stop()
+		log.Warnf("", "Abort parameter optimization job '%v'.", tuneJob)
+		*reply = fmt.Sprintf("%v Abort parameter optimization job '%v'.\n", utils.ColorString("yellow", "[Warning]"), tuneJob)
+	} else {
+		log.Infof("", "No tuning job needs to stop.")
+		*reply = utils.ColorString("red", fmt.Sprintln("No tuning job needs to stop."))
 	}
 
 	return nil
 }
+
+func stop() {
+	job := m.GetRunningTask()
+	if job == "" {
+		return
+	}
+
+	if strings.Split(job, " ")[0] == com.JobTuning || strings.Split(job, " ")[0] == com.JobBenchmark {
+		m.ClearTask()
+		m.StopSig <- os.Interrupt
+	}
+}
+

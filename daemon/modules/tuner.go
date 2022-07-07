@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
@@ -44,7 +45,8 @@ type Tuner struct {
 	implyDetail
 	bestInfo    Configuration
 	allowUpdate bool
-	Seter
+	Setter
+	Trainer
 }
 
 type TimeSpend struct {
@@ -63,47 +65,55 @@ type TimeSpend struct {
 func (tuner *Tuner) Tune() {
 	var err error
 	tuner.logName = log.ParamTune
-	defer func() {
-		if err != nil {
-			tuner.end()
-			tuner.parseTuningError(err)
-		}
-	}()
+	if err = tuner.CreateTuneJob(); err != nil {
+		log.Errorf(log.ParamTune, "create tune job failed: %v", err)
+		return
+	}
+
+	defer func() { tuner.parseTuningError(err) }()
 
 	if err = tuner.init(); err != nil {
-		err = fmt.Errorf("[%v] prepare for tuning: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("prepare for tuning: %v", err)
 		return
 	}
 
 	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("[%v] loop tuning: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("loop tuning: %v", err)
 		return
 	}
 
 	if err = tuner.dumpBest(); err != nil {
-		err = fmt.Errorf("[%v] dump best configuration: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("dump best configuration: %v", err)
 		return
 	}
 
 	if err = tuner.verifyBest(); err != nil {
-		err = fmt.Errorf("[%v] check best configuration: %v", utils.ColorString("red", "ERROR"), err)
+		err = fmt.Errorf("check best configuration: %v", err)
 		return
 	}
 }
 
 func (tuner *Tuner) parseTuningError(err error) {
+	defer tuner.end()
 	if err == nil {
+		tuner.updateStatus(Finish)
 		return
 	}
 
-	tuner.rollback()
+	if tuner.Flag == "tuning" {
+		tuner.rollback()
+	}
+
 	if strings.Contains(err.Error(), "interrupted") {
+		tuner.updateStatus(Stop)
 		log.Infof(tuner.logName, "parameter optimization job abort!")
 		return
 	}
-	log.Infof(tuner.logName, "%v", err)
+
+	tuner.updateStatus(Err)
+	log.Errorf(tuner.logName, "%v", err)
 }
 
 /*acquire configuration from brain*/
@@ -123,12 +133,6 @@ func (tuner *Tuner) acquire() (bool, error) {
 		return false, err
 	}
 
-	// check interrupted
-	if tuner.isInterrupted() {
-		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
-		return false, fmt.Errorf("tuning is interrupted")
-	}
-
 	// check end loop ahead of time
 	if acquiredInfo.Iteration < 0 {
 		log.Warnf(tuner.logName, "%vth Tuning acquired round is less than zero, the tuning job will end ahead of time", tuner.Iteration)
@@ -146,6 +150,12 @@ func (tuner *Tuner) acquire() (bool, error) {
 		return false, err
 	}
 
+	// check interrupted
+	if tuner.isInterrupted() {
+		log.Infof(tuner.logName, "Tuning interrupted after step%v, [acquire] round %v finish.", tuner.Step, tuner.Iteration)
+		return false, fmt.Errorf("tuning is interrupted")
+	}
+
 	return false, nil
 }
 
@@ -157,9 +167,39 @@ func (tuner *Tuner) feedback() error {
 		"bench_score": tuner.feedbackScore,
 	}
 
-	err := http.ResponseSuccess("POST", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/feedback", feedbackMap)
+	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/feedback"
+	body, err := http.RemoteCall("POST", url, feedbackMap)
 	if err != nil {
-		return fmt.Errorf("[feedback] remote call feedback err:%v\n", err)
+		return fmt.Errorf("'feedback' remote call err:%v\n", err)
+	}
+
+	var resp struct {
+		Suc       bool        `json:"suc"`
+		Msg       interface{} `json:"msg"`
+		TimeData  string      `json:"time_data"`
+		ScoreData string      `json:"score_data"`
+	}
+
+	err = json.Unmarshal(body, &resp)
+	if err != nil {
+		return fmt.Errorf("unmarshal 'feedback' responese failed: %v", err)
+	}
+
+	if !resp.Suc {
+		return fmt.Errorf("'feedback' failed, msg: %v", resp.Msg)
+	}
+
+	scorePath := fmt.Sprintf("%v/score.csv", config.GetTuningPath(tuner.Name))
+
+	err = file.Append(scorePath, strings.Split(resp.ScoreData, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save score value failed: %v", tuner.Iteration, err)
+	}
+
+	timePath := fmt.Sprintf("%v/time.csv", config.GetTuningPath(tuner.Name))
+	err = file.Append(timePath, strings.Split(resp.TimeData, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save score value failed: %v", tuner.Iteration, err)
 	}
 
 	timeCost := utils.Runtime(start)
@@ -175,11 +215,40 @@ func (tuner *Tuner) end() {
 
 	totalTime := utils.Runtime(tuner.StartTime).Count.Seconds()
 
+	var endInfo = make(map[int]interface{})
+
+	if tuner.Flag == "tuning" {
+		endInfo[TuneEndIdx] = start.Format(Format)
+		endInfo[tuneCostIdx] = endTime(int64(totalTime))
+	} else if tuner.Flag == "training" {
+		endInfo[TrainEndIdx] = start.Format(Format)
+		endInfo[trainCostIdx] = endTime(int64(totalTime))
+	}
+
+	tuner.updateJob(endInfo)
+
 	if totalTime == 0.0 || !tuner.Verbose {
 		return
 	}
 
 	tuner.setTimeSpentDetail(totalTime)
+}
+
+func endTime(cost int64) string {
+	h := cost / 3600
+	min := cost % 3600
+	m := min / 60
+	sec := min % 60
+
+	if h >= 1 {
+		return fmt.Sprintf("%dh%dm%vs", h, m, sec)
+	}
+
+	if m >= 1 {
+		return fmt.Sprintf("%dm%vs", m, sec)
+	}
+
+	return fmt.Sprintf("%vs", sec)
 }
 
 func (tuner *Tuner) setTimeSpentDetail(totalTime float64) {
@@ -212,32 +281,6 @@ func (tuner *Tuner) setTimeSpentDetail(totalTime float64) {
 	detailSlice = append(detailSlice, []string{"feedback", maxRound, feedbackTime, feedbackRatio})
 
 	tuner.timeSpend.detailInfo = utils.FormatInTable(detailSlice)
-}
-
-// Collect Sensitive parameters
-func (tuner *Tuner) Collect() {
-	var err error
-	tuner.logName = log.SensitizeCollect
-	tuner.isSensitize = true
-	defer func() {
-		tuner.end()
-		tuner.parseTuningError(err)
-	}()
-
-	if err = tuner.init(); err != nil {
-		err = fmt.Errorf("[%v] init Collect: %v", utils.ColorString("red", "ERROR"), err)
-		return
-	}
-
-	log.Infof(log.SensitizeCollect, "\nStep%v. Collect init success.", tuner.IncreaseStep(1))
-	log.Infof(log.SensitizeCollect, "\nStep%v. Start sensitization collection, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
-
-	if err = tuner.loop(); err != nil {
-		err = fmt.Errorf("[%v] loop collect: %v\n", utils.ColorString("red", "ERROR"), err)
-		return
-	}
-
-	log.Infof(log.SensitizeCollect, "\nStep%v. Sensitization collection finished, you can get the result by the command \"keentune sensitize train\" (see more details: keentune sensitize train -h).", tuner.IncreaseStep())
 }
 
 func (tuner *Tuner) IncreaseStep(initVal ...int) int {

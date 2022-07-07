@@ -14,7 +14,6 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -22,12 +21,11 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	ParamMap  string
-	Name      string
-	Round     int
-	BenchConf string
-	Verbose   bool
-	Log       string
+	Config  string
+	Name    string
+	Round   int
+	Verbose bool
+	Log     string
 }
 
 // Tune run param tune service
@@ -36,31 +34,36 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 		return fmt.Errorf("check %v", err)
 	}
 
+	com.SetAvailableDomain()
+	err := config.Backup(flag.Config, flag.Name, "tuning")
+	if err != nil {
+		return fmt.Errorf("backup '%v' failed: %v", flag.Config, err)
+	}
+
 	go runTuning(flag)
 	return nil
 }
 
 func runTuning(flag TuneFlag) {
-	com.SetRunningTask(com.JobTuning, flag.Name)
+	m.SetRunningTask(com.JobTuning, flag.Name)
 	log.ParamTune = "param tune" + ":" + flag.Log
 	// create log file
-	ioutil.WriteFile(flag.Log, []byte{}, os.ModePerm)
+	ioutil.WriteFile(flag.Log, []byte{}, 0755)
 	defer func() {
+		m.ClearTask()
 		config.ProgramNeedExit <- true
 		<-config.ServeFinish
-		com.ClearTask()
 	}()
 
-	log.Infof(log.ParamTune, "Step1. Parameter auto tuning start, using algorithm = %v.\n", config.KeenTune.Algorithm)
+	log.Infof(log.ParamTune, "Step1. Parameter auto tuning start, using algorithm = %v.\n", config.KeenTune.Brain.Algorithm)
 	if err := TuningImpl(flag, "tuning"); err != nil {
 		log.Errorf(log.ParamTune, "Param Tune failed, msg: %v", err)
 		return
 	}
-
 }
 
 func TuningImpl(flag TuneFlag, cmd string) error {
-	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchConf)
+	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchGroup[0].BenchConf)
 	if err != nil {
 		return err
 	}
@@ -73,20 +76,10 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 		Step:         1,
 		Flag:         cmd,
 		Benchmark:    *benchInfo,
+		Algorithm:    config.KeenTune.Brain.Algorithm,
 	}
 
-	if cmd == "tuning" {
-		tuner.Algorithm = config.KeenTune.Algorithm
-		tuner.Tune()
-		return nil
-	}
-
-	if cmd == "collect" {
-		tuner.Algorithm = config.KeenTune.Sensitize.Algorithm
-		tuner.Collect()
-		return nil
-	}
-
+	tuner.Tune()
 	return nil
 }
 
@@ -111,7 +104,7 @@ func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 		return nil, fmt.Errorf("benchmark json is null")
 	}
 
-	tuneIP := strings.Split(config.KeenTune.Bench.DestIP, ",")
+	tuneIP := strings.Split(config.KeenTune.BenchGroup[0].DestIP, ",")
 	if len(tuneIP) == 0 {
 		return nil, fmt.Errorf("tune ip from keentuned.conf is empty")
 	}

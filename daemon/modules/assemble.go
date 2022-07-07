@@ -6,6 +6,8 @@ package modules
 import (
 	"fmt"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
+	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"strconv"
 	"strings"
@@ -22,6 +24,7 @@ type Group struct {
 	AllowUpdate    map[string]bool // prevent map concurrency security problems
 	GroupName      string          //target-group-x
 	GroupNo        int             //No. x of target-group-x
+	Idx            int
 	ProfileSetFlag bool
 }
 
@@ -216,6 +219,12 @@ func (tuner *Tuner) parseAcquireParam(resp ReceivedConfigure) error {
 		tuner.Group[index].Dump.budget = resp.Budget
 	}
 
+	paramPath := fmt.Sprintf("%v/parameters_value.csv", config.GetTuningPath(tuner.Name))
+	err := file.Append(paramPath, strings.Split(resp.ParamValue, ","))
+	if err != nil {
+		log.Errorf(tuner.logName, "%vth iteration save parameters_value failed: %v", tuner.Iteration, err)
+	}
+
 	return nil
 }
 
@@ -316,48 +325,33 @@ func (gp *Group) updateDump(param map[string]Parameter) {
 	}
 }
 
-func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group) bool {
-	for index, groupSetFlag := range tuner.Seter.Group {
+func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group, targetIdx *int) bool {
+	for index, groupSetFlag := range tuner.Setter.Group {
 		if groupSetFlag && (groupNo == index+1) {
 			target.ProfileSetFlag = true
+			*targetIdx ++
+			tuner.Setter.IdMap[index] = *targetIdx
 			return true
 		}
 	}
+
 	return false
 }
 
 func (tuner *Tuner) initProfiles() error {
-	var target *Group
-	var err error
-	tuner.BrainParam = []Parameter{}
-	for index, group := range config.KeenTune.Group {
-		target, err = getInitParam(index+1, group.ParamMap, &tuner.BrainParam)
-		if err != nil {
-			return err
+	var targetIdx = new(int)
+	for _, group := range config.KeenTune.Group {
+		var target = new(Group)
+
+		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target, targetIdx)
+		if !target.ProfileSetFlag {
+			continue
 		}
 
 		target.IPs = group.IPs
 		target.Port = group.Port
 		target.GroupName = group.GroupName
 		target.GroupNo = group.GroupNo
-		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target)
-
-		if !target.ProfileSetFlag {
-			continue
-		}
-
-		target.mergeParam()
-
-		var updateIP = make(map[string]bool)
-		for i := 0; i < len(target.IPs); i++ {
-			if i == 0 {
-				updateIP[target.IPs[i]] = true
-				continue
-			}
-			updateIP[target.IPs[i]] = false
-		}
-
-		target.AllowUpdate = updateIP
 		tuner.Group = append(tuner.Group, *target)
 	}
 
@@ -367,3 +361,4 @@ func (tuner *Tuner) initProfiles() error {
 
 	return nil
 }
+

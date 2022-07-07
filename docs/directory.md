@@ -55,8 +55,8 @@
         sensitize collect 服务入口，执行敏感参数采集任务
       - delete.go
        sensitize delete 服务入口，删除指定的敏感参数数据
-      - list.go
-       sensitize list 服务入口, 展示可用的敏感参数训练数据列表
+      - job.go
+       sensitize jobs 服务入口, 展示可用的敏感参数训练数据列表
       - stop.go
        sensitize stop 服务入口，停止正在执行的敏感参数任务
       - train.go

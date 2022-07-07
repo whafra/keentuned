@@ -12,6 +12,7 @@ func (tuner *Tuner) loop() error {
 	var aheadStop bool
 	for i := 1; i <= tuner.MAXIteration; i++ {
 		tuner.Iteration = i
+		tuner.updateJob(map[int]interface{}{tuneCurRoundIdx: fmt.Sprint(tuner.Iteration)})
 		// 1. acquire
 		if aheadStop, err = tuner.acquire(); err != nil {
 			return err
@@ -59,11 +60,7 @@ func (tuner *Tuner) benchmark() error {
 	if int(tuner.Group[0].Dump.budget) != 0 {
 		round = int(tuner.Group[0].Dump.budget)
 	} else {
-		if tuner.isSensitize {
-			round = config.KeenTune.Sensitize.BenchRound
-		} else {
-			round = config.KeenTune.ExecRound
-		}
+		round = config.KeenTune.ExecRound
 	}
 
 	var err error
