@@ -13,13 +13,8 @@ import (
 	"sync"
 )
 
-<<<<<<< HEAD:daemon/modules/seter.go
-type Seter struct {
-	Name     string
-=======
 type Setter struct {
 	IdMap    map[int]int // key: total group Idx; value: real setter groupIdx
->>>>>>> master-uibackend-0414:daemon/modules/setter.go
 	Group    []bool
 	ConfFile []string
 }
@@ -67,15 +62,6 @@ func (tuner *Tuner) Set() error {
 		for _, detail := range failedInfo {
 			details += fmt.Sprintln(detail)
 		}
-<<<<<<< HEAD:daemon/modules/seter.go
-
-		log.Errorf(log.ProfSet, "Set failed: %v", details)
-		return
-	}
-
-	activeFile := config.GetProfileWorkPath("active.conf")
-=======
->>>>>>> master-uibackend-0414:daemon/modules/setter.go
 
 		log.Errorf(log.ProfSet, "Set failed: %v", details)
 		return fmt.Errorf(details)

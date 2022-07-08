@@ -22,11 +22,7 @@ import (
 func main() {
 	config.Init()
 	log.Init()
-<<<<<<< HEAD
-	com.ClearTask()
-=======
 	com.ResetJob()
->>>>>>> master-uibackend-0414
 
 	m.StopSig = make(chan os.Signal, 1)
 	quit := make(chan os.Signal, 1)

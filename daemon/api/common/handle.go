@@ -144,10 +144,6 @@ func report(url string, value []byte, err error) {
 		if config.IsInnerBenchRequests[benchResult.BenchID] && benchResult.BenchID > 0 {
 			config.BenchmarkResultChan[benchResult.BenchID] <- value
 		}
-<<<<<<< HEAD
-=======
-
->>>>>>> master-uibackend-0414
 		return
 	}
 
@@ -190,8 +186,6 @@ func status(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-<<<<<<< HEAD
-=======
 func command(w http.ResponseWriter, r *http.Request) {
 	var result = new(string)
 	var err error
@@ -413,4 +407,3 @@ func parseFlag(originCmd, flagName string, short ...string) (string, error) {
 	return flagValue, nil
 }
 
->>>>>>> master-uibackend-0414

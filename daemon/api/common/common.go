@@ -95,25 +95,6 @@ func KeenTunedService(quit chan os.Signal) {
 	registerRouter()
 
 	go func() {
-<<<<<<< HEAD
-		for s := range quit {
-			switch s {
-			case syscall.SIGTERM:
-				log.Info("", "keentune is stopped")
-				if GetRunningTask() != "" {
-					ClearTask()
-					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
-				}
-				os.Exit(0)
-			case syscall.SIGQUIT, syscall.SIGINT:
-				log.Info("", "keentune is interrupted")
-				if GetRunningTask() != "" {
-					ClearTask()
-					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
-				}
-				os.Exit(1)
-			}
-=======
 		select {
 		case sig := <-quit:
 			log.Info("", "keentune is interrupted")
@@ -126,7 +107,6 @@ func KeenTunedService(quit chan os.Signal) {
 			} else {
 				os.Exit(1)
 			}
->>>>>>> master-uibackend-0414
 		}
 	}()
 
@@ -267,21 +247,6 @@ func GetSensitizePath(fileName string) string {
 	return ""
 }
 
-<<<<<<< HEAD
-func GetRunningTask() string {
-	file, _ := ioutil.ReadFile("/var/keentune/job.cnf")
-	return string(file)
-}
-
-func SetRunningTask(class, name string) {
-	activeJob = fmt.Sprintf("%s %s", class, name)
-	ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0666)
-}
-
-func ClearTask() {
-	os.Remove("/var/keentune/job.cnf")
-}
-=======
 func IsApplying() bool {
 	job := m.GetRunningTask()
 	if job == "" || len(strings.Split(job, " ")) < 2 {
@@ -298,7 +263,6 @@ func ResetJob() {
 	if tuningJob != "" {
 		file.UpdateRow(tuningCsv, tuningJob, map[int]interface{}{m.TuneStatusIdx: m.Kill})
 	}
->>>>>>> master-uibackend-0414
 
 	sensitizeJob := file.GetRecord(sensitizeCsv, "status", "running", "name")
 	if sensitizeJob != "" {

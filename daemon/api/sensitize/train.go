@@ -29,14 +29,11 @@ type TrainFlag struct {
 func (s *Service) Train(flags TrainFlag, reply *string) error {
 	if err := com.CheckBrainClient(); err != nil {
 		return fmt.Errorf("check %v", err)
-<<<<<<< HEAD
-=======
 	}
 
 	err := config.Backup(flags.Config, flags.Job, "training")
 	if err != nil {
 		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
->>>>>>> master-uibackend-0414
 	}
 
 	go runTrain(flags)

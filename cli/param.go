@@ -61,20 +61,6 @@ func tuneCmd() *cobra.Command {
 		Short:   "Deploy and start a parameter tuning job",
 		Long:    "Deploy and start a parameter tuning job",
 		Example: egTune,
-<<<<<<< HEAD
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
-                                os.Exit(1)
-                        }
-
-			if err := checkTuningFlags("tune", &flag); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
-=======
->>>>>>> master-uibackend-0414
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
@@ -154,11 +140,6 @@ func deleteParamJobCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, flag.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), flag.Name)
-                                os.Exit(1)
-                        }
-
 			//Determine whether job already exists
 			JobPath := config.GetTuningPath(flag.Name)
 			_, err = os.Stat(JobPath)
@@ -201,18 +182,11 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 
-<<<<<<< HEAD
-			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), dump.Name)
-                                os.Exit(1)
-                        }
-=======
 			status := new(string)
 			if !IsTuningJobFinish(dump.Name, status) {
 				fmt.Printf("%v Job %v is %v, dump is not supported.\n", ColorString("yellow", "[Warning]"), *status, dump.Name)
 				return
 			}
->>>>>>> master-uibackend-0414
 
 			err := checkDumpParam(&dump)
 			if err != nil {

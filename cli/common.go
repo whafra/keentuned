@@ -5,12 +5,6 @@ import (
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
-<<<<<<< HEAD
-	"os"
-	"github.com/spf13/cobra"
-=======
-
->>>>>>> master-uibackend-0414
 	"keentune/daemon/common/config"
 
 	"github.com/spf13/cobra"
@@ -108,26 +102,6 @@ func benchCmd() *cobra.Command {
 }
 
 func versionCmd() *cobra.Command {
-<<<<<<< HEAD
-        var flag VersionFlag
-        var cmd = &cobra.Command{
-                Use:     "version",
-                Short:   "Print the version number of keentune",
-                Long:    "Print the version number of keentune",
-                Example: egVersion,
-                Run: func(cmd *cobra.Command, args []string) {
-			err := config.InitWorkDir()
-                        if err != nil {
-                                fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
-                                os.Exit(1)
-                        }
-
-                        flag.VersionNum = config.KeenTune.VersionConf
-                        fmt.Printf("keentune version %v\n", flag.VersionNum)
-                },
-        }
-        return cmd
-=======
 	var flag VersionFlag
 	var cmd = &cobra.Command{
 		Use:     "version",
@@ -145,7 +119,6 @@ func versionCmd() *cobra.Command {
 		},
 	}
 	return cmd
->>>>>>> master-uibackend-0414
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
