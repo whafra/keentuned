@@ -1,8 +1,7 @@
-# Auto-Tuning
-#### This document will introduce a performation of knobs auto-tuning by KeenTune
-
+# How to tuning knobs automatically
+---  
 ## What knobs to be tuned
-KeenTune默认支持对操作系统内核参数[sysctl](../daemon/examples/parameter/sysctl.json), [nginx运行参数](../daemon/examples/parameter/nginx.json), [mysql运行参数](../daemon/examples/parameter/my_cnf.json)等参数进行auto-tuning. 你还可以[自定义参数域](./6.customize_knobs.md)来进行auto-tuning.  
+KeenTune默认支持对操作系统内核参数[sysctl](../daemon/examples/parameter/sysctl.json), [nginx运行参数](../daemon/examples/parameter/nginx.json), [mysql运行参数](../daemon/examples/parameter/my_cnf.json)等参数进行auto-tuning. 你还可以[自定义参数域](./customize_knobs.md)来进行auto-tuning.  
 
 我们需要在keentuned.conf文件中定义我们想要调整的参数域  
 ```conf
@@ -22,7 +21,7 @@ Parameter List
 ```
 
 ## Which benchmark we use
-Auto-tuning需要一个benchmark工具来对性能进行评估，从而使得算法能够对参数配置进行选择和优化，KeenTune默认支持[wrk](./5.benchmkar_wrk.md),[fio](./5.benchmark_fio.md),[iperf](./5.benchmark_iperf.md),[tpce和tpch](./5.benchmark_tpce%26tpch.md)等benchmark工具. 和参数一样，你也可以通过开发benchmark脚本来[自定义benchmark](./6.customize_benchmark.md)进行auto-tuning.
+Auto-tuning需要一个benchmark工具来对性能进行评估，从而使得算法能够对参数配置进行选择和优化，KeenTune默认支持wrk,fio,iperf, 以及tpce和tpch等benchmark工具. 和参数一样，你也可以通过开发benchmark脚本来[自定义benchmark](./customize_benchmark.md)进行auto-tuning.
 
 我们需要在keentuned.conf文件中定义我们想要使用的benchmark文件
 ```conf
@@ -42,7 +41,7 @@ Benchmark List
 ```
 
 ## Which auto-tuning algorithm
-KeenTune在KeenTune-brain组件中内置了Random, TPE和HORD三种基础调优算法, 也可以开发新的算法组件将[自定义的算法](./6.customize_algorithm.md)加入到KeenTune中。
+KeenTune在KeenTune-brain组件中内置了Random, TPE和HORD三种基础调优算法, 也可以开发新的算法组件将[自定义的算法](./customize_algorithm.md)加入到KeenTune中。
 
 我们需要在keentuned.conf文件中定义我们想要使用的算法
 ```conf

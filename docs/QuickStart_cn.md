@@ -60,25 +60,25 @@ systemctl start keentune-target
 ```
 
 ### Auto-Tuning(参数调优)
-使用[默认配置](./2.Configuration_cn.md)开始一次[参数调优](./3.Auto_tuning_cn.md)，总轮次为10轮。  
+使用[默认配置](./install/Configuration_cn.md)开始一次[参数调优](./how-to/How%20to%20Auto-Tuning%20Knobs_cn.md)，总轮次为10轮。  
 ```s
 keentune param tune --job tune_demo --iteration 10
 ```
 
 ### Profile(专家调优方案)
-为[默认配置](./2.Configuration_cn.md)中[Group1](./4.target_group_cn.md)的机器设置[CPU高负载](./4.buildin_profile_cn.md)的[专家调优](./3.Profile_setting_cn.md)方案。  
+为[默认配置](./install/Configuration_cn.md)中[Group1](./design/target_group_cn.md)的机器设置[CPU高负载](./design/buildin_profile_cn.md)的[专家调优](./how-to/How%20to%20Auto-Tuning%20Knobs_cn.md)方案。  
 ```s
 keentune profile set --group1 cpu_high_load.conf
 ```
 
 ### Sensitize Knobs(敏感参数识别)
-使用[默认配置](./2.Configuration_cn.md)和Auto-Tuning中产生的数据对[参数敏感性](./3.Sensitize_knobs_cn.md)进行识别
+使用[默认配置](./install/Configuration_cn.md)和Auto-Tuning中产生的数据对[参数敏感性](./how-to/How%20to%20sentivize%20knob.md)进行识别
 ```s
 keentune sensitize train --data tune_demo --output tune_demo
 ```
 
 ### Pressure Control(智能控压)
-在http长链接工作负载下对[wrk](./5.benchmkar_wrk.md)的参数进行[智能化控制](./3.Pressure_control_cn.md)，总轮次为10轮。
+在http长链接工作负载下对[wrk](./5.benchmkar_wrk.md)的参数进行[智能化控制](./how-to/How%20to%20sentivize%20knob.md)，总轮次为10轮。
 ```s
 keentune param tune --param wrk.json --bench wrk_nginx_long.json   --job wrk_demo --iteration 10
 ```
