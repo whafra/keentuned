@@ -88,7 +88,7 @@ func ColorString(color string, content string) string {
 func GetExternalIP() (string, error) {
 	netInterfaces, err := net.Interfaces()
 	if err != nil {
-		return "", fmt.Errorf("net.Interfaces failed, err:", err.Error())
+		return "", fmt.Errorf("net.Interfaces failed, err: %v", err.Error())
 	}
 
 	for _, iface := range netInterfaces {
@@ -209,7 +209,7 @@ func decorateString(maxes []int) string {
 	return decorateStr + fmt.Sprintln()
 }
 
-// Remove Repeated
+// RemoveRepeated ...
 func RemoveRepeated(s []string) []string {
 	var result []string
 	m := make(map[string]bool)

@@ -63,7 +63,7 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
 			if err != nil {
-				return "", paramCollection, fmt.Errorf("collect Param:[%v]\n", err)
+				return "", paramCollection, fmt.Errorf("collect Param err: %v", err)
 			}
 
 			appliedInfo.DomainName = domain

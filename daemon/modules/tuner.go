@@ -170,7 +170,7 @@ func (tuner *Tuner) feedback() error {
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/feedback"
 	body, err := http.RemoteCall("POST", url, feedbackMap)
 	if err != nil {
-		return fmt.Errorf("'feedback' remote call err:%v\n", err)
+		return fmt.Errorf("'feedback' remote call err:%v", err)
 	}
 
 	var resp struct {

@@ -218,7 +218,7 @@ func readFile(fileName string) (DBLMap, error) {
 	var paramMap map[string]interface{}
 	err = json.Unmarshal(bytes, &paramMap)
 	if err != nil {
-		return nil, fmt.Errorf("Unmarshal err:%v\n", err)
+		return nil, fmt.Errorf("Unmarshal err: %v", err)
 	}
 
 	var domains []string

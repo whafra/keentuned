@@ -52,11 +52,11 @@ var SensitizeJobHeader = []string{
 }
 
 func getTuneJobFile() string {
-	return fmt.Sprint(config.GetDumpPath("tuning_jobs.csv"))
+	return fmt.Sprint(config.GetDumpPath(config.TuneCsv))
 }
 
 func getSensitizeJobFile() string {
-	return fmt.Sprint(config.GetDumpPath("sensitize_jobs.csv"))
+	return fmt.Sprint(config.GetDumpPath(config.SensitizeCsv))
 }
 
 const (

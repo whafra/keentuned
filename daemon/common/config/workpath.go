@@ -9,6 +9,11 @@ import (
 var TuneTempConf = "/var/keentune/tuning_workspace/temp.conf"
 var SensitizeTempConf = "/var/keentune/sensitize_workspace/temp.conf"
 
+const (
+	TuneCsv      = "tuning_jobs.csv"
+	SensitizeCsv = "sensitize_jobs.csv"
+)
+
 func GetTuningWorkPath(fileName string) string {
 	return assembleFilePath(KeenTune.DumpHome, "parameter", fileName)
 }

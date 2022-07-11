@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	egTrain         = "\tkeentune sensitize train --data collect_test --job train_test --trials 2"
-	egDelete        = "\tkeentune sensitize delete --job collect_test"
+	egTrain         = "\tkeentune sensitize train --data tune_test --job train_test --trials 2"
+	egDelete        = "\tkeentune sensitize delete --job tune_test"
 	egSensitiveJobs = "\tkeentune sensitize jobs"
 	egSensitiveStop = "\tkeentune sensitize stop"
 )
@@ -125,7 +125,7 @@ func deleteSensitivityCmd() *cobra.Command {
 			flag.Cmd = "sensitize"
 			err := config.InitWorkDir()
 			if err != nil {
-				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
+				fmt.Printf("%v Init work directory: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
 			}
 
@@ -137,7 +137,7 @@ func deleteSensitivityCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
-			if file.IsJobRunning(sensitizeCsv, flag.Name) {
+			if file.IsJobRunning(config.GetDumpPath(config.SensitizeCsv), flag.Name) {
 				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			}
