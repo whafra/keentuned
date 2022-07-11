@@ -17,13 +17,13 @@ func (tuner *Tuner) getBest() error {
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/best"
 	resp, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("remote call: %v\n", err)
+		return fmt.Errorf("remote call: %v", err)
 	}
 
 	var bestConfig ReceivedConfigure
 	err = json.Unmarshal(resp, &bestConfig)
 	if err != nil {
-		return fmt.Errorf("unmarshal best config: %v\n", err)
+		return fmt.Errorf("unmarshal best config: %v", err)
 	}
 
 	// time cost

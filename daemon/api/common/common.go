@@ -42,8 +42,6 @@ type DumpFlag struct {
 }
 
 var (
-	tuningCsv    = "/var/keentune/tuning_jobs.csv"
-	sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
 	logHome      = "/var/log/keentune"
 )
 
@@ -151,7 +149,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 
 	if flag.Cmd == "param" {
 		primaryKeys := []string{flag.Name}
-		file.DeleteRow(tuningCsv, primaryKeys)
+		file.DeleteRow(config.GetDumpPath(config.TuneCsv), primaryKeys)
 		os.Remove(fmt.Sprintf("%v/%v.log", logHome, flag.Name))
 	}
 
@@ -177,7 +175,7 @@ func RunTrainDelete(flag DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
 	primaryKeys := []string{flag.Name}
-	file.DeleteRow(sensitizeCsv, primaryKeys)
+	file.DeleteRow(config.GetDumpPath(config.SensitizeCsv), primaryKeys)
 	os.Remove(fmt.Sprintf("%v/keentuned-sensitize-train-%v.log", logHome, flag.Name))
 
 	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
@@ -259,14 +257,14 @@ func IsApplying() bool {
 func ResetJob() {
 	m.ClearTask()
 
-	tuningJob := file.GetRecord(tuningCsv, "status", "running", "name")
+	tuningJob := file.GetRecord(config.GetDumpPath(config.TuneCsv), "status", "running", "name")
 	if tuningJob != "" {
-		file.UpdateRow(tuningCsv, tuningJob, map[int]interface{}{m.TuneStatusIdx: m.Kill})
+		file.UpdateRow(config.GetDumpPath(config.TuneCsv), tuningJob, map[int]interface{}{m.TuneStatusIdx: m.Kill})
 	}
 
-	sensitizeJob := file.GetRecord(sensitizeCsv, "status", "running", "name")
+	sensitizeJob := file.GetRecord(config.GetDumpPath(config.SensitizeCsv), "status", "running", "name")
 	if sensitizeJob != "" {
-		file.UpdateRow(sensitizeCsv, sensitizeJob, map[int]interface{}{m.TrainStatusIdx: m.Kill})
+		file.UpdateRow(config.GetDumpPath(config.SensitizeCsv), sensitizeJob, map[int]interface{}{m.TrainStatusIdx: m.Kill})
 	}
 }
 

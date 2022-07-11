@@ -22,12 +22,9 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 		return fmt.Errorf("'%v' %v", jobFlag, err)
 	}
 
-	if flag.Trials <= 0 {
-		return fmt.Errorf("--trials must be positive integer, input: %v", flag.Trials)
-	}
-
+	
 	if flag.Trials > 10 || flag.Trials < 1 {
-		return fmt.Errorf("--trials is out of range [1,10], input: %v", flag.Trials)
+		return fmt.Errorf("invalid value in trials=%v", flag.Trials)
 	}
 
 	if IsMutexJobRunning(com.JobTuning) {
@@ -73,7 +70,7 @@ func isTuneDataReady(name string, reason *string) bool {
 	command := ""
 	filePath := ""
 	command = "keentune param tune --job"
-	filePath = config.GetDumpPath("tuning_jobs.csv")
+	filePath = config.GetDumpPath(config.TuneCsv)
 
 	if !file.IsPathExist(filePath) {
 		*reason = fmt.Sprintf("The file '%v' path does not exist", filePath)
@@ -109,8 +106,8 @@ func checkTuningFlags(cmdName string, flag *TuneFlag) error {
 		return fmt.Errorf("%v %v", jobFlag, err)
 	}
 
-	if flag.Round <= 0 {
-		return fmt.Errorf("--iteration must be positive integer, input: %v", flag.Round)
+	if flag.Round < 10 {
+		return fmt.Errorf("invalid value in iteration=%v, requirement: not less than 10", flag.Round)
 	}
 
 	if m.GetRunningTask() != "" {
@@ -161,12 +158,12 @@ func isJobRepeatOrHasRunningJob(cmd, name string, reason *string) bool {
 	filePath := ""
 	if cmd == "tune" {
 		command = "keentune param delete --job"
-		filePath = config.GetDumpPath("tuning_jobs.csv")
+		filePath = config.GetDumpPath(config.TuneCsv)
 	}
 
 	if cmd == "sensitize" {
 		command = "keentune sensitize delete --job"
-		filePath = config.GetDumpPath("sensitize_jobs.csv")
+		filePath = config.GetDumpPath(config.SensitizeCsv)
 	}
 
 	if !file.IsPathExist(filePath) {

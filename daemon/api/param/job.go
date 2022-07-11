@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
 	"os"
@@ -25,7 +26,7 @@ func (s *Service) Jobs(flag string, reply *string) error {
 		*reply = log.ClientLogMap[log.ParamJobs]
 		log.ClearCliLog(log.ParamJobs)
 	}()
-	filepath := "/var/keentune/tuning_jobs.csv"
+	filepath := config.GetDumpPath(config.TuneCsv)
 	content, err := ioutil.ReadFile(filepath)
 	if string(content) == "" {
 		log.Infof(log.ParamJobs, "No job found")

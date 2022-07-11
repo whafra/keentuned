@@ -3,6 +3,7 @@ package sensitize
 import (
 	"fmt"
 	com "keentune/daemon/api/common"
+	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
@@ -13,7 +14,7 @@ import (
 
 // Stop run sensitize stop service
 func (s *Service) Stop(request string, reply *string) error {
-	filePath := "/var/keentune/sensitize_jobs.csv"
+	filePath := config.GetDumpPath(config.SensitizeCsv)
 	trainJob := file.GetRecord(filePath, "status", "running", "name")
 
 	if trainJob != "" {

@@ -50,13 +50,13 @@ func DecoratePath(path string) string {
 func ReadFile2Map(path string) (map[string]interface{}, error) {
 	bytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("read [%v] file:%v\n", path, err)
+		return nil, fmt.Errorf("read [%v] file:%v", path, err)
 	}
 
 	var retMap map[string]interface{}
 	err = json.Unmarshal(bytes, &retMap)
 	if err != nil {
-		return nil, fmt.Errorf("Unmarshal err:%v\n", err)
+		return nil, fmt.Errorf("Unmarshal err: %v", err)
 	}
 
 	return retMap, nil

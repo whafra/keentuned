@@ -109,7 +109,7 @@ func readConfigParam(job string, result *string) error {
 }
 
 func readTrainInfo(job string, result *string) error {
-	record, err := file.GetOneRecord(sensitizeCsv, job, "name")
+	record, err := file.GetOneRecord(config.GetDumpPath(config.SensitizeCsv), job, "name")
 	if err != nil {
 		return fmt.Errorf("search '%v' err: %v", job, err)
 	}
@@ -180,13 +180,13 @@ func parseRound(info, key string) (int, error) {
 }
 
 func readTuneInfo(job string, result *string) error {
-	cmd := file.GetRecord(tuningCsv, "name", job, "cmd")
+	cmd := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "cmd")
 	if cmd == "" {
 		return fmt.Errorf("'%v' not exists", job)
 	}
 
 	var resp = TuneCmdResp{}
-	iterationStr := file.GetRecord(tuningCsv, "name", job, "iteration")
+	iterationStr := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "iteration")
 	iteration, err := strconv.Atoi(strings.Trim(iterationStr, " "))
 	if err != nil || iteration <= 0 {
 		return fmt.Errorf("'%v' not exists", "iteration")
