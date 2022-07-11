@@ -22,9 +22,6 @@ func subCommands() []*cobra.Command {
 	return subCmds
 }
 
-var tuningCsv = "/var/keentune/tuning_jobs.csv"
-var sensitizeCsv = "/var/keentune/sensitize_jobs.csv"
-
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
 var egVersion = "\tkeentune version"
 
@@ -47,10 +44,10 @@ func rollbackCmd(parentCmd string) *cobra.Command {
 
 func setTuneFlag(cmd *cobra.Command, flag *TuneFlag) {
 	flags := cmd.Flags()
-	flags.StringVarP(&flag.Name, "job", "j", "", "name of the new dynamic parameter tuning job")
-	flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of dynamic parameter tuning")
+	flags.StringVarP(&flag.Name, "job", "j", "", "Name of new knob auto-tuning job")
+	flags.IntVarP(&flag.Round, "iteration", "i", 100, "MAX-iteration of knob auto-tuning")
 
-	flags.StringVar(&flag.Config, "config", "keentuned.conf", "configuration specified for tuning")
+	flags.StringVar(&flag.Config, "config", "keentuned.conf", "Customized config file for knob auto-tuning")
 
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
@@ -162,7 +159,7 @@ func ColorString(color string, content string) string {
 }
 
 func IsTuningJobFinish(name string, status *string) bool {
-	*status = file.GetRecord(tuningCsv, "name", name, "status")
+	*status = file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", name, "status")
 	return *status == "finish"
 }
 

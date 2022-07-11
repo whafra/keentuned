@@ -148,7 +148,7 @@ func deleteParamJobCmd() *cobra.Command {
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
-			if file.IsJobRunning(tuningCsv, flag.Name) {
+			if file.IsJobRunning(config.GetDumpPath(config.TuneCsv), flag.Name) {
 				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			} else {
@@ -182,12 +182,6 @@ func dumpCmd() *cobra.Command {
 				return
 			}
 
-			status := new(string)
-			if !IsTuningJobFinish(dump.Name, status) {
-				fmt.Printf("%v Job %v is %v, dump is not supported.\n", ColorString("yellow", "[Warning]"), *status, dump.Name)
-				return
-			}
-
 			err := checkDumpParam(&dump)
 			if err != nil {
 				fmt.Printf("%v Check dump param:%v\n", ColorString("red", "[ERROR]"), err)
@@ -208,6 +202,11 @@ func checkDumpParam(dump *DumpFlag) error {
 	err := config.InitWorkDir()
 	if err != nil {
 		return fmt.Errorf("init work path %v", err)
+	}
+
+	status := new(string)
+	if !IsTuningJobFinish(dump.Name, status) {
+		return fmt.Errorf("job %v status is %v, dump is not supported", dump.Name, *status)
 	}
 
 	workPath := config.GetProfileWorkPath("")

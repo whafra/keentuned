@@ -169,22 +169,6 @@ func IsBrainOffline(clientName *string) bool {
 	return false
 }
 
-func ConnectTarget(group []bool) error {
-	err := checkSettableTarget(group)
-	if err != nil {
-		return err
-	}
-
-	var clientName = new(string)
-
-	if IsSetTargetOffline(group, clientName) {
-		return fmt.Errorf(*clientName)
-	}
-
-	go monitorClientStatus(IsSetTargetOffline, clientName, group)
-	return nil
-}
-
 func checkSettableTarget(group []bool) error {
 	inputLen := len(group)
 	hasLen := len(config.KeenTune.Group)
