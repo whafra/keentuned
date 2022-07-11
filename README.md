@@ -4,4 +4,152 @@ KeenTune 是一款AI算法与专家知识库双轮驱动的操作系统全栈式
 
 KeenTuned 是KeenTune的调度管理组件，包含CLI和Daemon两个部分。CLI模块提供用户可用的命令行接口，命令分为基础命令、静态调优相关命令、动态调优相关命令三个部分。keentuned作为核心管控模块，负责监控其他组件、接收解析来自CLI的命令、按照业务处理顺序调度相关组件等。
 
-## 安装
+## Build & Install
+
+
+## Configuration
+we can find configuration file in /etc/keentune/conf/keentund.conf
+```conf
+[keentuned]
+# Basic configuration of KeenTune-Daemon(KeenTuned).
+VERSION_NUM     = 1.3.0                     ; Record the version number of keentune
+PORT            = 9871                      ; KeenTuned access port
+HEARTBEAT_TIME  = 30                        ; Heartbeat detection interval(unit: seconds), recommended value 30
+KEENTUNED_HOME  = /etc/keentune             ; KeenTuned  default configuration root location
+DUMP_HOME       = /var/keentune             ; Dump home is the working directory for KeenTune job execution result
+
+; configuration about configuration dumping
+DUMP_BASELINE_CONFIGURATION = false         ; If dump the baseline configuration.
+DUMP_TUNING_CONFIGURATION   = false         ; If dump the intermediate configuration.
+DUMP_BEST_CONFIGURATION     = true          ; If dump the best configuration.
+
+; benchmark replay duplicately round
+BASELINE_BENCH_ROUND    = 5                 ; Benchmark execution rounds of baseline
+TUNING_BENCH_ROUND      = 3                 ; Benchmark execution rounds during tuning execution
+RECHECK_BENCH_ROUND     = 4                 ; Benchmark execution rounds after tuning for recheck
+
+; configuration about log
+LOGFILE_LEVEL           = DEBUG             ; logfile log level, i.e. INFO, DEBUG, WARN, FATAL
+LOGFILE_NAME            = keentuned.log     ; logfile name.
+LOGFILE_INTERVAL        = 2                 ; logfile interval
+LOGFILE_BACKUP_COUNT    = 14                ; logfile backup count
+
+[brain]
+# Topology of brain and basic configuration about brain.
+BRAIN_IP                = localhost         ; The machine ip address to depoly keentune-brain.
+BRAIN_PORT              = 9872              ; The service port of keentune-brain.
+AUTO_TUNING_ALGORITHM   = tpe               ; Brain optimization algorithm. i.e. tpe, hord, random
+SENSITIZE_ALGORITHM     = shap              ; Explainer of sensitive parameter training. i.e. shap, lasso, univariate
+
+[target-group-1]
+# Topology of target group and knobs to be tuned in target.
+TARGET_IP   = localhost                     ; The machine ip address to depoly keentune-target.
+TARGET_PORT = 9873                          ; The service port of keentune-target.
+PARAMETER   = sysctl.json                   ; Knobs to be tuned in this target
+
+[bench-group-1]
+# Topology of bench group and benchmark script to be performed in bench.
+BENCH_SRC_IP    = localhost                 ; The machine ip address to depoly keentune-bench.
+BENCH_SRC_PORT  = 9874                      ; The service port of keentune-bench.
+BENCH_DEST_IP   = localhost                 ; The destination ip address in benchmark workload.
+BENCH_CONFIG    = bench_wrk_nginx_long.json ; The configuration file of benchmark to be performed
+
+```
+
+## Run
+After modify KeenTuned configuration file, we can deploy KeenTuned and listening to requests as
+```s
+>> keentuned
+or depoly keentuned by systemctl
+>> systemctl start keentuned
+```
+
+## Code structure
+### CLI
+```
+cli
+├── api.go
+├── checkinput.go
+├── common.go
+├── config.go
+├── main.go
+├── param.go
+├── profile.go
+└── sensitize.go
+
+0 directories, 8 files
+```
+### Daemon
+```
+daemon
+├── api                 #
+│   ├── common
+│   │   ├── common.go
+│   │   ├── handle.go
+│   │   ├── heartbeat.go
+│   │   └── read.go
+│   ├── param
+│   │   ├── delete.go
+│   │   ├── dump.go
+│   │   ├── job.go
+│   │   ├── list.go
+│   │   ├── rollback.go
+│   │   ├── stop.go
+│   │   └── tune.go
+│   ├── profile
+│   │   ├── delete.go
+│   │   ├── generate.go
+│   │   ├── info.go
+│   │   ├── list.go
+│   │   ├── rollback.go
+│   │   └── set.go
+│   ├── sensitize
+│   │   ├── delete.go
+│   │   ├── job.go
+│   │   ├── stop.go
+│   │   └── train.go
+│   └── system
+│       └── benchmark.go
+├── common              #
+│   ├── config
+│   │   ├── check.go
+│   │   ├── config.go
+│   │   ├── priority.go
+│   │   ├── update.go
+│   │   └── workpath.go
+│   ├── file
+│   │   ├── file.go
+│   │   └── gocsv.go
+│   ├── log
+│   │   └── log.go
+│   └── utils
+│       ├── calculator.go
+│       ├── http
+│       │   └── http.go
+│       ├── parsejson.go
+│       └── utils.go
+├── examples
+│   ├── benchmark       #
+│   ├── detect          #
+│   ├── parameter       #
+│   └── profile         #
+└── modules             #
+│   ├── analyse.go
+│   ├── apply.go
+│   ├── assemble.go
+│   ├── benchmark.go
+│   ├── best.go
+│   ├── common.go
+│   ├── configuration.go
+│   ├── init.go
+│   ├── jobs.go
+│   ├── loop.go
+│   ├── parameter.go
+│   ├── setter.go
+│   ├── stop.go
+│   ├── trainer.go
+│   └── tuner.go
+└── daemon.go           #
+
+24 directories, 75 files
+```
