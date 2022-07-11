@@ -1,0 +1,22 @@
+{
+    "wrk": {
+      "connections": {
+        "desc": "Connections to keep open",
+        "dtype": "int",
+        "range": [
+          100,
+          "#!cpu_core#*300"
+        ]
+      },
+      "threads": {
+        "desc": "Number of threads to use",
+        "dtype": "int",
+        "range": [
+          1,
+          "#!cpu_core#*3"
+        ]
+      }
+
+    }
+}
+
