@@ -2,7 +2,7 @@
   "benchmark": [
     {
       "benchmark_cmd": "python3 {remote_script_path} {target_ip}",
-      "local_script_path": "benchmark/wrk/ack_nginx_http_long_base.py",
+      "local_script_path": "benchmark/wrk/wrk_https_short.py",
       "items": {
         "Requests_sec": {
           "negative": false,

@@ -1,1 +1,4 @@
 .vscode
+.flake8
+.*
+vendor/

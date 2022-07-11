@@ -7,16 +7,17 @@ import subprocess
 import logging
 logger = logging.getLogger(__name__)
 
+
 """
-Wrk Http long link benchmark
+Wrk Http short link benchmark
 e.g.
-'wrk -t 10 -c 300 -d 1 --latency http://127.0.0.1'
+'wrk -H "Connection: Close" -t 10 -c 300 -d 30 --latency http://127.0.0.1'
 """
 
 # const
 DEFAULT_CONNECTIONS = 300
 DEFAULT_THREADS = 10
-DEFAULT_DURATION = 2
+DEFAULT_DURATION = 30
 
 
 class Benchmark():
@@ -75,7 +76,7 @@ class Benchmark():
         
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        cmd = 'wrk -t {} -c {} -d {} --latency http://{}'.format(
+        cmd = 'wrk -H "Connection: Close" -t {} -c {} -d {} --latency https://{}'.format(
                 self.threads,self.connections,self.duration,self.url)
         logger.info(cmd)
         result = subprocess.run(
