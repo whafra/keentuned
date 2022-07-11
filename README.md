@@ -1,4 +1,4 @@
-# KeenTune
+# KeenTune-daemon(Keentuned)
 ## INTRODUCTION
 KeenTune 是一款AI算法与专家知识库双轮驱动的操作系统全栈式智能优化产品，为主流的操作系统提供轻量化、跨平台的一键式性能调优，让应用在智能定制的运行环境发挥最优性能。
 
