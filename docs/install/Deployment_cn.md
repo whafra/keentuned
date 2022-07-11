@@ -1,17 +1,15 @@
 # Deployment of KeenTune
 
 ## Topology of KeenTune Deployment
-根据不同的任务需求，KeenTune可以有多种灵活的部署形式，并通过[配置文件](./Configuration_cn.md)实现各组件的通信
-### Auto-tuning
+根据不同的任务需求，KeenTune可以有多种灵活的部署形式，并通过[配置文件](./Configuration_cn.md)实现各组件的通信  
 + 常规的KeenTune拓扑如图所示，我们将KeenTune-target部署在待调优环境中，其他组件部署在辅助环境中    
 ![common deployment topology](../assist/Topology1.png)  
-+ 如果benchmark工具所需的计算资源较多，我们可以将keentune-bench单独部署在一个辅助环境中，有利用提高工作负载的压力  
++ 如果**benchmark工具所需的计算资源较高**，我们可以将keentune-bench单独部署在一个辅助环境中，有利用提高工作负载的压力  
 ![deployment topology with bench node](../assist/Topology2.png)  
-+ 如果我们使用的调优算法所需要的计算资源较多，我可以将keentune-brain单独部署在一个辅助环境中，提高算法效率
++ 如果我们使用的**调优算法所需要的计算资源较高**，我可以将keentune-brain单独部署在一个辅助环境中，提高算法效率
 ![deployment topology with brain node](../assist/Topology3.png)  
-+ 在智能控压的应用场景下，我们需要将keentune-bench和keentune-target部署在同一个环境中。  
++ 在**智能控压**的应用场景下，我们需要将keentune-bench和keentune-target部署在同一个环境中。  
 ![pressure control deployment topology](../assist/Topology4.png)  
-
 
 ## YUM Installation
 参考[《KeenTune依赖文档》](./Dependencies_cn.md)配置yum源，然后使用以下命令安装KeenTune各组件
