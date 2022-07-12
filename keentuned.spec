@@ -49,7 +49,7 @@ fi
 %files
 %defattr(0644,root,root, 0755)
 %license LICENSE
-%doc README.md docs/directory.md
+%doc README.md docs/*
 %attr(0755, root, root) %{_bindir}/keentune
 %attr(0755, root, root) %{_bindir}/keentuned
 %dir %{_sysconfdir}/keentune
