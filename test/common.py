@@ -65,11 +65,11 @@ def checkServerStatus(server_list):
 def deleteDependentData(param_name):
     cmd = "echo y | keentune param delete --job {}".format(param_name)
     sysCommand(cmd)
-    cmd = 'echo y | keentune sensitize delete --data {}'.format(param_name)
+    cmd = 'echo y | keentune sensitize delete --job {}'.format(param_name)
     sysCommand(cmd)
 
 
-def runParamTune(name, iteration=1):
+def runParamTune(name, iteration=10):
     cmd = 'keentune param tune -i {} --job {}'.format(iteration, name)
     status, output, _ = sysCommand(cmd)
     assert status == 0
@@ -220,10 +220,10 @@ def getTrainTaskResult(path):
     while True:
         with open(path, 'r') as f:
             res_data = f.read()
-        if '"sensitize train" finish' in res_data or "[ERROR]" in res_data:
+        if 'identification results successfully' in res_data or "[ERROR]" in res_data:
             break
         time.sleep(8)
-    word_list = ["Step1", "Step2", "Step3", "Step4", '"sensitize train" finish']
+    word_list = ["Step1", "Step2", "Step3", "identification results successfully"]
     result = all([word in res_data for word in word_list])
     return result
 
