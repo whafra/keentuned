@@ -71,6 +71,10 @@ const (
 	Kill   = "kill"
 )
 
+const (
+	TuneCols = 11
+)
+
 // tune job column index
 const (
 	TuneNameIdx = iota

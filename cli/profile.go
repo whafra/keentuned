@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
-	"keentune/daemon/common/log"
 	"os"
 	"strings"
 
@@ -114,21 +112,13 @@ func setCmd() *cobra.Command {
 				}
 			}
 
-			var targetMsg = new(string)
-			if com.IsSetTargetOffline(setFlag.Group, targetMsg) {
-				fmt.Printf("%v Found %v offline, please get them (it) ready before use\n",
-					ColorString("red", "[ERROR]"),
-					strings.TrimSuffix(*targetMsg, ", "))
-				os.Exit(1)
-			}
-
 			RunSetRemote(cmd.Context(), setFlag)
 			return
 		},
 	}
 
-	var group string = ""
-	if err := initSet(); err != nil {
+	var group string
+	if err := config.InitTargetGroup(); err != nil {
 		setFlag.Group = make([]bool, GroupNum)
 		setFlag.ConfFile = make([]string, GroupNum)
 		for index := 0; index < GroupNum; index++ {
@@ -145,15 +135,6 @@ func setCmd() *cobra.Command {
 	}
 
 	return cmd
-}
-
-func initSet() error {
-	if err := config.InitTargetGroup(); err != nil {
-		return err
-	}
-
-	log.Init()
-	return nil
 }
 
 func deleteProfileCmd() *cobra.Command {
@@ -173,14 +154,9 @@ func deleteProfileCmd() *cobra.Command {
 			flag.Cmd = "profile"
 			flag.Name = strings.TrimSuffix(flag.Name, ".conf") + ".conf"
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%v Init work directory error: %v .\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			WorkPath := config.GetProfileWorkPath(flag.Name)
-			_, err = os.Stat(WorkPath)
+			_, err := os.Stat(WorkPath)
 			if err == nil {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
 				if !confirm() {
@@ -229,15 +205,10 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			workPathName := config.GetProfileWorkPath(genFlag.Name)
 			homePathName := config.GetProfileHomePath(genFlag.Name)
-			_, err = ioutil.ReadFile(workPathName)
+			_, err := ioutil.ReadFile(workPathName)
 			if err != nil {
 				_, errinfo := ioutil.ReadFile(homePathName)
 				if errinfo != nil {
@@ -271,3 +242,4 @@ func generateCmd() *cobra.Command {
 
 	return cmd
 }
+

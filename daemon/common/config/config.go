@@ -375,7 +375,6 @@ func InitTargetGroup() error {
 	KeenTune = new(KeentunedConf)
 
 	getWorkDir(cfg)
-	KeenTune.GetLogConf(cfg)
 
 	err = KeenTune.getTargetGroup(cfg)
 	if err != nil {
@@ -383,25 +382,6 @@ func InitTargetGroup() error {
 	}
 
 	return nil
-}
-
-func InitBrainConf() error {
-	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
-	if err != nil {
-		return fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
-	}
-
-	KeenTune = new(KeentunedConf)
-
-	brain := cfg.Section("brain")
-	KeenTune.BrainIP = brain.Key("BRAIN_IP").MustString("")
-	KeenTune.BrainPort = brain.Key("BRAIN_PORT").MustString("9872")
-	KeenTune.Brain.Algorithm = brain.Key("AUTO_TUNING_ALGORITHM").MustString("tpe")
-
-	getWorkDir(cfg)
-	KeenTune.GetLogConf(cfg)
-	return nil
-
 }
 
 func GetJobParamConfig(job string) (string, string, error) {

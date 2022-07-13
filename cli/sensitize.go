@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
-	"keentune/daemon/common/log"
 	"os"
 	"strings"
 
@@ -65,12 +64,7 @@ func trainCmd() *cobra.Command {
 				return
 			}
 
-			err := initSensitizeConf()
-			if err != nil {
-				fmt.Printf("%v Init Brain conf: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			if strings.Trim(trainflags.Job, " ") == "" {
 				trainflags.Job = trainflags.Data
 			}
@@ -122,16 +116,13 @@ func deleteSensitivityCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-			flag.Cmd = "sensitize"
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%v Init work directory: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
 
+			flag.Cmd = "sensitize"
+
+			initWorkDirectory()
 			//Determine whether job already exists
 			JobPath := config.GetSensitizePath(flag.Name)
-			_, err = os.Stat(JobPath)
+			_, err := os.Stat(JobPath)
 			if err != nil {
 				fmt.Printf("%v sensitize.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
@@ -152,13 +143,11 @@ func deleteSensitivityCmd() *cobra.Command {
 	return cmd
 }
 
-func initSensitizeConf() error {
-	err := config.InitBrainConf()
+func initWorkDirectory() {
+	err := config.InitWorkDir()
 	if err != nil {
-		return err
+		fmt.Printf("%v Init work directory error: %v .\n", ColorString("red", "[ERROR]"), err)
+		os.Exit(1)
 	}
-
-	log.Init()
-	return nil
 }
 

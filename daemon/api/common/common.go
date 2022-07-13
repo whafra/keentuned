@@ -42,7 +42,7 @@ type DumpFlag struct {
 }
 
 var (
-	logHome      = "/var/log/keentune"
+	logHome = "/var/log/keentune"
 )
 
 var (
@@ -52,7 +52,7 @@ var (
 	JobBenchmark = "benchmark"
 )
 
-func IsDataNameUsed(name string) bool {
+func IsDataReady(name string) bool {
 	dataList, _, _, err := GetDataList()
 	if err != nil {
 		return false
@@ -292,3 +292,4 @@ func SetAvailableDomain() {
 		config.PriorityList[domain] = 1
 	}
 }
+
