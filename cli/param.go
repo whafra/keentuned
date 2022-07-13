@@ -68,12 +68,7 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%v init work dir: %v, check keentuned.conf and retry.\n", ColorString("red", "[ERROR]"), err)
-				return
-			}
-
+			initWorkDirectory()
 			if err := checkTuningFlags("tune", &flag); err != nil {
 				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
 				os.Exit(1)
@@ -134,15 +129,10 @@ func deleteParamJobCmd() *cobra.Command {
 			}
 			flag.Cmd = "param"
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%s Init work path %v", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			//Determine whether job already exists
 			JobPath := config.GetTuningPath(flag.Name)
-			_, err = os.Stat(JobPath)
+			_, err := os.Stat(JobPath)
 			if err != nil {
 				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
@@ -212,17 +202,17 @@ func checkDumpParam(dump *DumpFlag) error {
 	workPath := config.GetProfileWorkPath("")
 	job := config.GetTuningPath(dump.Name)
 	if !file.IsPathExist(job) {
-		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, dump.Name)
 	}
 
 	const bestSuffix = "_best.json"
 	bestFiles, err := file.WalkFilePath(job, bestSuffix, false)
 	if err != nil {
-		return fmt.Errorf("find the job '%v' best json err: %v ", strings.Split(job, "/")[len(strings.Split(job, "/"))-1], err)
+		return fmt.Errorf("search the job '%v' file path err: %v ", dump.Name, err)
 	}
 
 	if len(bestFiles) == 0 {
-		return fmt.Errorf("find the job '%v' best json doesn't exist", strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+		return fmt.Errorf("find the job '%v' best json doesn't exist", dump.Name)
 	}
 
 	var fileExist bool

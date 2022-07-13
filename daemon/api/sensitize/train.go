@@ -36,6 +36,10 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 		return fmt.Errorf("check %v", err)
 	}
 
+	if !com.IsDataReady(flags.Data) {
+		return fmt.Errorf("data file '%v' does not exist", flags.Data)
+	}
+
 	go runTrain(flags)
 	return nil
 }

@@ -14,7 +14,7 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 	var err error
 	jobFlag := "--job"
 
-	if err = checkData(cmdName, flag.Data); err != nil {
+	if err = checkData(flag.Data); err != nil {
 		return fmt.Errorf("'%v' %v", "--data", err)
 	}
 
@@ -22,7 +22,6 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 		return fmt.Errorf("'%v' %v", jobFlag, err)
 	}
 
-	
 	if flag.Trials > 10 || flag.Trials < 1 {
 		return fmt.Errorf("invalid value in trials=%v", flag.Trials)
 	}
@@ -48,14 +47,10 @@ func IsMutexJobRunning(mutexJob string) bool {
 	return strings.Split(job, " ")[0] == mutexJob
 }
 
-func checkData(cmd, name string) error {
+func checkData(name string) error {
 	err := matchRegular(name)
 	if err != nil {
 		return err
-	}
-
-	if !com.IsDataNameUsed(name) {
-		return fmt.Errorf("file '%v' does not exist", name)
 	}
 
 	var reason = new(string)
@@ -83,18 +78,16 @@ func isTuneDataReady(name string, reason *string) bool {
 		return false
 	}
 
-	colLen := 11
-	statusIdx := 2
-	if len(records) != colLen {
+	if len(records) != m.TuneCols {
 		*reason = fmt.Sprintf("'%v' record is abnormal, column partial absence", name)
 		return false
 	}
 
-	if records[statusIdx] == "finish" {
+	if records[m.TuneStatusIdx] == "finish" {
 		return true
 	}
 
-	*reason = fmt.Sprintf("origin job '%v' status '%v' is not 'finish', training is not supported", name, records[statusIdx])
+	*reason = fmt.Sprintf("origin job '%v' status '%v' is not 'finish', training is not supported", name, records[m.TuneStatusIdx])
 	return false
 }
 

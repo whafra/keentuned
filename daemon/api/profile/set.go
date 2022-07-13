@@ -10,6 +10,7 @@ import (
 	com "keentune/daemon/api/common"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
+	"strings"
 )
 
 type SetFlag struct {
@@ -26,6 +27,11 @@ type Result struct {
 func (s *Service) Set(flag SetFlag, reply *string) error {
 	if com.IsApplying() {
 		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
+	}
+
+	var targetMsg = new(string)
+	if com.IsSetTargetOffline(flag.Group, targetMsg) {
+		return fmt.Errorf("found %v offline, please get them (it) ready before setting", strings.TrimSuffix(*targetMsg, ", "))
 	}
 
 	com.SetAvailableDomain()
