@@ -27,7 +27,7 @@ The bench module runs benchmark tools to obtain a metric value that represents t
 The target module is responsible for applying the recommended knob configuration and maintaining the default knob application to support the recovery of the auto-tuning environment.   
 
 ## 2. Primary Function
-### 2.1. Knobs Auto-tuning
+### 2.1. Parameters Auto-tuning
 ### 2.2. Expert Optimized Profile
 ### 2.3. Sensibility identification
 ### 2.4. Capacity Evaluation
