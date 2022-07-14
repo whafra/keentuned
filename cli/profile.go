@@ -12,7 +12,8 @@ import (
 
 const (
 	exampleInfo         = "\tkeentune profile info --name cpu_high_load.conf"
-	exampleSet          = "\tkeentune profile set --group1 cpu_high_load.conf"
+	exampleSet  = "\tkeentune profile set --group1 cpu_high_load.conf\n" +
+		"\tkeentune profile set cpu_high_load.conf"
 	exampleGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
 	exampleProfDelete   = "\tkeentune profile delete --name tune_test.conf"
 	exampleProfList     = "\tkeentune profile list"
@@ -96,21 +97,14 @@ func setCmd() *cobra.Command {
 		Long:    "Apply a profile to the target machine",
 		Example: exampleSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			// common configuration to all target group
-			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
-				for i, _ := range setFlag.ConfFile {
-					setFlag.Group[i] = true
-					setFlag.ConfFile[i] = args[0]
-				}
-			} else {
-				for i, v := range setFlag.ConfFile {
-					if len(v) != 0 && strings.HasSuffix(v, ".conf") {
-						setFlag.Group[i] = true
-					} else {
-						setFlag.Group[i] = false
-					}
-				}
+			if len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile) {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
 			}
+
+			// bind configuration file to group
+			bindFileToGroup(args, setFlag)
 
 			RunSetRemote(cmd.Context(), setFlag)
 			return
@@ -135,6 +129,43 @@ func setCmd() *cobra.Command {
 	}
 
 	return cmd
+}
+
+func setWithoutAnyGroup(groupFiles []string) bool {
+	for _, fileName := range groupFiles {
+		if len(fileName) != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func bindFileToGroup(args []string, setFlag SetFlag) {
+	// Case1: bind all groups to the same configuration, when args passed. 
+	if len(args) > 0 {
+		for i, _ := range setFlag.ConfFile {
+			setFlag.Group[i] = true
+			setFlag.ConfFile[i] = args[0]
+		}
+
+		return
+	}
+
+	// Case2: bind a group according to the corresponding configuration by '--groupx' flag.
+	for i, v := range setFlag.ConfFile {
+		if strings.HasSuffix(v, ".conf") {
+			setFlag.Group[i] = true
+			continue
+		}
+
+		if len(v) != 0 {
+			fmt.Printf("%v group%v, file %v is not  with .conf suffix.\n", ColorString("red", "[ERROR]"), i, v)
+			os.Exit(1)
+		}
+	}
+
+	return
 }
 
 func deleteProfileCmd() *cobra.Command {
