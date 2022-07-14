@@ -58,6 +58,9 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Tue Jul 12 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.0
+- Add: Support UI expert one click tuning
+
 * Mon Jun 20 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.2.1-2
 - fix: Clear task residue on startup
 

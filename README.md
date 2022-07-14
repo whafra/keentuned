@@ -5,7 +5,27 @@ KeenTune 是一款AI算法与专家知识库双轮驱动的操作系统全栈式
 KeenTuned 是KeenTune的调度管理组件，包含CLI和Daemon两个部分。CLI模块提供用户可用的命令行接口，命令分为基础命令、静态调优相关命令、动态调优相关命令三个部分。keentuned作为核心管控模块，负责监控其他组件、接收解析来自CLI的命令、按照业务处理顺序调度相关组件等。
 
 ## Build & Install
+First, we can use keentuned either build 'keentuned' by source code or install by yum repo. Choose one of the following ways.
 
+### Build by source code
+```s
+>> sh keentuned_install.sh
+``` 
+### Install by yum install
+First add the yum repo. If it is an Ali8 series system, directly by modifying `enabled=1` in /etc/yum.repos.d/AnolisOS-Plus.repo to enable Plus source.
+```s
+[KeenTune]
+baseurl=https://mirrors.openanolis.cn/anolis/8.6/Plus/$basearch/os
+enabled=1
+gpgkey=https://mirrors.openanolis.cn/anolis/RPM-GPG-KEY-ANOLIS
+gpgcheck=0
+```
+And then install
+```s
+yum clean all
+yum makecache
+yum install keentuned -y
+```
 
 ## Configuration
 we can find configuration file in /etc/keentune/conf/keentund.conf
@@ -82,7 +102,7 @@ cli
 ### Daemon
 ```
 daemon
-├── api                 #
+├── api                 # Control layer: receiving cli and ui requests, checking parameters, and simple business processing
 │   ├── common
 │   │   ├── common.go
 │   │   ├── handle.go
@@ -110,7 +130,7 @@ daemon
 │   │   └── train.go
 │   └── system
 │       └── benchmark.go
-├── common              #
+├── common              # Common libraries layer: including configuration, file, log processing and tool functions.
 │   ├── config
 │   │   ├── check.go
 │   │   ├── config.go
@@ -129,11 +149,11 @@ daemon
 │       ├── parsejson.go
 │       └── utils.go
 ├── examples
-│   ├── benchmark       #
-│   ├── detect          #
-│   ├── parameter       #
-│   └── profile         #
-└── modules             #
+│   ├── benchmark       # sample benchmark script and json configuration lib
+│   ├── detect          # sample configuration for Resource Detection
+│   ├── parameter       # sample parameter lib 
+│   └── profile         # sample profile lib
+└── modules             # Model layer: tuning and other complex business processing
 │   ├── analyse.go
 │   ├── apply.go
 │   ├── assemble.go
@@ -149,7 +169,7 @@ daemon
 │   ├── stop.go
 │   ├── trainer.go
 │   └── tuner.go
-└── daemon.go           #
+└── daemon.go           # keentuned daemon main entrance
 
 24 directories, 75 files
 ```
