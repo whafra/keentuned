@@ -279,7 +279,7 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		}
 
 		group.DestIP = bench.Key("BENCH_DEST_IP").MustString("localhost")
-		group.BenchConf = bench.Key("BENCH_CONFIG").MustString("bench_wrk_nginx_long.json")
+		group.BenchConf = bench.Key("BENCH_CONFIG").MustString("wrk_http_long.json")
 
 		if err = checkBenchConf(&group.BenchConf); err != nil {
 			return err
@@ -396,13 +396,13 @@ func GetJobParamConfig(job string) (string, string, error) {
 		return "", "", err
 	}
 
-	var groupNames = make([]string, 0)
-	if !hasGroupSections(cfg, &groupNames, TargetSectionPrefix) {
+	var targetGroupNames = make([]string, 0)
+	if !hasGroupSections(cfg, &targetGroupNames, TargetSectionPrefix) {
 		return "", "", fmt.Errorf("target-group not found")
 	}
 
-	var parameterConf, benchConf string
-	for _, groupName := range groupNames {
+	var parameterConf string
+	for _, groupName := range targetGroupNames {
 		target := cfg.Section(groupName)
 		parameterConf += fmt.Sprintf("%v:", groupName)
 		parameter := target.Key("PARAMETER").MustString("")
@@ -414,9 +414,18 @@ func GetJobParamConfig(job string) (string, string, error) {
 		parameterConf = fmt.Sprintf("%v\n", strings.TrimSuffix(parameterConf, ","))
 	}
 
-	bench := cfg.Section("benchmark")
-	benchName := bench.Key("BENCH_CONFIG").MustString("")
-	benchConf = GetBenchJsonPath(benchName)
+	var benchGroupNames = make([]string, 0)
+	if !hasGroupSections(cfg, &benchGroupNames, BenchSectionPrefix) {
+		return parameterConf, "", fmt.Errorf("bench-group not found")
+	}
+
+	var benchConf string
+	for _, groupName := range benchGroupNames {
+		bench := cfg.Section(groupName)
+		benchName := bench.Key("BENCH_CONFIG").MustString("wrk_http_long.json")
+		benchConf += GetBenchJsonPath(benchName)
+	}
+
 	return strings.TrimSuffix(parameterConf, "\n"), benchConf, nil
 }
 

@@ -149,7 +149,7 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 }
 
 func GetBenchJsonPath(fileName string) string {
-	if string(fileName[0]) == "/" || fileName == "" {
+	if fileName == "" || string(fileName[0]) == "/" {
 		return fileName
 	}
 
