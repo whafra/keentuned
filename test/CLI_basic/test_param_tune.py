@@ -31,7 +31,7 @@ class TestParamTune(unittest.TestCase):
         logger.info('the test_param_tune testcase finished')
 
     def test_param_tune_FUN(self):
-        cmd = 'keentune param tune -i 1 --job param1'
+        cmd = 'keentune param tune -i 10 --job param1'
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 

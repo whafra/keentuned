@@ -41,8 +41,3 @@ class TestParamDelete(unittest.TestCase):
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertFalse(self.out.__contains__('param1'))
-
-        cmd = "echo y | keentune param delete --job sysctl.json"
-        self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__('not supported to delete'))

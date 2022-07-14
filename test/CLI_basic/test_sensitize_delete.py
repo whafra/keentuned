@@ -8,9 +8,12 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 from common import sysCommand
 from common import checkServerStatus
 from common import deleteDependentData
-from common import runSensitizeCollect
+from common import runParamTune
+from common import getTaskLogPath
+from common import getTrainTaskResult
 
 logger = logging.getLogger(__name__)
+
 
 class TestSensitizeDelete(unittest.TestCase):
     def setUp(self) -> None:
@@ -18,7 +21,7 @@ class TestSensitizeDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        status = runSensitizeCollect("sensitize1")
+        status = runParamTune("param1", 10)
         self.assertEqual(status, 0)
         logger.info('start to run test_sensitize_delete testcase')
 
@@ -26,20 +29,21 @@ class TestSensitizeDelete(unittest.TestCase):
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("sensitize1")
+        deleteDependentData("param1")
         logger.info('the test_sensitize_delete testcase finished')
 
     def test_sensitize_delete_FUN(self):
-        cmd = 'echo y | keentune sensitize delete --data sensitize1'
+        cmd = 'echo y | keentune sensitize train --data param1 --job param1'
+        path = getTaskLogPath(cmd)
+        result = getTrainTaskResult(path)
+        self.assertTrue(result)
+        
+        cmd = 'echo y | keentune sensitize delete --job param1'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('delete successfully'))
 
-        cmd = 'keentune sensitize list'
+        cmd = 'keentune sensitize jobs'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertFalse(self.out.__contains__('sensitize1'))
-
-        self.path = "/var/keentune/data/tuning_data/collect/'sensitize1[{}]'".format(self.algorithm)
-        res = os.path.exists(self.path)
-        self.assertFalse(res)
+        self.assertFalse(self.out.__contains__('param1'))
