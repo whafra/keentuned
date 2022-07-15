@@ -12,7 +12,6 @@ from common import checkServerStatus
 from common import sysCommand
 from common import getTaskLogPath
 from common import getTuneTaskResult
-from common import getCollectTaskResult
 from common import getTrainTaskResult
 
 logger = logging.getLogger(__name__)
@@ -31,7 +30,7 @@ class TestSensitizeProfile(unittest.TestCase):
                        "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
-        deleteDependentData("sensitize1")
+        deleteDependentData("param1")
         logger.info('the test_sensitize_profile testcase finished')
 
     def check_list_status(self, name):
@@ -69,15 +68,16 @@ class TestSensitizeProfile(unittest.TestCase):
         self.check_list_status(name)
 
     def test_sensitize_profile_RBT_run(self):
-        cmd = 'keentune sensitize collect -i 10 --data sensitize1'
+        cmd = 'keentune param tune -i 10 --job param1'
         path = getTaskLogPath(cmd)
-        self.profile_set_data("profile1", 1, 'job collect sensitize1 is running')
-        self.profile_rollback(1, 'job collect sensitize1 is running')
+        time.sleep(3)
+        self.profile_set_data("profile1", 1, 'job tuning param1 is running')
+        self.profile_rollback(1, 'job tuning param1 is running')
         self.profile_list()
-        result = getCollectTaskResult(path)
+        result = getTuneTaskResult(path)
         self.assertTrue(result)
 
-        cmd = 'echo y | keentune sensitize train --data sensitize1 --output sensitize1 -t 10'
+        cmd = 'echo y | keentune sensitize train --data param1 --job param1 -t 10'
         path = getTaskLogPath(cmd)
         self.profile_set_data("profile1", 0, 'Set profile1.conf successfully')
         self.profile_list("profile1")
@@ -87,4 +87,3 @@ class TestSensitizeProfile(unittest.TestCase):
         self.assertTrue(result)
 
         os.remove("/var/keentune/profile/profile1.conf")
-        os.remove("/var/keentune/sensitize/sensi-sensitize1.json")

@@ -42,7 +42,7 @@ class TestProfileSet(unittest.TestCase):
     def test_profile_set_RBT_lose_name_param(self):
         cmd = 'keentune profile set'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('found group is null'))
 
     def test_profile_set_RBT_lose_name_value(self):
@@ -54,13 +54,13 @@ class TestProfileSet(unittest.TestCase):
     def test_profile_set_RBT_name_value_null(self):
         cmd = "keentune profile set --group1 ''"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('found group is null'))
 
     def test_profile_set_RBT_name_value_empty(self):
         cmd = "keentune profile set --group1 ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('found group is null'))
 
     def test_profile_set_RBT_full_path(self):
