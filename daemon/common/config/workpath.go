@@ -6,12 +6,20 @@ import (
 	"strings"
 )
 
+var TuneTempConf = "/var/keentune/tuning_workspace/temp.conf"
+var SensitizeTempConf = "/var/keentune/sensitize_workspace/temp.conf"
+
+const (
+	TuneCsv      = "tuning_jobs.csv"
+	SensitizeCsv = "sensitize_jobs.csv"
+)
+
 func GetTuningWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "parameter", fileName)
 }
 
 func GetGenerateWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "parameter/generate", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "parameter/generate", fileName)
 }
 
 func GetBenchHomePath() string {
@@ -19,11 +27,21 @@ func GetBenchHomePath() string {
 }
 
 func GetProfileWorkPath(fileName string) string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "profile", fileName)
+	return assembleFilePath(KeenTune.DumpHome, "profile", fileName)
+}
+func GetDumpPath(fileName string) string {
+	return assembleFilePath(KeenTune.DumpHome, "", fileName)
 }
 
-func GetSensitizePath() string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "sensitize", "")
+func GetTuningPath(jobName string) string {
+	return assembleFilePath(KeenTune.DumpHome, "tuning_workspace", jobName)
+}
+func GetSensitizePath(jobName string) string {
+	return assembleFilePath(KeenTune.DumpHome, "sensitize_workspace", jobName)
+}
+
+func GetSensitizeWorkPath(fileName string) string {
+	return assembleFilePath(KeenTune.DumpHome, "sensitize_workspace", fileName)
 }
 
 func GetParamHomePath() string {
@@ -38,8 +56,12 @@ func GetProfileHomePath(fileName string) string {
 	return assembleFilePath(KeenTune.Home, "profile", fileName)
 }
 
+func GetSensitizeHomePath(fileName string) string {
+	return assembleFilePath(KeenTune.Home, "sensitize", "") + "/"
+}
+
 func GetDumpCSVPath() string {
-	return assembleFilePath(KeenTune.DumpConf.DumpHome, "csv", "")
+	return assembleFilePath(KeenTune.DumpHome, "csv", "")
 }
 
 func assembleFilePath(prefix, partition, fileName string) string {
@@ -101,7 +123,7 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 	// Only a file name, work directory has priority
 	case 1:
 		if strings.Contains(parts[0], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpConf.DumpHome, class, parts[0])
+			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpHome, class, parts[0])
 			if file.IsPathExist(workPath) {
 				return workPath
 			}
@@ -109,12 +131,12 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 			return fmt.Sprintf("%s/%s/%s", KeenTune.Home, class, parts[0])
 		}
 
-		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpConf.DumpHome, class, parts[0], parts[0], extraSufix)
+		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpHome, class, parts[0], parts[0], extraSufix)
 	// File relative path, work directory has priority
 	default:
 		// If the first element of the split has the same name as the specified class, then it will Trim the class+"/"
 		if strings.Contains(parts[partLen-1], fileType) {
-			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
+			workPath = fmt.Sprintf("%s/%s/%s", KeenTune.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
 			if file.IsPathExist(workPath) {
 				return workPath
 			}
@@ -122,12 +144,12 @@ func GetAbsolutePath(fileName, class, fileType, extraSufix string) string {
 			return fmt.Sprintf("%s/%s/%s", KeenTune.Home, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)))
 		}
 
-		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpConf.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
+		return fmt.Sprintf("%s/%s/%s/%s%s", KeenTune.DumpHome, class, strings.TrimPrefix(relativePath, fmt.Sprintf("%s/", class)), parts[partLen-1], extraSufix)
 	}
 }
 
 func GetBenchJsonPath(fileName string) string {
-	if string(fileName[0]) == "/" || fileName == "" {
+	if fileName == "" || string(fileName[0]) == "/" {
 		return fileName
 	}
 
@@ -142,5 +164,36 @@ func GetBenchJsonPath(fileName string) string {
 	}
 
 	return fmt.Sprintf("%v/%v", GetBenchHomePath(), strings.TrimPrefix(fileName, "benchmark/"))
+}
+
+func GetKeenTunedConfPath(origin string) string {
+	if origin == "" {
+		return keentuneConfigFile
+	}
+
+	if strings.HasPrefix(origin, "/") {
+		return origin
+	}
+
+	fullPath := fmt.Sprintf("%v/conf/%v", KeenTune.Home, strings.TrimPrefix(strings.TrimPrefix(origin, "keentune/"), "conf/"))
+	return fullPath
+}
+
+func GetProfilePath(fileName string) string {
+	if file.IsPathExist(fileName) {
+		return fileName
+	}
+
+	workPath := GetProfileWorkPath(fileName)
+	if file.IsPathExist(workPath) {
+		return workPath
+	}
+
+	homePath := GetProfileHomePath(fileName)
+	if file.IsPathExist(homePath) {
+		return homePath
+	}
+
+	return ""
 }
 

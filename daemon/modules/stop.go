@@ -11,7 +11,7 @@ func NewSafeChan() *SafeChan {
 	return &SafeChan{C: make(chan struct{}, 1)}
 }
 
-func (sc *SafeChan) Stop() {
+func (sc *SafeChan) SafeStop() {
 	sc.once.Do(func() {
 		close(sc.C)
 	})

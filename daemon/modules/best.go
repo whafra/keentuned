@@ -17,13 +17,13 @@ func (tuner *Tuner) getBest() error {
 	url := config.KeenTune.BrainIP + ":" + config.KeenTune.BrainPort + "/best"
 	resp, err := http.RemoteCall("GET", url, nil)
 	if err != nil {
-		return fmt.Errorf("remote call: %v\n", err)
+		return fmt.Errorf("remote call: %v", err)
 	}
 
 	var bestConfig ReceivedConfigure
 	err = json.Unmarshal(resp, &bestConfig)
 	if err != nil {
-		return fmt.Errorf("unmarshal best config: %v\n", err)
+		return fmt.Errorf("unmarshal best config: %v", err)
 	}
 
 	// time cost
@@ -32,7 +32,7 @@ func (tuner *Tuner) getBest() error {
 
 	tuner.bestInfo.Round = bestConfig.Iteration
 	tuner.bestInfo.Score = bestConfig.Score
-	tuner.bestInfo.Parameters=bestConfig.Candidate
+	tuner.bestInfo.Parameters = bestConfig.Candidate
 
 	return nil
 }
@@ -74,7 +74,7 @@ func (tuner *Tuner) verifyBest() error {
 }
 
 func (tuner *Tuner) dumpBest() error {
-	if !config.KeenTune.DumpConf.BestDump {
+	if !config.KeenTune.BestDump {
 		return nil
 	}
 
@@ -90,14 +90,15 @@ func (tuner *Tuner) dumpBest() error {
 
 	suffix := "_best.json"
 	var fileList string
+	jobPath := config.GetTuningPath(tuner.Name)
 	for index := range tuner.Group {
 		err = tuner.Group[index].Dump.Save(tuner.Name, fmt.Sprintf("_group%v%v", index+1, suffix))
 		if err != nil {
 			log.Warnf(tuner.logName, "dump best.json failed, %v", err)
 			continue
 		}
-		
-		fileList += fmt.Sprintf("\n\t%v/parameter/%v/%v_group%v%v", config.KeenTune.DumpConf.DumpHome, tuner.Name, tuner.Name, index+1, suffix)
+
+		fileList += fmt.Sprintf("\n\t%v/%v_group%v%v", jobPath, tuner.Name, index+1, suffix)
 	}
 
 	log.Infof(tuner.logName, "Step%v. Best configuration dump successfully. File list: %v\n", tuner.IncreaseStep(), fileList)

@@ -8,23 +8,16 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
-	"keentune/daemon/common/utils"
 	utilhttp "keentune/daemon/common/utils/http"
+	m "keentune/daemon/modules"
 	"net/http"
 	"os"
 	"strings"
 	"syscall"
 )
-
-type listInfo struct {
-	Name      string `json:"name"`
-	Scenario  string `json:"type"` // enum:"collect", "tuning"
-	Algorithm string `json:"algorithm"`
-}
 
 type deleter struct {
 	cmd      string
@@ -48,16 +41,18 @@ type DumpFlag struct {
 	Force  bool
 }
 
-var activeJob = ""
-
 var (
-	JobTuning     = "tuning"
-	JobCollection = "collect"
-	JobTraining   = "train"
-	JobBenchmark  = "benchmark"
+	logHome = "/var/log/keentune"
 )
 
-func IsDataNameUsed(name string) bool {
+var (
+	JobTuning    = "tuning"
+	JobProfile   = "profile"
+	JobTraining  = "train"
+	JobBenchmark = "benchmark"
+)
+
+func IsDataReady(name string) bool {
 	dataList, _, _, err := GetDataList()
 	if err != nil {
 		return false
@@ -73,14 +68,14 @@ func IsDataNameUsed(name string) bool {
 }
 
 func GetDataList() ([]string, string, string, error) {
-	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/sensitize_list", nil)
+	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
 	if err != nil {
 		return nil, "", "", err
 	}
 
 	var sensiList struct {
-		Success bool       `json:"suc"`
-		Data    []listInfo `json:"data"`
+		Success bool     `json:"suc"`
+		Data    []string `json:"data"`
 	}
 
 	if err = json.Unmarshal(resp, &sensiList); err != nil {
@@ -88,26 +83,9 @@ func GetDataList() ([]string, string, string, error) {
 	}
 
 	if !sensiList.Success {
-		return nil, "", "", fmt.Errorf("remotecall sensitize_list return suc is false")
+		return nil, "", "", fmt.Errorf("remotecall avaliable return suc is false")
 	}
-
-	var dataDetailSlice [][]string
-	var dataList []string
-	var collectList string
-
-	if len(sensiList.Data) > 0 {
-		dataDetailSlice = append(dataDetailSlice, []string{"data name", "application scenario", "algorithm"})
-	}
-
-	for _, value := range sensiList.Data {
-		dataDetailSlice = append(dataDetailSlice, []string{value.Name, value.Scenario, value.Algorithm})
-		dataList = append(dataList, value.Name)
-		if value.Scenario == "collect" {
-			collectList += fmt.Sprintf("\n\t%v", value.Name)
-		}
-	}
-
-	return dataList, collectList, utils.FormatInTable(dataDetailSlice), nil
+	return sensiList.Data, "", "", nil
 }
 
 func KeenTunedService(quit chan os.Signal) {
@@ -115,21 +93,16 @@ func KeenTunedService(quit chan os.Signal) {
 	registerRouter()
 
 	go func() {
-		for s := range quit {
-			switch s {
-			case syscall.SIGTERM:
-				log.Info("", "keentune is stopped")
-				if GetRunningTask() != "" {
-					ClearTask()
-					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
-				}
+		select {
+		case sig := <-quit:
+			log.Info("", "keentune is interrupted")
+			if m.GetRunningTask() != "" {
+				ResetJob()
+				utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
+			}
+			if sig == syscall.SIGTERM {
 				os.Exit(0)
-			case syscall.SIGQUIT, syscall.SIGINT:
-				log.Info("", "keentune is interrupted")
-				if GetRunningTask() != "" {
-					ClearTask()
-					utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/end", nil)
-				}
+			} else {
 				os.Exit(1)
 			}
 		}
@@ -154,7 +127,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 	case "param":
 		fullName = GetParameterPath(flag.Name)
 	case "profile":
-		fullName = GetProfilePath(flag.Name)
+		fullName = config.GetProfilePath(flag.Name)
 	default:
 		log.Errorf("", "%v is not supported", flag.Cmd)
 		return nil
@@ -174,7 +147,38 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 		return fmt.Errorf("Delete failed: %v", err.Error())
 	}
 
+	if flag.Cmd == "param" {
+		primaryKeys := []string{flag.Name}
+		file.DeleteRow(config.GetDumpPath(config.TuneCsv), primaryKeys)
+		os.Remove(fmt.Sprintf("%v/%v.log", logHome, flag.Name))
+	}
+
 	log.Infof(fmt.Sprintf("%s delete", inst.cmd), "[ok] %v delete successfully", flag.Name)
+	return nil
+}
+
+// RunDelete run delete file service
+func RunTrainDelete(flag DeleteFlag, reply *string) error {
+	fullName := GetSensitizePath(flag.Name)
+
+	inst := new(deleter)
+	inst.cmd = flag.Cmd
+	inst.fileName = fullName
+
+	if err := inst.check(flag.Name); err != nil {
+		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
+		return fmt.Errorf("Check name failed: %v", err.Error())
+	}
+
+	if err := inst.delete(); err != nil {
+		log.Errorf(fmt.Sprintf("%s delete", inst.cmd), err.Error())
+		return fmt.Errorf("Delete failed: %v", err.Error())
+	}
+	primaryKeys := []string{flag.Name}
+	file.DeleteRow(config.GetDumpPath(config.SensitizeCsv), primaryKeys)
+	os.Remove(fmt.Sprintf("%v/keentuned-sensitize-train-%v.log", logHome, flag.Name))
+
+	log.Infof(log.SensitizeDel, "[ok] %v delete successfully", flag.Name)
 	return nil
 }
 
@@ -183,7 +187,7 @@ func (d *deleter) check(inputName string) error {
 		return fmt.Errorf("%v is not supported to delete", d.fileName)
 	}
 
-	if d.cmd == "param" {
+	if d.cmd != "profile" {
 		return nil
 	}
 
@@ -192,13 +196,8 @@ func (d *deleter) check(inputName string) error {
 		return nil
 	}
 
-	activeNameBytes, err := ioutil.ReadFile(activeFileName)
-	if err != nil {
-		return fmt.Errorf("read file :%v err:%v", activeFileName, err)
-	}
-
-	if strings.Contains(d.fileName, string(activeNameBytes)) && string(activeNameBytes) != "" {
-		return fmt.Errorf("%v is active profile, please run \"keentune profile rollback\" before delete", string(activeNameBytes))
+	if file.HasRecord(activeFileName, "name", inputName) {
+		return fmt.Errorf("%v is active profile, please run \"keentune profile rollback\" before delete", inputName)
 	}
 
 	return nil
@@ -208,26 +207,8 @@ func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
 
-func GetProfilePath(fileName string) string {
-	if file.IsPathExist(fileName) {
-		return fileName
-	}
-
-	workPath := config.GetProfileWorkPath(fileName)
-	if file.IsPathExist(workPath) {
-		return workPath
-	}
-
-	homePath := config.GetProfileHomePath(fileName)
-	if file.IsPathExist(homePath) {
-		return homePath
-	}
-
-	return ""
-}
-
 func GetParameterPath(fileName string) string {
-	workPath := config.GetTuningWorkPath(fileName)
+	workPath := config.GetTuningPath(fileName)
 	if file.IsPathExist(workPath) {
 		return workPath
 	}
@@ -245,29 +226,70 @@ func GetParameterPath(fileName string) string {
 	return ""
 }
 
-func GetRunningTask() string {
-	file, _ := ioutil.ReadFile("/var/keentune/job.cnf")
-	return string(file)
-}
+func GetSensitizePath(fileName string) string {
+	workPath := config.GetSensitizePath(fileName)
+	if file.IsPathExist(workPath) {
+		return workPath
+	}
 
-func SetRunningTask(class, name string) {
-	activeJob = fmt.Sprintf("%s %s", class, name)
-	ioutil.WriteFile("/var/keentune/job.cnf", []byte(activeJob), 0666)
-}
+	homePath := config.GetParamHomePath() + fileName
+	if file.IsPathExist(homePath) {
+		return homePath
+	}
 
-func ClearTask() {
-	os.Remove("/var/keentune/job.cnf")
-}
+	generatePath := config.GetGenerateWorkPath(fmt.Sprintf("%s%s", strings.TrimSuffix(fileName, ".json"), ".json"))
+	if file.IsPathExist(generatePath) {
+		return generatePath
+	}
 
-func IsJobRunning(name string) bool {
-	return GetRunningTask() == name
+	return ""
 }
 
 func IsApplying() bool {
-	job := GetRunningTask()
+	job := m.GetRunningTask()
 	if job == "" || len(strings.Split(job, " ")) < 2 {
 		return false
 	}
 
-	return (strings.Split(job, " ")[0] == JobCollection) || (strings.Split(job, " ")[0] == JobTuning)
+	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
 }
+
+func ResetJob() {
+	m.ClearTask()
+
+	tuningJob := file.GetRecord(config.GetDumpPath(config.TuneCsv), "status", "running", "name")
+	if tuningJob != "" {
+		file.UpdateRow(config.GetDumpPath(config.TuneCsv), tuningJob, map[int]interface{}{m.TuneStatusIdx: m.Kill})
+	}
+
+	sensitizeJob := file.GetRecord(config.GetDumpPath(config.SensitizeCsv), "status", "running", "name")
+	if sensitizeJob != "" {
+		file.UpdateRow(config.GetDumpPath(config.SensitizeCsv), sensitizeJob, map[int]interface{}{m.TrainStatusIdx: m.Kill})
+	}
+}
+
+func SetAvailableDomain() {
+	url := fmt.Sprintf("%s:%s/avaliable", config.KeenTune.Target.Group[0].IPs[0], config.KeenTune.Target.Group[0].Port)
+	resp, err := utilhttp.RemoteCall("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	var ret struct {
+		Domains []string `json:"result"`
+	}
+
+	err = json.Unmarshal(resp, &ret)
+	if err != nil {
+		return
+	}
+
+	for _, domain := range ret.Domains {
+		if domain == config.NginxDomain {
+			config.PriorityList[domain] = 0
+			continue
+		}
+		config.PriorityList[domain] = 1
+	}
+}
+

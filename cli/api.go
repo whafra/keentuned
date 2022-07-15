@@ -10,13 +10,11 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	ParamMap  string
-	Name      string // job specific name
-	Round     int
-	BenchConf string
-	ParamConf []string
-	Verbose   bool
-	Log       string // log file
+	Config  string
+	Name    string // job specific name
+	Round   int
+	Verbose bool
+	Log     string // log file
 }
 
 // DumpFlag ...
@@ -34,17 +32,17 @@ type GenFlag struct {
 }
 
 type SetFlag struct {
-	Name     string
 	Group    []bool
 	ConfFile []string
 }
 
 type TrainFlag struct {
-	Output string
+	Job    string
 	Data   string
 	Trials int
 	Force  bool
 	Log    string // log file
+	Config string
 }
 
 type DeleteFlag struct {
@@ -64,7 +62,7 @@ type BenchmarkFlag struct {
 }
 
 type VersionFlag struct {
-        VersionNum string
+	VersionNum string
 }
 
 var (
@@ -126,42 +124,24 @@ func RunGenerateRemote(ctx context.Context, flag GenFlag) {
 	remoteImpl("profile.Generate", flag)
 }
 
-func RunCollectRemote(ctx context.Context, flag TuneFlag) {
-	remoteImpl("sensitize.Collect", flag)
-
-	fmt.Printf("%v Running Sensitize Collect Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\titeration: %v\n\tname: %v\n", flag.Round, flag.Name)
-	fmt.Printf("\n\tsee more details by log file: \"%v\"\n", flag.Log)
-	return
-}
-
 func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 	remoteImpl("sensitize.Train", flag)
 
 	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
-	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\toutput: %v\n", flag.Trials, flag.Data, flag.Output)
+	fmt.Printf("\n\ttrials: %v\n\tdata: %v\n\tjob: %v\n", flag.Trials, flag.Data, flag.Job)
 	fmt.Printf("\n\tsee more detailsby log file:  \"%v\"\n", flag.Log)
 	return
 }
 
 func StopRemote(ctx context.Context, flag string) {
-	var job string
-	if flag == "param" {
-		job = "parameter optimization"
-	}
-
-	if flag == "sensitize" {
-		job = "sensibility identification"
-	}
-
 	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
-	fmt.Printf("%v Abort %v job.\n", ColorString("yellow", "[Warning]"), job)
 }
 
-func RunJobsRemote(ctx context.Context) {
-	remoteImpl("param.Jobs", "")
+func RunJobsRemote(ctx context.Context, flag string) {
+	remoteImpl(fmt.Sprintf("%s.Jobs", flag), flag)
 }
 
 func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
+

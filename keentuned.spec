@@ -1,8 +1,8 @@
 %define debug_package %{nil}
-%define anolis_release 2
+%define anolis_release 1
 
 Name:           keentuned
-Version:        1.2.1
+Version:        1.3.0
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
@@ -49,7 +49,7 @@ fi
 %files
 %defattr(0644,root,root, 0755)
 %license LICENSE
-%doc README.md docs/directory.md
+%doc README.md docs/*
 %attr(0755, root, root) %{_bindir}/keentune
 %attr(0755, root, root) %{_bindir}/keentuned
 %dir %{_sysconfdir}/keentune
@@ -58,6 +58,9 @@ fi
 %{_prefix}/lib/systemd/system/keentuned.service
 
 %changelog
+* Tue Jul 12 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.0
+- Add: Support UI expert one click tuning
+
 * Mon Jun 20 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.2.1-2
 - fix: Clear task residue on startup
 

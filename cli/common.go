@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"strings"
-	"os"
-	"github.com/spf13/cobra"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/file"
+	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 func subCommands() []*cobra.Command {
@@ -15,6 +16,7 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
+	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
 
 	return subCmds
 }
@@ -39,15 +41,12 @@ func rollbackCmd(parentCmd string) *cobra.Command {
 	return cmd
 }
 
-func setTuneFlag(cmdName string, cmd *cobra.Command, flag *TuneFlag) {
+func setTuneFlag(cmd *cobra.Command, flag *TuneFlag) {
 	flags := cmd.Flags()
-	if cmdName == "tune" {
-		flags.StringVarP(&flag.Name, "job", "j", "", "name of the new dynamic parameter tuning job")
-		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of dynamic parameter tuning")
-	} else {
-		flags.StringVarP(&flag.Name, "data", "d", "", "sensitivity identification data name")
-		flags.IntVarP(&flag.Round, "iteration", "i", 100, "iteration of sensitivity identification data collection")
-	}
+	flags.StringVarP(&flag.Name, "job", "j", "", "Name of new knob auto-tuning job")
+	flags.IntVarP(&flag.Round, "iteration", "i", 100, "MAX-iteration of knob auto-tuning")
+
+	flags.StringVar(&flag.Config, "config", "keentuned.conf", "Customized config file for knob auto-tuning")
 
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
@@ -99,24 +98,19 @@ func benchCmd() *cobra.Command {
 }
 
 func versionCmd() *cobra.Command {
-        var flag VersionFlag
-        var cmd = &cobra.Command{
-                Use:     "version",
-                Short:   "Print the version number of keentune",
-                Long:    "Print the version number of keentune",
-                Example: egVersion,
-                Run: func(cmd *cobra.Command, args []string) {
-			err := config.InitWorkDir()
-                        if err != nil {
-                                fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
-                                os.Exit(1)
-                        }
-
-                        flag.VersionNum = config.KeenTune.VersionConf
-                        fmt.Printf("keentune version %v\n", flag.VersionNum)
-                },
-        }
-        return cmd
+	var flag VersionFlag
+	var cmd = &cobra.Command{
+		Use:     "version",
+		Short:   "Print the version number of keentune",
+		Long:    "Print the version number of keentune",
+		Example: egBenchmark,
+		Run: func(cmd *cobra.Command, args []string) {
+			initWorkDirectory()
+			flag.VersionNum = config.KeenTune.VersionConf
+			fmt.Printf("keentune version %v\n", flag.VersionNum)
+		},
+	}
+	return cmd
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
@@ -157,5 +151,10 @@ func ColorString(color string, content string) string {
 	default:
 		return content
 	}
+}
+
+func IsTuningJobFinish(name string, status *string) bool {
+	*status = file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", name, "status")
+	return *status == "finish"
 }
 

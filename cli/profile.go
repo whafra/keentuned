@@ -2,41 +2,40 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
-	"keentune/daemon/common/log"
 	"os"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 const (
-	egInfo         = "\tkeentune profile info --name cpu_high_load.conf"
-	egSet          = "\tkeentune profile set --group1 cpu_high_load.conf"
-	egGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
-	egProfDelete   = "\tkeentune profile delete --name tune_test.conf"
-	egProfList     = "\tkeentune profile list"
-	egProfRollback = "\tkeentune profile rollback"
+	exampleInfo         = "\tkeentune profile info --name cpu_high_load.conf"
+	exampleSet  = "\tkeentune profile set --group1 cpu_high_load.conf\n" +
+		"\tkeentune profile set cpu_high_load.conf"
+	exampleGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
+	exampleProfDelete   = "\tkeentune profile delete --name tune_test.conf"
+	exampleProfList     = "\tkeentune profile list"
+	exampleProfRollback = "\tkeentune profile rollback"
 )
 
+// keentune profile
 func createProfileCmds() *cobra.Command {
 	var profCmd = &cobra.Command{
-		Use:     "profile [command]",
-		Short:   "Static tuning with expert profiles",
-		Long:    "Static tuning with expert profiles",
-		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s", egProfDelete, egGenerate, egInfo, egProfList, egProfRollback, egSet),
+		Use:   "profile [command]",
+		Short: "Static tuning with expert profiles",
+		Long:  "Static tuning with expert profiles",
+		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+			exampleProfDelete,
+			exampleGenerate,
+			exampleInfo,
+			exampleProfList,
+			exampleProfRollback,
+			exampleSet,
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" && args[0] != "generate" && args[0] != "list" && args[0] != "set" && args[0] != "delete" && args[0] != "info" && args[0] != "rollback" {
-					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				}
-			}
-
-			if len(args) == 0 {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-			}
-
+			fmt.Printf("Invaild argument. See help information: \n\n")
 			return cmd.Help()
 		},
 	}
@@ -53,43 +52,39 @@ func createProfileCmds() *cobra.Command {
 	return profCmd
 }
 
+// keentune profile info
 func infoCmd() *cobra.Command {
 	var name string
 	cmd := &cobra.Command{
 		Use:     "info",
 		Short:   "Show information of the specified profile",
 		Long:    "Show information of the specified profile",
-		Example: egInfo,
+		Example: exampleInfo,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				fmt.Printf("Invaild argument. See help information: \n\n")
 				cmd.Help()
-				return
+			} else {
+				name = strings.TrimSuffix(name, ".conf") + ".conf"
+				RunInfoRemote(cmd.Context(), name)
 			}
-
-			name = strings.TrimSuffix(name, ".conf") + ".conf"
-			RunInfoRemote(cmd.Context(), name)
-			return
 		},
 	}
-
 	cmd.Flags().StringVar(&name, "name", "", "profile name, query by command \"keentune profile list\"")
-
 	return cmd
 }
 
+// keentune profile list
 func listProfileCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List all profiles",
 		Long:    "List all profiles",
-		Example: egProfList,
+		Example: exampleProfList,
 		Run: func(cmd *cobra.Command, args []string) {
 			RunListRemote(cmd.Context(), "profile")
-			return
 		},
 	}
-
 	return cmd
 }
 
@@ -100,40 +95,24 @@ func setCmd() *cobra.Command {
 		Use:     "set",
 		Short:   "Apply a profile to the target machine",
 		Long:    "Apply a profile to the target machine",
-		Example: egSet,
+		Example: exampleSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			//判断若args有值且以.conf结尾，则认为是默认所有group下发统一配置
-			if len(args) > 0 && strings.HasSuffix(args[0], ".conf") {
-				for i, _ := range setFlag.ConfFile {
-					setFlag.Group[i] = true
-					setFlag.ConfFile[i] = args[0]
-				}
-			} else {
-				//若groupX已配置且以.conf结尾，则认为该配置有效
-				for i, v := range setFlag.ConfFile {
-					if len(v) != 0 && strings.HasSuffix(v, ".conf") {
-						setFlag.Group[i] = true
-					} else {
-						setFlag.Group[i] = false
-					}
-				}
+			if len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile) {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				return
 			}
 
-			var targetMsg = new(string)
-			if com.IsSetTargetOffline(setFlag.Group, targetMsg) {
-				fmt.Printf("%v Found %v offline, please get them (it) ready before use\n",
-					ColorString("red", "[ERROR]"),
-					strings.TrimSuffix(*targetMsg, ", "))
-				os.Exit(1)
-			}
+			// bind configuration file to group
+			bindFileToGroup(args, setFlag)
 
 			RunSetRemote(cmd.Context(), setFlag)
 			return
 		},
 	}
 
-	var group string = ""
-	if err := initSet(); err != nil {
+	var group string
+	if err := config.InitTargetGroup(); err != nil {
 		setFlag.Group = make([]bool, GroupNum)
 		setFlag.ConfFile = make([]string, GroupNum)
 		for index := 0; index < GroupNum; index++ {
@@ -152,13 +131,41 @@ func setCmd() *cobra.Command {
 	return cmd
 }
 
-func initSet() error {
-	if err := config.InitTargetGroup(); err != nil {
-		return err
+func setWithoutAnyGroup(groupFiles []string) bool {
+	for _, fileName := range groupFiles {
+		if len(fileName) != 0 {
+			return false
+		}
 	}
 
-	log.Init()
-	return nil
+	return true
+}
+
+func bindFileToGroup(args []string, setFlag SetFlag) {
+	// Case1: bind all groups to the same configuration, when args passed. 
+	if len(args) > 0 {
+		for i, _ := range setFlag.ConfFile {
+			setFlag.Group[i] = true
+			setFlag.ConfFile[i] = args[0]
+		}
+
+		return
+	}
+
+	// Case2: bind a group according to the corresponding configuration by '--groupx' flag.
+	for i, v := range setFlag.ConfFile {
+		if strings.HasSuffix(v, ".conf") {
+			setFlag.Group[i] = true
+			continue
+		}
+
+		if len(v) != 0 {
+			fmt.Printf("%v group%v, file %v is not  with .conf suffix.\n", ColorString("red", "[ERROR]"), i, v)
+			os.Exit(1)
+		}
+	}
+
+	return
 }
 
 func deleteProfileCmd() *cobra.Command {
@@ -167,10 +174,10 @@ func deleteProfileCmd() *cobra.Command {
 		Use:     "delete",
 		Short:   "Delete a profile",
 		Long:    "Delete a profile",
-		Example: egProfDelete,
+		Example: exampleProfDelete,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				fmt.Printf("Invaild argument. See help information: \n\n")
 				cmd.Help()
 				return
 			}
@@ -178,14 +185,9 @@ func deleteProfileCmd() *cobra.Command {
 			flag.Cmd = "profile"
 			flag.Name = strings.TrimSuffix(flag.Name, ".conf") + ".conf"
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%v Init work directory error: %v .\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			WorkPath := config.GetProfileWorkPath(flag.Name)
-			_, err = os.Stat(WorkPath)
+			_, err := os.Stat(WorkPath)
 			if err == nil {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
 				if !confirm() {
@@ -219,10 +221,10 @@ func generateCmd() *cobra.Command {
 		Use:     "generate",
 		Short:   "Generate a parameter configuration file from profile",
 		Long:    "Generate a parameter configuration file from profile",
-		Example: egGenerate,
+		Example: exampleGenerate,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(genFlag.Name, " ") == "" {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				fmt.Printf("Invaild argument. See help information: \n\n")
 				cmd.Help()
 				return
 			}
@@ -234,15 +236,10 @@ func generateCmd() *cobra.Command {
 				genFlag.Output = strings.TrimSuffix(genFlag.Output, ".json") + ".json"
 			}
 
-			err := config.InitWorkDir()
-			if err != nil {
-				fmt.Printf("%s %v", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-
+			initWorkDirectory()
 			workPathName := config.GetProfileWorkPath(genFlag.Name)
 			homePathName := config.GetProfileHomePath(genFlag.Name)
-			_, err = ioutil.ReadFile(workPathName)
+			_, err := ioutil.ReadFile(workPathName)
 			if err != nil {
 				_, errinfo := ioutil.ReadFile(homePathName)
 				if errinfo != nil {
@@ -276,3 +273,4 @@ func generateCmd() *cobra.Command {
 
 	return cmd
 }
+

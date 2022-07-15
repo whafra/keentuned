@@ -8,14 +8,12 @@ package profile
 import (
 	"fmt"
 	com "keentune/daemon/api/common"
-	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
 	m "keentune/daemon/modules"
-	"time"
+	"strings"
 )
 
 type SetFlag struct {
-	Name     string
 	Group    []bool
 	ConfFile []string
 }
@@ -28,45 +26,34 @@ type Result struct {
 // Set run profile set service
 func (s *Service) Set(flag SetFlag, reply *string) error {
 	if com.IsApplying() {
-		return fmt.Errorf("operation does not support, job %v is running", com.GetRunningTask())
+		return fmt.Errorf("operation does not support, job %v is running", m.GetRunningTask())
 	}
-	if err := com.ConnectTarget(flag.Group); err != nil {
-		log.Errorf(log.ProfSet, "Check %v", err)
-		return fmt.Errorf("Check %v", err)
+
+	var targetMsg = new(string)
+	if com.IsSetTargetOffline(flag.Group, targetMsg) {
+		return fmt.Errorf("found %v offline, please get them (it) ready before setting", strings.TrimSuffix(*targetMsg, ", "))
 	}
-	runSeting(flag, reply)
-	return nil
-}
 
-func runSeting(flag SetFlag, reply *string) {
-
+	com.SetAvailableDomain()
+	m.SetRunningTask(com.JobProfile, "set")
 	defer func() {
-		config.ProgramNeedExit <- true
-		<-config.ServeFinish
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
+		m.ClearTask()
 	}()
-	
-	if err := SetingImpl(flag, "tuning"); err != nil {
-		log.Errorf(log.ProfSet, "Profile Set failed, msg: %v", err)
-		return
-	}
 
+	return SettingImpl(flag)
 }
 
-func SetingImpl(flag SetFlag, cmd string) error {
+func SettingImpl(flag SetFlag) error {
+	tuner := &m.Tuner{}
 
-	tuner := &m.Tuner{
-		Name:      flag.Name,
-		StartTime: time.Now(),
-		Flag:      cmd,
-		Step:      1,
-	}
-	tuner.Seter.Group = make([]bool, len(flag.Group))
-	tuner.Seter.ConfFile = make([]string, len(flag.ConfFile))
-	copy(tuner.Seter.Group, flag.Group)
-	copy(tuner.Seter.ConfFile, flag.ConfFile)
+	tuner.Setter.Group = make([]bool, len(flag.Group))
+	tuner.Setter.IdMap = make(map[int]int)
+	tuner.Setter.ConfFile = make([]string, len(flag.ConfFile))
+	copy(tuner.Setter.Group, flag.Group)
+	copy(tuner.Setter.ConfFile, flag.ConfFile)
 
-	tuner.Set()
-	return nil
+	return tuner.Set()
 }
+

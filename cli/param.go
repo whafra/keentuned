@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/spf13/cobra"
 )
 
 const (
@@ -62,17 +61,6 @@ func tuneCmd() *cobra.Command {
 		Short:   "Deploy and start a parameter tuning job",
 		Long:    "Deploy and start a parameter tuning job",
 		Example: egTune,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			if com.GetRunningTask() != "" {
-                                fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("red", "[ERROR]"), com.GetRunningTask())
-                                os.Exit(1)
-                        }
-
-			if err := checkTuningFlags("tune", &flag); err != nil {
-				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
-				os.Exit(1)
-			}
-		},
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
@@ -80,13 +68,19 @@ func tuneCmd() *cobra.Command {
 				return
 			}
 
-			flag.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-param-tune", time.Now().Unix())
+			initWorkDirectory()
+			if err := checkTuningFlags("tune", &flag); err != nil {
+				fmt.Printf("%v check input: %v\n", ColorString("red", "[ERROR]"), err)
+				os.Exit(1)
+			}
+
+			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
 			RunTuneRemote(cmd.Context(), flag)
 		},
 	}
 
-	setTuneFlag("tune", cmd, &flag)
+	setTuneFlag(cmd, &flag)
 	return cmd
 }
 
@@ -112,7 +106,7 @@ func jobCmd() *cobra.Command {
 		Long:    "List parameter optimizing jobs",
 		Example: egJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunJobsRemote(cmd.Context())
+			RunJobsRemote(cmd.Context(), "param")
 			return
 		},
 	}
@@ -133,35 +127,29 @@ func deleteParamJobCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
+			flag.Cmd = "param"
 
-			err := config.InitWorkDir()
+			initWorkDirectory()
+			//Determine whether job already exists
+			JobPath := config.GetTuningPath(flag.Name)
+			_, err := os.Stat(JobPath)
 			if err != nil {
-				fmt.Printf("%s Init work path %v", ColorString("red", "[ERROR]"), err)
+				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
-
-			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, flag.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), flag.Name)
-                                os.Exit(1)
-                        }
-
-			//Determine whether job already exists
-			JobPath := com.GetParameterPath(flag.Name)
-			_, err = os.Stat(JobPath)
-			if err == nil {
+			//Determine whether job can be deleted
+			if file.IsJobRunning(config.GetDumpPath(config.TuneCsv), flag.Name) {
+				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
+				return
+			} else {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)
 				if !confirm() {
 					fmt.Println("[-] Give Up Delete")
 					return
 				}
-				flag.Cmd = "param"
 				RunDeleteRemote(cmd.Context(), flag)
-			} else {
-				fmt.Printf("%v param.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
-				os.Exit(1)
+				return
 			}
-
-			return
 		},
 	}
 
@@ -183,11 +171,6 @@ func dumpCmd() *cobra.Command {
 				cmd.Help()
 				return
 			}
-
-			if com.IsJobRunning(fmt.Sprintf("%s %s", com.JobTuning, dump.Name)) {
-                                fmt.Printf("%v tuning job %v is running, wait for it finishing\n", ColorString("red", "[ERROR]"), dump.Name)
-                                os.Exit(1)
-                        }
 
 			err := checkDumpParam(&dump)
 			if err != nil {
@@ -211,20 +194,25 @@ func checkDumpParam(dump *DumpFlag) error {
 		return fmt.Errorf("init work path %v", err)
 	}
 
+	status := new(string)
+	if !IsTuningJobFinish(dump.Name, status) {
+		return fmt.Errorf("job %v status is %v, dump is not supported", dump.Name, *status)
+	}
+
 	workPath := config.GetProfileWorkPath("")
-	job := config.GetTuningWorkPath(dump.Name)
+	job := config.GetTuningPath(dump.Name)
 	if !file.IsPathExist(job) {
-		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+		return fmt.Errorf("find the tuned file [%v] does not exist, please confirm that the tuning job [%v] exists or is completed. ", job, dump.Name)
 	}
 
 	const bestSuffix = "_best.json"
 	bestFiles, err := file.WalkFilePath(job, bestSuffix, false)
 	if err != nil {
-		return fmt.Errorf("find the job '%v' best json err: %v ", strings.Split(job, "/")[len(strings.Split(job, "/"))-1], err)
+		return fmt.Errorf("search the job '%v' file path err: %v ", dump.Name, err)
 	}
 
 	if len(bestFiles) == 0 {
-		return fmt.Errorf("find the job '%v' best json doesn't exist", strings.Split(job, "/")[len(strings.Split(job, "/"))-1])
+		return fmt.Errorf("find the job '%v' best json doesn't exist", dump.Name)
 	}
 
 	var fileExist bool

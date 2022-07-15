@@ -21,10 +21,11 @@ type Configuration struct {
 }
 
 type ReceivedConfigure struct {
-	Candidate []Parameter           `json:"candidate"`
-	Score     map[string]ItemDetail `json:"bench_score,omitempty"`
-	Iteration int                   `json:"iteration"`
-	Budget    float32               `json:"budget"`
+	Candidate  []Parameter           `json:"candidate"`
+	Score      map[string]ItemDetail `json:"bench_score,omitempty"`
+	Iteration  int                   `json:"iteration"`
+	Budget     float32               `json:"budget"`
+	ParamValue string                `json:"parameter_value,omitempty"`
 }
 
 type ItemDetail struct {
@@ -40,7 +41,7 @@ func (conf Configuration) Save(fileName, suffix string) error {
 	// acquire API return round is 1 less than the actual round value
 	conf.Round += 1
 
-	err := file.Dump2File(config.GetTuningWorkPath(fileName), fileName+suffix, conf)
+	err := file.Dump2File(config.GetTuningPath(fileName), fileName+suffix, conf)
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
 			if err != nil {
-				return "", paramCollection, fmt.Errorf("collect Param:[%v]\n", err)
+				return "", paramCollection, fmt.Errorf("collect Param err: %v", err)
 			}
 
 			appliedInfo.DomainName = domain
@@ -119,7 +120,6 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 		if len(detail) != 0 {
 			return nil, fmt.Errorf("%s", detail)
 		}
-		
 		return nil, fmt.Errorf("%v", applyShortRet.Msg)
 	}
 
@@ -135,6 +135,8 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 		if err := json.Unmarshal(body, &applyResp); err != nil {
 			return nil, fmt.Errorf("Parse apply response Unmarshal err: %v", err)
 		}
+	case <-StopSig:
+		return nil, fmt.Errorf("get apply result is interrupted")
 	}
 
 	if !applyResp.Success {
