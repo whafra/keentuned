@@ -67,11 +67,7 @@ class TestLongStability(unittest.TestCase):
             self.assertEqual(result, 0)
             time.sleep(5)
 
-            result = runSensitizeCollect("sensitize1", iteration=500)
-            self.assertEqual(result, 0)
-            time.sleep(5)
-
-            cmd = "echo y | keentune sensitize train --data sensitize1 --output sensitize1"
+            cmd = "echo y | keentune sensitize train --data param1 --job param1 -t 10"
             path = getTaskLogPath(cmd)
             result = getTrainTaskResult(path)
             self.assertTrue(result)
@@ -84,7 +80,6 @@ class TestLongStability(unittest.TestCase):
                 time.sleep(2)
 
             deleteDependentData("param1")
-            deleteDependentData("sensitize1")
             cmd = 'echo y | keentune profile delete --name param1_group1.conf'
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)

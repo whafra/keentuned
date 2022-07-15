@@ -12,7 +12,7 @@ from common import checkServerStatus
 from common import sysCommand
 from common import getTuneTaskResult
 from common import getTaskLogPath
-from common import runSensitizeCollect
+from common import runParamTune
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,6 @@ class TestMultiScenes(unittest.TestCase):
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
         deleteDependentData("param1")
-        deleteDependentData("sensitize1")
         logger.info('the test_multiple_scenes testcase finished')
 
     @staticmethod
@@ -61,7 +60,7 @@ class TestMultiScenes(unittest.TestCase):
         self.assertTrue(self.out.__contains__(name))
 
     def run_sensitize_train(self, name):
-        cmd = "echo y | keentune sensitize train --data {} --output {}".format(name, name)
+        cmd = "echo y | keentune sensitize train --data {0} --job {0}".format(name)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
 
@@ -70,15 +69,15 @@ class TestMultiScenes(unittest.TestCase):
         while True:
             with open(path, 'r') as f:
                 res_data = f.read()
-            if '"sensitize train" finish' in res_data or "[ERROR]" in res_data:
+            if "identification results successfully" in res_data or "[ERROR]" in res_data:
                 break
             time.sleep(8)
 
-        word_list = ["Step1", "Step2", "Step3", "Step4", '"sensitize train" finish']
+        word_list = ["Step1", "Step2", "Step3", "identification results successfully"]
         result = all([word in res_data for word in word_list])
         self.assertTrue(result)
 
-        self.path = "/var/keentune/sensitize/sensi-{}.json".format(name)
+        self.path = "/var/keentune/sensitize_workspace/{}/knobs.json".format(name)
         res = os.path.exists(self.path)
         self.assertTrue(res)
 
@@ -97,7 +96,7 @@ class TestMultiScenes(unittest.TestCase):
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertIn("restart keentuned server successfully!", self.out)
-        cmd = 'keentune param tune -i 1 --job param1'
+        cmd = 'keentune param tune -i 10 --job param1'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
@@ -105,24 +104,24 @@ class TestMultiScenes(unittest.TestCase):
     
     def test_sensitize_train_FUN_lasso(self):
         self.restart_brain_server("lasso")
-        status = runSensitizeCollect("sensitize1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        self.run_sensitize_train("sensitize1")
+        self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_univariate(self):
         self.restart_brain_server("univariate")
-        status = runSensitizeCollect("sensitize1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        self.run_sensitize_train("sensitize1")
+        self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_gp(self):
         self.restart_brain_server("gp")
-        status = runSensitizeCollect("sensitize1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        self.run_sensitize_train("sensitize1")
+        self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_shap(self):
         self.restart_brain_server("shap")
-        status = runSensitizeCollect("sensitize1")
+        status = runParamTune("param1")
         self.assertEqual(status, 0)
-        self.run_sensitize_train("sensitize1")
+        self.run_sensitize_train("param1")

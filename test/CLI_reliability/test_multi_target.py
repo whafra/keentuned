@@ -39,7 +39,7 @@ class TestMultiTarget(unittest.TestCase):
         status = checkServerStatus(server_list)
         self.assertEqual(status, 0)
 
-        deleteDependentData("test1")
+        deleteDependentData("param1")
         self.delete_tmp_file()
         logger.info('the test_multi_target testcase finished')
 
@@ -63,13 +63,13 @@ class TestMultiTarget(unittest.TestCase):
                 os.remove(path)
         
     def run_param_tune(self):
-        cmd = 'keentune param tune -i 1 --job test1'
+        cmd = 'keentune param tune -i 10 --job param1'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
 
     def check_sysctl_params(self, server):
-        path = "/var/keentune/parameter/test1/test1_group{}_best.json".format(str(server[1]))
+        path = "/var/keentune/parameter/param1/param1_group{}_best.json".format(str(server[1]))
         with open(path, "r", encoding='UTF-8') as f:
             params = json.load(f)
 
@@ -155,16 +155,16 @@ class TestMultiTarget(unittest.TestCase):
         status = self.run_multi_target(scene_cmd, "localhost", server_list)
 
         if status:
-            cmd = "echo y | keentune param dump --job test1"
+            cmd = "echo y | keentune param dump --job param1"
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
-            cmd = "keentune profile set --group1 test1_group1.conf --group2 test1_group2.conf --group3 test1_group3.conf --group4 test1_group4.conf"
+            cmd = "keentune profile set --group1 param1_group1.conf --group2 param1_group2.conf --group3 param1_group3.conf --group4 param1_group4.conf"
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
-            self.assertIn("Set test1_group1.conf successfully", self.out)
-            self.assertIn("Set test1_group2.conf successfully", self.out)
-            self.assertIn("Set test1_group3.conf successfully", self.out)
-            self.assertIn("Set test1_group4.conf successfully", self.out)
+            self.assertIn("Set param1_group1.conf successfully", self.out)
+            self.assertIn("Set param1_group2.conf successfully", self.out)
+            self.assertIn("Set param1_group3.conf successfully", self.out)
+            self.assertIn("Set param1_group4.conf successfully", self.out)
 
     def test_multi_bench_FUN_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)
