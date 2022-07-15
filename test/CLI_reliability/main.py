@@ -12,7 +12,6 @@ from CLI_reliability.test_profile_info import TestProfileInfo
 from CLI_reliability.test_profile_set import TestProfileSet
 from CLI_reliability.test_profile_delete import TestProfileDelete
 from CLI_reliability.test_profile_generate import TestProfileGenerate
-from CLI_reliability.test_sensitize_collect import TestSensitizeCollect
 from CLI_reliability.test_sensitize_train import TestSensitizeTrain
 from CLI_reliability.test_sensitize_delete import TestSensitizeDelete
 from CLI_reliability.test_param_tune_rollback import TestParamTuneRollback
@@ -40,7 +39,6 @@ def RunReliabilityCase():
     profile_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestProfileGenerate))
 
     sensitize_suite = unittest.TestSuite()
-    sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeCollect))
     sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeTrain))
     sensitize_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSensitizeDelete))
 

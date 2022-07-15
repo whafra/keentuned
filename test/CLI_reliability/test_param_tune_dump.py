@@ -63,7 +63,7 @@ class TestParamTuneDump(unittest.TestCase):
         time.sleep(2)
         self.status, self.out, _ = sysCommand('echo y | keentune param dump -j param2')
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__('tuning job param2 is running'))
+        self.assertTrue(self.out.__contains__('job param2 status is running'))
         self.dump_job_data("param1")
 
         result = getTuneTaskResult(log_path)

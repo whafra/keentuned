@@ -44,12 +44,12 @@ class TestParamTuneDelete(unittest.TestCase):
         self.assertFalse(res)
 
     def test_param_tune_RBT_delete(self):
-        cmd = 'keentune param tune  -i 1 --job param1'
+        cmd = 'keentune param tune  -i 10 --job param1'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("--job the specified name [param1] already exists"))
+        self.assertTrue(self.out.__contains__("--job the specified name 'param1' already exists"))
 
-        job_path = "/var/keentune/parameter/param1"
+        job_path = "/var/keentune/tuning_workspace/param1"
         res = os.path.exists(job_path)
         self.assertTrue(res)
         self.delete_job_data(job_path)
@@ -60,10 +60,9 @@ class TestParamTuneDelete(unittest.TestCase):
         log_path = re.search(r'\s+"(.*?)"', self.out).group(1)
         time.sleep(2)
         self.status, self.out, _ = sysCommand('echo y | keentune param delete --job param1')
-        self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__('tuning job param1 is running'))
+        self.assertEqual(self.status, 0)
+        self.assertTrue(self.out.__contains__('Job param1 is running'))
 
         result = getTuneTaskResult(log_path)
         self.assertTrue(result)
         self.delete_job_data(job_path)
-

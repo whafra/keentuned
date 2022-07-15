@@ -49,33 +49,33 @@ class TestParamTune(unittest.TestCase):
         self.assertTrue(self.out.__contains__(name))
 
     def test_param_tune_RBT_lose_job_param(self):
-        cmd = 'keentune param tune -i 1'
+        cmd = 'keentune param tune -i 10'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_tune_RBT_lose_job_value(self):
-        cmd = 'keentune param tune -i 1 --job'
+        cmd = 'keentune param tune -i 10 --job'
         self.status, _, self.error = sysCommand(cmd)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.error.__contains__('flag needs an argument: --job'))   
 
     def test_param_tune_RBT_job_value_null(self):
-        cmd = "keentune param tune -i 1 --job ''"
+        cmd = "keentune param tune -i 10 --job ''"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_tune_RBT_job_value_empty(self):
-        cmd = "keentune param tune -i 1 --job ' '"
+        cmd = "keentune param tune -i 10 --job ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("""--job find unexpected characters ' ' . Only "a-z", "A-Z", "0-9" and "_" are supported"""))
+        self.assertEqual(self.status, 0)
+        self.assertTrue(self.out.__contains__("Incomplete or Unmatched command"))
 
     def test_param_tune_RBT_job_value_repeat(self):
         self.status = runParamTune("param1")
         self.assertEqual(self.status, 0)
-        cmd = 'keentune param tune -i 1 --job param1'
+        cmd = 'keentune param tune -i 10 --job param1'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__("already exists"))
@@ -106,7 +106,7 @@ class TestParamTune(unittest.TestCase):
         self.assertTrue(self.error.__contains__('invalid argument'))
 
     def test_param_tune_RBT_lose_debug_value(self):
-        cmd = 'keentune param tune -i 1 --job param4 --debug'
+        cmd = 'keentune param tune -i 10 --job param4 --debug'
         path = getTaskLogPath(cmd)
 
         while True:
@@ -121,7 +121,7 @@ class TestParamTune(unittest.TestCase):
         deleteDependentData("param4")
 
     def test_param_tune_RBT_debug_value_error(self):
-        cmd = "keentune param tune -i 1  --job param4 --debug -0"
+        cmd = "keentune param tune -i 10 --job param4 --debug -0"
         self.status, _, self.error = sysCommand(cmd)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.error.__contains__("unknown shorthand flag: '0' in -0"))
@@ -143,7 +143,7 @@ class TestParamTune(unittest.TestCase):
         deleteDependentData("param5")
 
     def test_param_tune_RBT_job_special_chars_01(self):
-        cmd = 'keentune param tune -i 1 --job _param11'
+        cmd = 'keentune param tune -i 10 --job _param11'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
@@ -151,27 +151,27 @@ class TestParamTune(unittest.TestCase):
         deleteDependentData("_param11")
 
     def test_param_tune_RBT_job_special_chars_02(self):
-        cmd = 'keentune param tune -i 1 --job /root/test'
+        cmd = 'keentune param tune -i 10 --job /root/test'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__("--job find unexpected characters '/'"))
 
     def test_param_tune_RBT_job_special_chars_03(self):
-        cmd = 'keentune param tune -i 1 --job test,a'
+        cmd = 'keentune param tune -i 10 --job test,a'
         self.status, self.out, _ = sysCommand(cmd)
         time.sleep(20)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__("--job find unexpected characters ','"))
 
     def test_param_tune_RBT_job_special_chars_04(self):
-        cmd = 'keentune param tune -i 1 --job _test+1.1'
+        cmd = 'keentune param tune -i 10 --job _test+1.1'
         self.status, self.out, _ = sysCommand(cmd)
         time.sleep(20)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__("--job find unexpected characters '+' '.'"))
 
     def test_param_tune_RBT_job_special_chars_05(self):
-        cmd = 'keentune param tune -i 1 --job param3 a'
+        cmd = 'keentune param tune -i 10 --job param3 a'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
@@ -182,13 +182,13 @@ class TestParamTune(unittest.TestCase):
         cmd = 'keentune param tune -i -1 --job param3'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("--iteration must be positive integer, input: -1"))
+        self.assertTrue(self.out.__contains__("not less than 10"))
 
     def test_param_tune_RBT_iteration_value_zero(self):
         cmd = 'keentune param tune -i 0 --job param3'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("--iteration must be positive integer, input: 0"))
+        self.assertTrue(self.out.__contains__("not less than 10"))
 
     def test_param_tune_RBT_iteration_value_float(self):
         cmd = 'keentune param tune -i 5.2 --job param3'
@@ -203,7 +203,7 @@ class TestParamTune(unittest.TestCase):
         self.assertTrue(self.error.__contains__("Error: invalid argument"))
 
     def test_param_tune_RBT_iteration_value_str_number(self):
-        cmd = 'keentune param tune -i "5" --job param3'
+        cmd = 'keentune param tune -i "10" --job param3'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
@@ -216,7 +216,7 @@ class TestParamTune(unittest.TestCase):
         self.assertEqual(self.status, 0)
         self.assertIn("restart keentuned server successfully!", self.out)
 
-        cmd = 'keentune param tune -i 1 --job param3'
+        cmd = 'keentune param tune -i 10 --job param3'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
