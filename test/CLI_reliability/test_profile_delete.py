@@ -43,7 +43,7 @@ class TestProfileDelete(unittest.TestCase):
         cmd = 'keentune profile delete'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
+        self.assertTrue(self.out.__contains__('Invaild argument'))
 
     def test_profile_delete_RBT_lose_name_value(self):
         cmd = 'keentune profile delete --name'
@@ -55,10 +55,10 @@ class TestProfileDelete(unittest.TestCase):
         cmd = "keentune profile delete --name ''"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
+        self.assertTrue(self.out.__contains__('Invaild argument'))
 
     def test_profile_delete_RBT_name_value_empty(self):
         cmd = "keentune profile delete --name ' '"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
+        self.assertTrue(self.out.__contains__('Invaild argument'))
