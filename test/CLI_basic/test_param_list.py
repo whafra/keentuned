@@ -38,7 +38,7 @@ class TestParamList(unittest.TestCase):
         self.assertTrue(self.out.__contains__('Parameter List'))
         self.assertTrue(self.out.__contains__('Benchmark List'))
 
-        file_list = ["sysctl.json", "bench_wrk_nginx_long.json"]
+        file_list = ["sysctl.json", "wrk_http_long.json"]
         result = all([file in self.out for file in file_list])
         self.assertTrue(result)
 
