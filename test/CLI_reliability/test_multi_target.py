@@ -69,7 +69,7 @@ class TestMultiTarget(unittest.TestCase):
         self.assertTrue(result)
 
     def check_sysctl_params(self, server):
-        path = "/var/keentune/parameter/param1/param1_group{}_best.json".format(str(server[1]))
+        path = "/var/keentune/tuning_workspace/param1/param1_group{}_best.json".format(str(server[1]))
         with open(path, "r", encoding='UTF-8') as f:
             params = json.load(f)
 
