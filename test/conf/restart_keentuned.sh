@@ -25,9 +25,9 @@ restart_keentuned()
     cp $benchmark_script $keentuned_path/benchmark/wrk
 
     echo y | cp $local_keentuned_conf $keentuned_conf_path
-    sed -i "s/BENCH_SRC_IP = .*/BENCH_SRC_IP = ${bench_server}/g" $keentuned_conf_path
-    sed -i "s/BENCH_DEST_IP = .*/BENCH_DEST_IP = ${target_server}/g" $keentuned_conf_path
-    sed -i "s/BENCH_CONFIG = .*/BENCH_CONFIG = bench_wrk_nginx_long_multi_target.json/g" $keentuned_conf_path
+    sed -i "s/BENCH_SRC_IP.*=.*/BENCH_SRC_IP = ${bench_server}/g" $keentuned_conf_path
+    sed -i "s/BENCH_DEST_IP.*=.*/BENCH_DEST_IP = ${target_server}/g" $keentuned_conf_path
+    sed -i "s/BENCH_CONFIG.*=.*/BENCH_CONFIG = bench_wrk_nginx_long_multi_target.json/g" $keentuned_conf_path
     echo -e $scene_cmd >> $keentuned_conf_path
 
     keentuned > keentuned-multi_target.log 2>&1 &
