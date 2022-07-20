@@ -13,9 +13,9 @@ clear_keentune_env()
 restart_keentuned()
 {
     if [ "$scene" == "param" ];then
-        sed -i "s/PARAMETER = .*/PARAMETER = ${json_name}/g" $keentuned_conf_path
+        sed -i "s/PARAMETER.*=.*/PARAMETER = ${json_name}/g" $keentuned_conf_path
     else
-        sed -i "s/BENCH_CONFIG = .*/BENCH_CONFIG = ${json_name}/g" $keentuned_conf_path
+        sed -i "s/BENCH_CONFIG.*=.*/BENCH_CONFIG = ${json_name}/g" $keentuned_conf_path
     fi
     
     keentuned > keentuned-multi_target.log 2>&1 &
