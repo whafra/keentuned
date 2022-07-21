@@ -97,7 +97,8 @@ func setCmd() *cobra.Command {
 		Long:    "Apply a profile to the target machine",
 		Example: exampleSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile) {
+			if (len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile)) || 
+			(len(args) > 0 && len(strings.Trim(args[0], " ")) == 0) {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return
@@ -133,7 +134,7 @@ func setCmd() *cobra.Command {
 
 func setWithoutAnyGroup(groupFiles []string) bool {
 	for _, fileName := range groupFiles {
-		if len(fileName) != 0 {
+		if len(strings.Trim(fileName, " ")) != 0 {
 			return false
 		}
 	}
@@ -144,6 +145,11 @@ func setWithoutAnyGroup(groupFiles []string) bool {
 func bindFileToGroup(args []string, setFlag SetFlag) {
 	// Case1: bind all groups to the same configuration, when args passed. 
 	if len(args) > 0 {
+		if !strings.HasSuffix(strings.Trim(args[0], " "), ".conf") {
+			fmt.Printf("%v file '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), args[0])
+			os.Exit(1)
+		}
+
 		for i, _ := range setFlag.ConfFile {
 			setFlag.Group[i] = true
 			setFlag.ConfFile[i] = args[0]
@@ -160,12 +166,12 @@ func bindFileToGroup(args []string, setFlag SetFlag) {
 		}
 
 		if len(v) != 0 {
-			fmt.Printf("%v group%v, file %v is not  with .conf suffix.\n", ColorString("red", "[ERROR]"), i, v)
+			fmt.Printf("%v group%v, file '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), i+1, v)
 			os.Exit(1)
 		}
-	}
 
-	return
+		return
+	}
 }
 
 func deleteProfileCmd() *cobra.Command {
