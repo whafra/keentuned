@@ -64,7 +64,7 @@ fi
 %{_mandir}/man7/keentune-detect.7*
 
 %changelog
-* Mon Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
+* Thu Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
 - fix: missing of man dir
 
 * Tue Jul 12 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.0-0
