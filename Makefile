@@ -6,6 +6,7 @@ CURDIR=$(shell pwd)
 PYDIR=$(shell which python3)
 PREFIX     ?= /usr
 CONFDIR    ?= /etc
+MANDIR 	   ?= /usr/share/man
 LIBEXEC    ?= libexec
 BINDIR      = $(DESTDIR)$(PREFIX)/bin
 SYSCONFDIR  = $(DESTDIR)$(CONFDIR)
@@ -46,6 +47,13 @@ install:
 	cp -rf daemon/examples/* $(SYSCONFDIR)/keentune
 	install -m 0644 keentuned.conf $(SYSCONFDIR)/keentune/conf/
 	install -m 0644 keentuned.service $(SYSTEMDDIR)
+
+	install -D -m 0644 man/keentune.8 ${MANDIR}/man8/keentune.8
+	install -D -m 0644 man/keentuned.8 ${MANDIR}/man8/keentuned.8
+	install -D -m 0644 man/keentuned.conf.5 ${MANDIR}/man5/keentuned.conf.5
+	install -D -m 0644 man/keentune-benchmark.7 ${MANDIR}/man7/keentune-benchmark.7
+	install -D -m 0644 man/keentune-profile.7 ${MANDIR}/man7/keentune-profile.7
+	install -D -m 0644 man/keentune-detect.7 ${MANDIR}/man7/keentune-detect.7
 	@echo "END INSTALL keentuned"
 
 startup:

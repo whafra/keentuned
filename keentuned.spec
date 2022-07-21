@@ -56,9 +56,18 @@ fi
 %dir %{_sysconfdir}/keentune/conf
 %{_sysconfdir}/keentune
 %{_prefix}/lib/systemd/system/keentuned.service
+%{_mandir}/man8/keentune.8*
+%{_mandir}/man8/keentuned.8*
+%{_mandir}/man5/keentuned.conf.5*
+%{_mandir}/man7/keentune-benchmark.7*
+%{_mandir}/man7/keentune-profile.7*
+%{_mandir}/man7/keentune-detect.7*
 
 %changelog
-* Tue Jul 12 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.0
+* Mon Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
+- fix: missing of man dir
+
+* Tue Jul 12 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.0-0
 - Add: Support UI expert one click tuning
 
 * Mon Jun 20 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.2.1-2
