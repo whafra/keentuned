@@ -64,6 +64,7 @@ if __name__ == "__main__":
     os.system("cp -r {} keentuned-{}".format(os.path.join(source_dir,"daemon"), version_in_spec))
     os.system("cp -r {} keentuned-{}".format(os.path.join(source_dir,"docs"), version_in_spec))
     os.system("cp -r {} keentuned-{}".format(os.path.join(source_dir,"vendor"), version_in_spec))
+    os.system("cp -r {} keentuned-{}".format(os.path.join(source_dir,"man"), version_in_spec))
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"go.mod"), version_in_spec))
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"go.sum"), version_in_spec))
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"keentuned.conf"), version_in_spec))
