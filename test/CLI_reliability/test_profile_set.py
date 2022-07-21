@@ -60,8 +60,8 @@ class TestProfileSet(unittest.TestCase):
     def test_profile_set_RBT_name_value_empty(self):
         cmd = "keentune profile set --group1 ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__('not  with .conf suffix'))
+        self.assertEqual(self.status, 0)
+        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_set_RBT_full_path(self):
         path = "/var/keentune/profile/param1_group1.conf"

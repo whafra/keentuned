@@ -41,25 +41,25 @@ class TestParamDump(unittest.TestCase):
         logger.info('the test_param_dump testcase finished')
 
     def test_param_dump_RBT_lose_job_param(self):
-        cmd = 'keentune param dump'.format(self.tune_name)
+        cmd = 'keentune param dump'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_dump_RBT_lose_job_value(self):
-        cmd = 'echo y | keentune param dump -j'.format(self.tune_name)
+        cmd = 'echo y | keentune param dump -j'
         self.status, _, self.error = sysCommand(cmd)
         self.assertEqual(self.status, 1)
         self.assertTrue(self.error.__contains__("flag needs an argument: 'j' in -j"))
 
     def test_param_dump_RBT_job_value_empty(self):
-        cmd = "echo y | keentune param dump -j ' '".format(self.tune_name)
+        cmd = "echo y | keentune param dump -j ' '"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_dump_RBT_job_value_null(self):
-        cmd = "echo y | keentune param dump -j ''".format(self.tune_name)
+        cmd = "echo y | keentune param dump -j ''"
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))

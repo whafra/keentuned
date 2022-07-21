@@ -43,7 +43,7 @@ class TestParamTuneStop(unittest.TestCase):
     def test_param_tune_RBT_stop(self):
         self.status, self.out, _  = sysCommand(self.cmd)
         self.assertEqual(self.status, 0)
-        time.sleep(2)
+        time.sleep(7)
         self.param_tune_stop()
         deleteDependentData("param1")
         
