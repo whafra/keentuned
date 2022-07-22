@@ -178,7 +178,7 @@ func isJobRepeatOrHasRunningJob(cmd, name string, reason *string) bool {
 	}
 
 	if file.HasRecord(filePath, "name", name) {
-		*reason = fmt.Sprintf("The tuning job '%v' does not exists, run 'keentune param tune' to perform an auto-tuning job.", name)
+		*reason = fmt.Sprintf("the specified name '%v' already exists, run '%v' first or change name and try again", name, getDeleteCmd(cmd))
 		return true
 	}
 
@@ -191,5 +191,14 @@ func isJobRepeatOrHasRunningJob(cmd, name string, reason *string) bool {
 	}
 
 	return false
+}
+
+func getDeleteCmd(cmd string) string {
+	switch cmd {
+	case "tune":
+		return "keentune param delete"
+	default:
+		return fmt.Sprintf("keentune %v delete", cmd)
+	}
 }
 
