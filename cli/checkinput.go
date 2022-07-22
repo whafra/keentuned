@@ -27,7 +27,7 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 	}
 
 	if IsMutexJobRunning(com.JobTuning) {
-		return fmt.Errorf("Another Job %v is running, you can wait for it finishing or stop it.", m.GetRunningTask())
+		return fmt.Errorf("Another tuning job %v is running, use 'keentune param stop' to shutdown.", m.GetRunningTask())
 	}
 
 	flag.Config = config.GetKeenTunedConfPath(flag.Config)
@@ -62,24 +62,21 @@ func checkData(name string) error {
 }
 
 func isTuneDataReady(name string, reason *string) bool {
-	command := ""
-	filePath := ""
-	command = "keentune param tune --job"
-	filePath = config.GetDumpPath(config.TuneCsv)
+	filePath := config.GetDumpPath(config.TuneCsv)
 
 	if !file.IsPathExist(filePath) {
-		*reason = fmt.Sprintf("The file '%v' path does not exist", filePath)
+		*reason = fmt.Sprintf("File '%v' does not exist.", filePath)
 		return false
 	}
 
 	records, err := file.GetOneRecord(filePath, name, "name")
 	if err != nil {
-		*reason = fmt.Sprintf("the specified name '%v' not exists. Run [%v %v --iteration xxx] or specify a new name and try again", name, command, name)
+		*reason = fmt.Sprintf("The tuning job '%v' does not exist, run 'keentune param tune' to perform an auto-tuning job.", name)
 		return false
 	}
 
 	if len(records) != m.TuneCols {
-		*reason = fmt.Sprintf("'%v' record is abnormal, column partial absence", name)
+		*reason = fmt.Sprintf("invalid record '%v': column size %v, expected %v", name, len(records), m.TuneCols)
 		return false
 	}
 
@@ -87,7 +84,7 @@ func isTuneDataReady(name string, reason *string) bool {
 		return true
 	}
 
-	*reason = fmt.Sprintf("origin job '%v' status '%v' is not 'finish', training is not supported", name, records[m.TuneStatusIdx])
+	*reason = fmt.Sprintf("auto-tuning job '%v' is %v, can not training sensibility model", name, records[m.TuneStatusIdx])
 	return false
 }
 
@@ -100,11 +97,11 @@ func checkTuningFlags(cmdName string, flag *TuneFlag) error {
 	}
 
 	if flag.Round < 10 {
-		return fmt.Errorf("invalid value in iteration=%v, requirement: not less than 10", flag.Round)
+		return fmt.Errorf("invalid value: iteration = %v, Restriction: iteration >= 10 ", flag.Round)
 	}
 
 	if m.GetRunningTask() != "" {
-		return fmt.Errorf("Job %v is running, you can wait for it finishing or stop it.", m.GetRunningTask())
+		return fmt.Errorf("%v", parseJobRunningErrMsg(m.GetRunningTask()))
 	}
 
 	flag.Config = config.GetKeenTunedConfPath(flag.Config)
@@ -113,6 +110,22 @@ func checkTuningFlags(cmdName string, flag *TuneFlag) error {
 	}
 
 	return nil
+}
+
+func parseJobRunningErrMsg(jobInfo string) string {
+	parts := strings.Split(jobInfo, " ")
+	if len(parts) != 2 {
+		return fmt.Sprintf("Another job %v is running", jobInfo)
+	}
+
+	switch parts[0] {
+	case com.JobTuning, com.JobBenchmark:
+		return fmt.Sprintf("Another tuning job %v is running, use 'keentune param stop' to shutdown.", parts[1])
+	case com.JobTraining:
+		return fmt.Sprintf("Another sensitizing job %v is running, use 'keentune sensitize stop' to shutdown.", parts[1])
+	default:
+		return fmt.Sprintf("Another setting job %v is running, wait for it to finish.", parts[1])
+	}
 }
 
 func checkJob(cmd, name string) error {
@@ -150,29 +163,30 @@ func isJobRepeatOrHasRunningJob(cmd, name string, reason *string) bool {
 	command := ""
 	filePath := ""
 	if cmd == "tune" {
-		command = "keentune param delete --job"
+		command = com.JobTuning
 		filePath = config.GetDumpPath(config.TuneCsv)
 	}
 
 	if cmd == "sensitize" {
-		command = "keentune sensitize delete --job"
+		command = com.JobTraining
 		filePath = config.GetDumpPath(config.SensitizeCsv)
 	}
 
 	if !file.IsPathExist(filePath) {
-		*reason = fmt.Sprintf("The file '%v' path does not exist", filePath)
+		*reason = fmt.Sprintf("File '%v' does not exist.", filePath)
 		return false
 	}
 
 	if file.HasRecord(filePath, "name", name) {
-		*reason = fmt.Sprintf("the specified name '%v' already exists. Run [%v %v] or specify a new name and try again", name, command, name)
+		*reason = fmt.Sprintf("The tuning job '%v' does not exists, run 'keentune param tune' to perform an auto-tuning job.", name)
 		return true
 	}
 
 	// Mutual exclusion check
 	runningJob := file.GetRecord(filePath, "status", "running", "name")
 	if runningJob != "" {
-		*reason = fmt.Sprintf("Job %v is running, you can wait for finishing it or stop it.", runningJob)
+		jobInfo := fmt.Sprintf("%s %s", command, runningJob)
+		*reason = parseJobRunningErrMsg(jobInfo)
 		return true
 	}
 

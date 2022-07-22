@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	exampleInfo         = "\tkeentune profile info --name cpu_high_load.conf"
+	exampleInfo = "\tkeentune profile info --name cpu_high_load.conf"
 	exampleSet  = "\tkeentune profile set --group1 cpu_high_load.conf\n" +
 		"\tkeentune profile set cpu_high_load.conf"
 	exampleGenerate     = "\tkeentune profile generate --name tune_test.conf --output gen_param_test.json"
@@ -97,8 +97,8 @@ func setCmd() *cobra.Command {
 		Long:    "Apply a profile to the target machine",
 		Example: exampleSet,
 		Run: func(cmd *cobra.Command, args []string) {
-			if (len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile)) || 
-			(len(args) > 0 && len(strings.Trim(args[0], " ")) == 0) {
+			if (len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile)) ||
+				(len(args) > 0 && len(strings.Trim(args[0], " ")) == 0) {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
 				cmd.Help()
 				return
@@ -169,9 +169,9 @@ func bindFileToGroup(args []string, setFlag SetFlag) {
 			fmt.Printf("%v group%v, file '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), i+1, v)
 			os.Exit(1)
 		}
-
-		return
 	}
+
+	return
 }
 
 func deleteProfileCmd() *cobra.Command {
@@ -205,9 +205,9 @@ func deleteProfileCmd() *cobra.Command {
 				HomePath := config.GetProfileHomePath(flag.Name)
 				_, err = os.Stat(HomePath)
 				if err == nil {
-					fmt.Printf("%v profile.Delete failed, msg: Check name failed: %v is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
+					fmt.Printf("%v File '%v' is not supported to delete\n", ColorString("red", "[ERROR]"), HomePath)
 				} else {
-					fmt.Printf("%v profile.Delete failed, msg: Check name failed: File [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+					fmt.Printf("%v File '%v' does not exist.\n", ColorString("red", "[ERROR]"), flag.Name)
 				}
 				os.Exit(1)
 			}
