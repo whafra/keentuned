@@ -134,12 +134,12 @@ func deleteParamJobCmd() *cobra.Command {
 			JobPath := config.GetTuningPath(flag.Name)
 			_, err := os.Stat(JobPath)
 			if err != nil {
-				fmt.Printf("%v param.Delete failed, msg: Check name failed: Job [%v] is non-existent\n", ColorString("red", "[ERROR]"), flag.Name)
+				fmt.Printf("%v Auto-tuning job '%v' does not exist.\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
 			//Determine whether job can be deleted
 			if file.IsJobRunning(config.GetDumpPath(config.TuneCsv), flag.Name) {
-				fmt.Printf("%v Job %v is running, you can wait for it finishing or stop it.\n", ColorString("yellow", "[Warning]"), flag.Name)
+				fmt.Printf("%v Auto-tuning job %v is running, use 'keentune param stop' to shutdown.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			} else {
 				fmt.Printf("%s %s '%s' ?Y(yes)/N(no)", ColorString("yellow", "[Warning]"), deleteTips, flag.Name)

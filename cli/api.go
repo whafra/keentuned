@@ -79,7 +79,7 @@ func remoteImpl(callName string, flag interface{}) {
 	var reply string
 	err = client.Call(callName, flag, &reply)
 	if err != nil {
-		fmt.Printf("%v %v failed, msg: %v\n", ColorString("red", "[ERROR]"), callName, err)
+		fmt.Printf("%v %v\n", ColorString("red", "[ERROR]"), err)
 		os.Exit(1)
 	}
 
