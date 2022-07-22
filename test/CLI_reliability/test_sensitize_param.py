@@ -46,14 +46,14 @@ class TestSensitizeParam(unittest.TestCase):
         train_cmd = 'echo y | keentune sensitize train --data param1 --job param1 -t 5'
         path = getTaskLogPath(tune_cmd)
         time.sleep(10)
-        self.run_task(train_cmd, 1, "'param1' status 'running' is not 'finish'")
+        self.run_task(train_cmd, 1, "job 'param1' is running, can not training sensibility model")
         result = getTuneTaskResult(path)
         self.assertTrue(result)
 
         path = getTaskLogPath(train_cmd)
         time.sleep(3)
         tune_cmd = 'keentune param tune -i 10 --job param2'
-        self.run_task(tune_cmd, 1, "Job train param1 is running")
+        self.run_task(tune_cmd, 1, "Another sensitizing job param1 is running")
         result = getTrainTaskResult(path)
         self.assertTrue(result)
         deleteDependentData("param1")
