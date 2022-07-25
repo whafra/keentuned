@@ -61,7 +61,7 @@ class TestParamTuneDelete(unittest.TestCase):
         time.sleep(2)
         self.status, self.out, _ = sysCommand('echo y | keentune param delete --job param1')
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Job param1 is running'))
+        self.assertTrue(self.out.__contains__('Auto-tuning job param1 is running'))
 
         result = getTuneTaskResult(log_path)
         self.assertTrue(result)

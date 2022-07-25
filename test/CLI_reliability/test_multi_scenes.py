@@ -91,16 +91,20 @@ class TestMultiScenes(unittest.TestCase):
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('restart brain server successfully!'))
 
-    def test_param_tune_FUN_nginx(self):
-        cmd = "sh conf/reset_keentuned.sh {} {}".format("param", "nginx.json")
+    def reset_keentuned(self, config, file):
+        cmd = "sh conf/reset_keentuned.sh {} {}".format(config, file)
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertIn("restart keentuned server successfully!", self.out)
+
+    def test_param_tune_FUN_nginx(self):
+        self.reset_keentuned("param", "nginx.json")
         cmd = 'keentune param tune -i 10 --job param1'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
         self.assertTrue(result)
         self.check_param_tune_job("param1")
+        self.reset_keentuned("param", "sysctl.json")
     
     def test_sensitize_train_FUN_lasso(self):
         self.restart_brain_server("lasso")

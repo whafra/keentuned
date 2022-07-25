@@ -182,13 +182,13 @@ class TestParamTune(unittest.TestCase):
         cmd = 'keentune param tune -i -1 --job param3'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("not less than 10"))
+        self.assertTrue(self.out.__contains__("iteration >= 10"))
 
     def test_param_tune_RBT_iteration_value_zero(self):
         cmd = 'keentune param tune -i 0 --job param3'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 1)
-        self.assertTrue(self.out.__contains__("not less than 10"))
+        self.assertTrue(self.out.__contains__("iteration >= 10"))
 
     def test_param_tune_RBT_iteration_value_float(self):
         cmd = 'keentune param tune -i 5.2 --job param3'
