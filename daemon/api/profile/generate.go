@@ -23,12 +23,12 @@ func (s *Service) Generate(flag GenFlag, reply *string) error {
 	}()
 
 	fullName := config.GetProfileWorkPath(flag.Name)
-	readMap, err := file.ConvertConfFileToJson(fullName)
+	_, readMap, err := file.ConvertConfFileToJson(fullName)
 	if err != nil {
 		ResetValue(&fullName, config.GetProfileHomePath(flag.Name))
 	}
 	
-	readMap, err = file.ConvertConfFileToJson(fullName)
+	_, readMap, err = file.ConvertConfFileToJson(fullName)
 	if err != nil {
 		log.Errorf(log.ProfGenerate, "Convert file: %v, err:%v\n", flag.Name, err)
 		return fmt.Errorf("Convert file: %v, err:%v", flag.Name, err)

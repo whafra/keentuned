@@ -151,7 +151,7 @@ func (tuner *Tuner) getConfigParamInfo(configFileALL map[int]string) (map[int][]
 	retRequestAll := map[int][]map[string]interface{}{}
 	for groupIndex, configFile := range configFileALL {
 
-		resultMap, err := file.ConvertConfFileToJson(configFile)
+		_, resultMap, err := file.ConvertConfFileToJson(configFile)
 		if err != nil {
 			return nil, fmt.Errorf("convert file '%v' %v", configFile, err)
 		}
