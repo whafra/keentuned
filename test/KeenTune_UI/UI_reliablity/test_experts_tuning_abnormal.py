@@ -30,16 +30,13 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                 self.driver = webdriver.Chrome()
                 self.driver.maximize_window()
 
-        self.driver.get("http://39.102.53.144:8082/list/static-page")
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.get("http://39.102.55.119:8082/list/static-page/")
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("1")
         self.driver.find_element(By.ID, "info").send_keys("[my.con]")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
-
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("11")
         self.driver.find_element(By.ID, "info").send_keys("[my.con]")
         self.driver.find_element(By.XPATH,
@@ -49,11 +46,11 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
     @classmethod
     def tearDownClass(self) -> None:
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
-        sleep(1)
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
-
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
-        sleep(1)
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
         self.driver.quit()
 
@@ -113,7 +110,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
-    def test_copyfile_name_exit(self):
+    def test_copyfile_name_exsit(self):
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
         self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
         self.driver.find_element(By.ID, "name").send_keys(Keys.BACKSPACE)
@@ -125,8 +122,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_creatfile_name_empty(self):
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "info").send_keys("[my.con]")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
@@ -137,8 +133,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_creatfile_content_empty(self):
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("content_empty")
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]').click()
@@ -149,9 +144,8 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
         self.driver.find_element(By.XPATH,
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
-    def test_creatfile_name_exit(self):
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+    def test_creatfile_name_exsit(self):
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("1")
         sleep(1)
         ele_nameexit = self.driver.find_element(By.XPATH,
@@ -161,8 +155,7 @@ class TestKeenTune_UI_abnormal(unittest.TestCase):
                                  '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]').click()
 
     def test_creatfile_content_error(self):
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("content_error")
         self.driver.find_element(By.ID, "info").send_keys("content_error")
         sleep(1)

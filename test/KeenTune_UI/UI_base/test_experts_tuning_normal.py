@@ -29,7 +29,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
                 self.driver = webdriver.Chrome()
                 self.driver.maximize_window()
 
-        self.driver.get("http://39.102.53.144:8082/list/static-page")
+        self.driver.get("http://39.102.55.119:8082/list/static-page")
         return self.driver
 
     @classmethod
@@ -63,8 +63,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         assert "1.conf" in ele_copy.text
 
     def test_creatfile(self):
-        self.driver.find_element(By.XPATH,
-                                 '//button[@class="ant-btn ant-btn-primary ant-btn-two-chinese-chars"]').click()
+        self.driver.find_element(By.XPATH,'//button[@class="ant-btn ant-btn-primary"]').click()
         self.driver.find_element(By.ID, "name").send_keys("11")
         self.driver.find_element(By.ID, "info").send_keys("[my.con]")
         self.driver.find_element(By.XPATH,
@@ -75,8 +74,11 @@ class TestKeenTune_UI_normal(unittest.TestCase):
 
     def test_deletefile(self):
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
+        sleep(0.5)
         self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
         sleep(1)
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
@@ -106,9 +108,9 @@ class TestKeenTune_UI_normal(unittest.TestCase):
                                                  '//div[@class="ant-pro-table-list-toolbar-title"]')
         sleep(1)
         assert "List of Expert Knowledge Based Tuning Profiles" in ele_language1.text
-        ele_language2 = self.driver.find_element(By.XPATH, '//div[@class="ant-table-content"]//th[1]')
+        ele_language2 = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-left"]//div')
         sleep(1)
-        assert "Profile Name" not in ele_language2.text
+        assert "List of Expert Knowledge Based Tuning Profiles"  in ele_language2.text
 
     def test_refresh(self):
         self.driver.find_element(By.XPATH,
