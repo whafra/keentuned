@@ -34,9 +34,10 @@ func createProfileCmds() *cobra.Command {
 			exampleProfRollback,
 			exampleSet,
 		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Printf("Invaild argument. See help information: \n\n")
-			return cmd.Help()
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+			cmd.Usage()
+			os.Exit(1)
 		},
 	}
 
@@ -62,8 +63,9 @@ func infoCmd() *cobra.Command {
 		Example: exampleInfo,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(name, " ") == "" {
-				fmt.Printf("Invaild argument. See help information: \n\n")
-				cmd.Help()
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Usage()
+				os.Exit(1)
 			} else {
 				name = strings.TrimSuffix(name, ".conf") + ".conf"
 				RunInfoRemote(cmd.Context(), name)
@@ -100,8 +102,8 @@ func setCmd() *cobra.Command {
 			if (len(args) == 0 && setWithoutAnyGroup(setFlag.ConfFile)) ||
 				(len(args) > 0 && len(strings.Trim(args[0], " ")) == 0) {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			// bind configuration file to group
@@ -146,7 +148,7 @@ func bindFileToGroup(args []string, setFlag SetFlag) {
 	// Case1: bind all groups to the same configuration, when args passed. 
 	if len(args) > 0 {
 		if !strings.HasSuffix(strings.Trim(args[0], " "), ".conf") {
-			fmt.Printf("%v file '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), args[0])
+			fmt.Printf("%v Invalid value: '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), args[0])
 			os.Exit(1)
 		}
 
@@ -166,7 +168,7 @@ func bindFileToGroup(args []string, setFlag SetFlag) {
 		}
 
 		if len(v) != 0 {
-			fmt.Printf("%v group%v, file '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), i+1, v)
+			fmt.Printf("%v Invalid value: group%v, '%v' is not with '.conf' suffix.\n", ColorString("red", "[ERROR]"), i+1, v)
 			os.Exit(1)
 		}
 	}
@@ -183,9 +185,9 @@ func deleteProfileCmd() *cobra.Command {
 		Example: exampleProfDelete,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
-				fmt.Printf("Invaild argument. See help information: \n\n")
-				cmd.Help()
-				return
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			flag.Cmd = "profile"
@@ -230,9 +232,9 @@ func generateCmd() *cobra.Command {
 		Example: exampleGenerate,
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(genFlag.Name, " ") == "" {
-				fmt.Printf("Invaild argument. See help information: \n\n")
-				cmd.Help()
-				return
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			genFlag.Name = strings.TrimSuffix(genFlag.Name, ".conf") + ".conf"
