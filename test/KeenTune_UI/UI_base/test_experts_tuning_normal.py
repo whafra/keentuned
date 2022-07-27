@@ -36,22 +36,6 @@ class TestKeenTune_UI_normal(unittest.TestCase):
     def tearDownClass(self) -> None:
         self.driver.quit()
 
-    def test_set_group(self):
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[5]').click()
-        self.driver.find_element(By.XPATH, '//input[@value="group1"]').click()
-        self.driver.find_element(By.XPATH, '//div[3]/div/div[2]/button/span').click()
-        sleep(1)
-        ele_set = self.driver.find_element(By.XPATH,'//tr[@data-row-key="1"]/td[3]')
-        assert "[target-group-1]\nTARGET_IP = localhost" in ele_set.text
-
-    def test_checkfile(self):
-        self.driver.find_element(By.XPATH,'//tr[@data-row-key="2"]/td[1]//span').click()
-        sleep(1)
-        ele_checkfile = self.driver.find_element(By.XPATH,'//div[@class="CodeMirror-code"]')
-        assert "[my.con]" in ele_checkfile.text
-        self.driver.find_element(By.XPATH,
-                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button').click()
-
     def test_copyfile(self):
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[2]').click()
         self.driver.find_element(By.ID, "name").send_keys(Keys.CONTROL, "a")
@@ -72,23 +56,13 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         sleep(1)
         assert "11.conf" in ele_creat.text
 
-    def test_deletefile(self):
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
-        sleep(0.5)
-        self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
-        sleep(0.5)
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
-        sleep(0.5)
-        self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
+    def test_checkfile(self):
+        self.driver.find_element(By.XPATH,'//tr[@data-row-key="2"]/td[1]//span').click()
         sleep(1)
-        ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
-        assert "1.conf" not in ele_copy.text
-
-    def test_restore(self):
-        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[4]').click()
-        sleep(1)
-        ele_set = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[3]')
-        assert "[target-group-1]\nTARGET_IP = localhost" not in ele_set.text
+        ele_checkfile = self.driver.find_element(By.XPATH,'//div[@class="CodeMirror-code"]')
+        assert "[my.con]" in ele_checkfile.text
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button').click()
 
     def test_editor(self):
         self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]/td[4]//div[3]').click()
@@ -100,6 +74,32 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         ele_editor = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)
         assert "111.conf" in ele_editor.text
+
+    def test_set_group(self):
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[5]').click()
+        self.driver.find_element(By.XPATH, '//input[@value="group1"]').click()
+        self.driver.find_element(By.XPATH, '//div[3]/div/div[2]/button/span').click()
+        sleep(1)
+        ele_set = self.driver.find_element(By.XPATH,'//tr[@data-row-key="1"]/td[3]')
+        assert "[target-group-1]\nTARGET_IP = localhost" in ele_set.text
+
+    def test_restore(self):
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[4]//div[4]').click()
+        sleep(1)
+        ele_set = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[3]')
+        assert "[target-group-1]\nTARGET_IP = localhost" not in ele_set.text
+
+    def test_deletefile(self):
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
+        sleep(0.5)
+        self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
+        sleep(0.5)
+        self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[4]//div[1]//div[1]').click()
+        sleep(0.5)
+        self.driver.find_element(By.XPATH, '//div[@class="ant-popover-buttons"]/button[2]').click()
+        sleep(1)
+        ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
+        assert "1.conf" not in ele_copy.text
 
     def test_language_switch(self):
         self.driver.find_element(By.XPATH,
