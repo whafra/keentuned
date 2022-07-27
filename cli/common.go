@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
+	"os"
 	"strings"
-
-	"github.com/spf13/cobra"
 )
 
 func subCommands() []*cobra.Command {
