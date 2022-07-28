@@ -325,28 +325,21 @@ func (gp *Group) updateDump(param map[string]Parameter) {
 	}
 }
 
-func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group, targetIdx *int) bool {
-	for index, groupSetFlag := range tuner.Setter.Group {
-		if groupSetFlag && (groupNo == index+1) {
-			target.ProfileSetFlag = true
-			*targetIdx ++
-			tuner.Setter.IdMap[index] = *targetIdx
-			return true
-		}
-	}
-
-	return false
-}
-
 func (tuner *Tuner) initProfiles() error {
-	var targetIdx = new(int)
-	for _, group := range config.KeenTune.Group {
-		var target = new(Group)
-
-		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target, targetIdx)
-		if !target.ProfileSetFlag {
+	for groupIdx, group := range config.KeenTune.Group {
+		isSetting := tuner.Setter.Group[groupIdx]
+		if !isSetting {
 			continue
 		}
+
+		var target = new(Group)
+		confFile := tuner.Setter.ConfFile[groupIdx]
+		recommend, err := target.getConfigParam(confFile)
+		if err != nil {
+			return err
+		}
+
+		tuner.recommend += recommend
 
 		target.IPs = group.IPs
 		target.Port = group.Port
@@ -360,5 +353,27 @@ func (tuner *Tuner) initProfiles() error {
 	}
 
 	return nil
+}
+
+func (gp *Group) getConfigParam(fileName string) (string, error) {
+	filePath := config.GetProfilePath(fileName)
+	if filePath == "" {
+		return "", fmt.Errorf("file '%v' does not exist, expect in '%v' nor in '%v'", fileName,
+			fmt.Sprintf("%s/profile", config.KeenTune.Home),
+			fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
+	}
+
+	recommend, resultMap, err := file.ConvertConfFileToJson(filePath)
+	if err != nil {
+		return recommend, fmt.Errorf("convert file '%v' %v", filePath, err)
+	}
+
+	gp.Params, err = config.GetPriorityParams(resultMap)
+	if err != nil {
+		return recommend, err
+	}
+
+	gp.mergeParam()
+	return recommend, nil
 }
 

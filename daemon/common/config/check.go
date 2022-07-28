@@ -344,7 +344,8 @@ func isDataTypeOK(dtype string) bool {
 	}
 }
 
-func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
+func GetPriorityParams(userParamMap DBLMap) ([]DBLMap, error) {
+	var mergedParam = make([]DBLMap, PRILevel)
 	for domainName, domainMap := range userParamMap {
 		priID, ok := PriorityList[domainName]
 		if !ok {
@@ -363,7 +364,7 @@ func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 		for name, paramValue := range domainMap {
 			paramMap, ok := paramValue.(map[string]interface{})
 			if !ok {
-				return fmt.Errorf("parse param %v value [%+v] type to map failed", name, paramValue)
+				return nil, fmt.Errorf("parse param %v value [%+v] type to map failed", name, paramValue)
 			}
 
 			if _, ok = mergedParam[priID][domainName][name]; !ok {
@@ -371,6 +372,6 @@ func ReadProfileParams(userParamMap DBLMap, mergedParam []DBLMap) error {
 			}
 		}
 	}
-	return nil
+	return mergedParam, nil
 }
 

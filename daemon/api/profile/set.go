@@ -49,7 +49,6 @@ func SettingImpl(flag SetFlag) error {
 	tuner := &m.Tuner{}
 
 	tuner.Setter.Group = make([]bool, len(flag.Group))
-	tuner.Setter.IdMap = make(map[int]int)
 	tuner.Setter.ConfFile = make([]string, len(flag.ConfFile))
 	copy(tuner.Setter.Group, flag.Group)
 	copy(tuner.Setter.ConfFile, flag.ConfFile)
