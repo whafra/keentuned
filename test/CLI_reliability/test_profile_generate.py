@@ -43,14 +43,14 @@ class TestProfileGenerate(unittest.TestCase):
     def test_profile_generate_RBT_lose_params(self):
         cmd = 'echo y | keentune profile generate'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Invaild argument'))
+        self.assertEqual(self.status, 1)
+        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_generate_RBT_lose_name_param(self):
         cmd = 'echo y | keentune profile generate -o param1'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Invaild argument'))
+        self.assertEqual(self.status, 1)
+        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_generate_RBT_lose_name_value(self):
         cmd = 'echo y | keentune profile generate -n -o param1'
@@ -61,14 +61,14 @@ class TestProfileGenerate(unittest.TestCase):
     def test_profile_generate_RBT_name_value_empty(self):
         cmd = "echo y | keentune profile generate -n ' ' -o param1"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Invaild argument'))
+        self.assertEqual(self.status, 1)
+        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_generate_RBT_name_value_null(self):
         cmd = "echo y | keentune profile generate -n '' -o param1"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Invaild argument'))
+        self.assertEqual(self.status, 1)
+        self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_generate_RBT_lose_output_param(self):
         cmd = 'echo y | keentune profile generate -n param1_group1.conf'

@@ -39,7 +39,7 @@ class TestSensitizeDelete(unittest.TestCase):
     def test_sensitize_delete_RBT_lose_data_param(self):
         cmd = 'keentune sensitize delete'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_sensitize_delete_RBT_lose_data_value(self):
@@ -51,11 +51,11 @@ class TestSensitizeDelete(unittest.TestCase):
     def test_sensitize_delete_RBT_data_value_null(self):
         cmd = "keentune sensitize delete --job ''"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_sensitize_delete_RBT_data_value_empty(self):
         cmd = "keentune sensitize delete --job ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))

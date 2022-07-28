@@ -54,7 +54,7 @@ class TestInstallYum(unittest.TestCase):
             baseurl = "https://mirrors.openanolis.cn/anolis/8.6/Plus/$basearch/os"
             gpgkey = "https://mirrors.openanolis.cn/anolis/RPM-GPG-KEY-ANOLIS"
             cmd = "echo -e '\n[keentune]\nname=keentune-os\nbaseurl={}\ngpgkey={}\nenabled=1\ngpgcheck=0' >> /etc/yum.repos.d/epel.repo;\
-                   yum clear all;yum makecache".format(baseurl, gpgkey)
+                   yum clean all;yum makecache".format(baseurl, gpgkey)
             self.assertEqual(sysCommand(cmd)[0], 0)
         
         self.install_server()

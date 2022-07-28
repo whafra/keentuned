@@ -39,7 +39,7 @@ class TestParamDelete(unittest.TestCase):
     def test_param_delete_RBT_lose_job(self):
         cmd = 'keentune param delete'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_delete_RBT_lose_job_value(self):
@@ -51,11 +51,11 @@ class TestParamDelete(unittest.TestCase):
     def test_param_delete_RBT_job_null(self):
         cmd = "keentune param delete --job ''"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_delete_RBT_job_empty(self):
         cmd = "keentune param delete --job ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))

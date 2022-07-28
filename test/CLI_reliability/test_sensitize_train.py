@@ -60,7 +60,7 @@ class TestSensitizeTrain(unittest.TestCase):
     def test_sensitize_train_RBT_lose_data_param(self):
         cmd = 'echo y | keentune sensitize train --job param1'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_sensitize_train_RBT_lose_data_value(self):
@@ -72,13 +72,13 @@ class TestSensitizeTrain(unittest.TestCase):
     def test_sensitize_train_RBT_data_value_null(self):
         cmd = "echo y | keentune sensitize train --data '' --job param1"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_sensitize_train_RBT_data_value_empty(self):
         cmd = "echo y | keentune sensitize train --data ' ' --job param1"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_sensitize_train_RBT_lose_job_param(self):
