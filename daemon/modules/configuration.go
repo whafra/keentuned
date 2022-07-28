@@ -50,15 +50,17 @@ func (conf Configuration) Save(fileName, suffix string) error {
 
 // collectParam collect param change map to struct map and state param success information
 func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error) {
-	var paramCollection = make(map[string]Parameter)
-	var sucCount, failedCount int
-	var failedInfoSlice [][]string
-
 	if len(applyResp) == 0 {
 		return "", nil, fmt.Errorf("apply response is null")
 	}
 
+	var paramCollection = make(map[string]Parameter)
+	var setResult string
+	var totalFailed int
 	for domain, paramMap := range applyResp {
+		var sucCount, failedCount int
+		var failedInfoSlice [][]string
+		setResult += fmt.Sprintf("[%v]\n\t", domain)
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
@@ -80,25 +82,24 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 			}
 
 			failedCount++
+			totalFailed++
 			if failedCount == 1 {
 				failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
 			}
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
+
+		if failedCount == 0 {
+			setResult += fmt.Sprintf("successed %v/%v\n", sucCount, sucCount)
+			continue
+		}
+
+		failedDetail := utils.FormatInTable(failedInfoSlice)
+		setResult = fmt.Sprintf("successed %v/%v, failed %v; the failed details:%s\n", sucCount, sucCount+failedCount, failedCount, failedDetail)
 	}
 
-	var setResult string
-
-	if failedCount == 0 {
-		setResult = fmt.Sprintf("successed %v/%v", sucCount, sucCount)
-		return setResult, paramCollection, nil
-	}
-
-	failedDetail := utils.FormatInTable(failedInfoSlice)
-	setResult = fmt.Sprintf("successed %v/%v, failed %v; the failed details:%s", sucCount, sucCount+failedCount, failedCount, failedDetail)
-
-	if failedCount == len(paramCollection) {
-		return setResult, paramCollection, fmt.Errorf("return all failed: %v", failedDetail)
+	if totalFailed == len(paramCollection) {
+		return setResult, paramCollection, fmt.Errorf("return all failed")
 	}
 
 	return setResult, paramCollection, nil
