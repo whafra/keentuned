@@ -6,11 +6,11 @@ CURDIR=$(shell pwd)
 PYDIR=$(shell which python3)
 PREFIX     ?= /usr
 CONFDIR    ?= /etc
-MANDIR 	   ?= /usr/share/man
 LIBEXEC    ?= libexec
 BINDIR      = $(DESTDIR)$(PREFIX)/bin
 SYSCONFDIR  = $(DESTDIR)$(CONFDIR)
 SYSTEMDDIR  = $(DESTDIR)$(PREFIX)/lib/systemd/system
+MANDIR 	   ?= $(DESTDIR)/usr/share/man
 SRCVERSION  = $(shell git rev-parse --short HEAD 2>/dev/null)
 ATUNEVERSION = $(VERSION)$(if $(SRCVERSION),($(SRCVERSION)))
 SHELL = /bin/bash
@@ -41,6 +41,9 @@ install:
 	mkdir -p $(SYSCONFDIR)/keentune/
 	mkdir -p $(SYSCONFDIR)/keentune/conf/
 	mkdir -p $(SYSTEMDDIR)
+	mkdir -p ${MANDIR}/man5/
+	mkdir -p ${MANDIR}/man7/
+	mkdir -p ${MANDIR}/man8/
 	mkdir -p $(DESTDIR)$(PREFIX)/share/bash-completion/completions/
 	install -m 0755 $(PKGPATH)/keentune $(BINDIR)
 	install -m 0755 $(PKGPATH)/keentuned $(BINDIR)
