@@ -5,9 +5,9 @@ from test_experts_tuning_abnormal import TestKeenTune_UI_abnormal
 def RunKeenTuneCase():
     suite = unittest.TestSuite()
     suite.addTest(TestKeenTune_UI_abnormal("test_group_empty"))
-    suite.addTest(TestKeenTune_UI_abnormal("test_copyfile_name_exit"))
-    suite.addTest(TestKeenTune_UI_abnormal("test_creatfile_name_exit"))
-    suite.addTest(TestKeenTune_UI_abnormal("test_editorfile_exit_name"))
+    suite.addTest(TestKeenTune_UI_abnormal("test_copyfile_name_exsit"))
+    suite.addTest(TestKeenTune_UI_abnormal("test_creatfile_name_exsit"))
+    suite.addTest(TestKeenTune_UI_abnormal("test_editorfile_exsit_name"))
     suite.addTest(TestKeenTune_UI_abnormal("test_copyfile_name_empty"))
     suite.addTest(TestKeenTune_UI_abnormal("test_copyfile_context_empty"))
     suite.addTest(TestKeenTune_UI_abnormal("test_copyfile_context_error"))
