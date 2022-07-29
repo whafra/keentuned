@@ -7,19 +7,21 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class TestKeenTune_UI_normal(unittest.TestCase):
+
+class TestKeenTuneUiNormal(unittest.TestCase):
     @classmethod
-    def setUpClass(self,no_ui=False) -> None:
+    def setUpClass(self, no_ui=False) -> None:
         if 'linux' in sys.platform:
             option = webdriver.ChromeOptions()
             option.add_argument('headless')
             option.add_argument('no-sandbox')
             option.add_argument('--start-maximized')
             option.add_argument('--disable-gpu')
+            option.add_argument('lang=zh_CN.UTF-8')
             option.add_argument('--window-size=1920,1080')
             self.driver = webdriver.Chrome(options=option)
             self.driver.implicitly_wait(3)
-            self.wait = WebDriverWait(self.driver,15,0.5)
+            self.wait = WebDriverWait(self.driver, 30, 0.5)
 
         else:
             if no_ui:
@@ -27,18 +29,17 @@ class TestKeenTune_UI_normal(unittest.TestCase):
                 option.add_argument('headless')
                 option.add_argument('--start-maximized')
                 self.driver = webdriver.Chrome(chrome_options=option)
-                self.wait = WebDriverWait(self.driver,15,0.5)
+                self.wait = WebDriverWait(self.driver, 30, 0.5)
             else:
                 self.driver = webdriver.Chrome()
                 self.driver.maximize_window()
-                self.wait = WebDriverWait(self.driver,15,0.5)
+                self.wait = WebDriverWait(self.driver, 30, 0.5)
 
-        self.driver.get("http://39.102.55.119:8082/list/static-page")
-        return self.driver
+        self.driver.get("http://{}:8082/list/static-page".format(self.web_ip))
 
     @classmethod
     def tearDownClass(self) -> None:
-        self.driver.get("http://39.102.55.119:8082/list/static-page")
+        self.driver.get("http://{}:8082/list/static-page".format(self.web_ip))
         for i in range(9):
             first_text = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//tr[@data-row-key="1"]//td[1]//div[1]//span[1]'))).text
             if first_text != 'cpu_high_load.conf':
@@ -49,7 +50,6 @@ class TestKeenTune_UI_normal(unittest.TestCase):
                 break
         self.driver.quit()
 
-
     def test_copyfile(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]/td[4]//div[2]'))).click()
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
@@ -58,7 +58,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
         sleep(1)
-        assert "1.conf" in ele_copy.text
+        self.assertIn("1.conf", ele_copy.text)
 
     def test_creatfile(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//button[@class="ant-btn ant-btn-primary"]'))).click()
@@ -68,13 +68,13 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         sleep(1)
         ele_creat = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)
-        assert "11.conf" in ele_creat.text
+        self.assertIn("11.conf", ele_creat.text)
 
     def test_checkfile(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="2"]/td[1]//span'))).click()
         sleep(1)
         ele_checkfile = self.driver.find_element(By.XPATH,'//div[@class="CodeMirror-code"]')
-        assert "[my.con]" in ele_checkfile.text
+        self.assertIn("[my.con]", ele_checkfile.text)
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/button'))).click()
         sleep(1)
 
@@ -86,7 +86,7 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
         ele_editor = self.driver.find_element(By.XPATH, '//tr[@data-row-key="2"]//td[1]')
         sleep(1)
-        assert "111.conf" in ele_editor.text
+        self.assertIn("111.conf", ele_editor.text)
 
     def test_set_group(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]//td[4]//div[5]'))).click()
@@ -94,13 +94,13 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[3]/div/div[2]/button/span'))).click()
         sleep(1)
         ele_set = self.driver.find_element(By.XPATH,'//tr[@data-row-key="1"]/td[3]')
-        assert "[target-group-1]" in ele_set.text
+        self.assertIn("[target-group-1]", ele_set.text)
 
     def test_restore(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tr[@data-row-key="1"]/td[4]//div[4]'))).click()
         sleep(1)
         ele_set = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]/td[3]')
-        assert "[target-group-1]\nTARGET_IP = localhost" not in ele_set.text
+        self.assertNotIn("[target-group-1]\nTARGET_IP = localhost", ele_set.text)
 
     def test_deletefile(self):
         for i in range(9):
@@ -112,15 +112,20 @@ class TestKeenTune_UI_normal(unittest.TestCase):
             else:
                 break
         ele_copy = self.driver.find_element(By.XPATH, '//tr[@data-row-key="1"]//td[1]')
-        assert "1.conf" not in ele_copy.text
+        self.assertNotIn("1.conf", ele_copy.text)
 
     def test_language_switch(self):
+        lan_dict = {"en": "List of Expert Knowledge Based Tuning Profiles", "cn": "调优专家知识库列表"}
+        start_value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
         self.wait.until(EC.element_to_be_clickable((By.XPATH,
                                                 '//div[@class="ant-space ant-space-horizontal ant-space-align-center right___3L8KG"]/div/div/img'))).click()
-        ele_language1 = self.driver.find_element(By.XPATH,
-                                                 '//div[@class="ant-pro-table-list-toolbar-title"]')
+        end_value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
         sleep(1)
-        assert "List of Expert Knowledge Based Tuning Profiles" in ele_language1.text
+        language = "en" if "Tuning Profiles" in end_value else "cn"
+        self.assertNotEqual(end_value, start_value)
+        self.assertIn(lan_dict[language], end_value)
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-space ant-space-horizontal ant-space-align-center right___3L8KG"]/div/div/img').click()
 
     def test_refresh(self):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-space ant-space-horizontal ant-space-align-center '
@@ -132,6 +137,6 @@ class TestKeenTune_UI_normal(unittest.TestCase):
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-tree-list-holder-inner"]/div[1]//span[4]'))).click()
         sleep(1)
         ele = self.driver.find_element(By.XPATH, '//thead[@class="ant-table-thead"]')
-        assert "Profile Name" not in ele.text
+        self.assertNotIn("Profile Name", ele.text)
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//a[@class="ant-pro-table-column-setting-action-rest-button"]'))).click()
-        assert "Profile Name" in ele.text
+        self.assertIn("Profile Name", ele.text)
