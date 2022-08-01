@@ -31,6 +31,10 @@ func (tuner *Tuner) Set() error {
 		return fmt.Errorf("init profiles %v", err)
 	}
 
+	if len(tuner.recommend) > 0 {
+		log.Infof(log.ProfSet, "[+] Optimizing Recommendation\n%v", tuner.recommend)
+	}
+
 	defer func() {
 		if err != nil {
 			tuner.rollback()
@@ -51,10 +55,6 @@ func (tuner *Tuner) Set() error {
 	err = tuner.updateActive()
 	if err != nil {
 		return err
-	}
-
-	if len(tuner.recommend) > 0 {
-		log.Infof(log.ProfSet, "[+] Optimizing Recommendation\n%v", tuner.recommend)
 	}
 
 	groupSetResult := "[+] Optimizing Setting\n"

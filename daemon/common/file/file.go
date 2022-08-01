@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-const recommendReg = "^recommend:+$"
+const recommendReg = "^recommend.+$"
 
 // IsPathExist ...
 func IsPathExist(path string) bool {
@@ -145,7 +145,8 @@ func ConvertConfFileToJson(fileName string) (string, map[string]map[string]inter
 	commonDomain := ""
 	recommends := ""
 	var tmpRecommendMap = make(map[string][]string)
-	for _, line := range strings.Split(string(paramBytes), "\n") {
+	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
+	for _, line := range strings.Split(replacedStr, "\n") {
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
 		}
