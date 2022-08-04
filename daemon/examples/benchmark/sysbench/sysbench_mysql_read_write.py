@@ -139,7 +139,7 @@ class Benchmark:
             logger.info(self.out)
             pattern_static_trans = re.compile(r'transactions:\s+[\d.]+\s+\(([\d.]+)')
             pattern_static_queries = re.compile(r'queries:\s+[\d.]+\s+\(([\d.]+)')
-            pattern_through_eps = re.compile(r'events/s \(eps\):\s+([\d.]+)')
+            pattern_through_eps = re.compile(r'events\s\(avg/stddev\):\s+([\d.]+)')
             pattern_latency_avg = re.compile(r'avg:\s+([\d.]+)')
             pattern_latency_pct = re.compile(r'95th percentile:\s+([\d.]+)')
 
