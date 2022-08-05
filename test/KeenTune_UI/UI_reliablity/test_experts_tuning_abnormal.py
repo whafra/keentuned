@@ -64,6 +64,10 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
         self.driver.quit()
 
     def setUp(self) -> None:
+        sleep(1)
+
+    def tearDown(self) -> None:
+        sleep(1)
         try:
             self.driver.find_element(By.XPATH,
                                      '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]')
@@ -72,9 +76,6 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
         else:
             self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-
-    def tearDown(self) -> None:
-        sleep(1)
 
     def test_group_empty(self):
         sleep(1)
