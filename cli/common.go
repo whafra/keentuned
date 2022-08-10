@@ -7,6 +7,7 @@ import (
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
+	"io"
 )
 
 func subCommands() []*cobra.Command {
@@ -17,12 +18,14 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
 	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
+	subCmds = append(subCmds, decorateCmd(migrateCmd()))
 
 	return subCmds
 }
 
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
 var egVersion = "\tkeentune version"
+var egMigrate = "\tkeentune migrate virtual-host"
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag
@@ -111,6 +114,48 @@ func versionCmd() *cobra.Command {
 		},
 	}
 	return cmd
+}
+
+func migrateCmd() *cobra.Command {
+	var flag MigrateFlag
+	var cmd = &cobra.Command{
+		Use:     "migrate",
+                Short:   "Migrate the profile from Tuned to KeenTune",
+                Long:    "Migrate the profile from Tuned to KeenTune",
+                Example: egMigrate,
+                Run: func(cmd *cobra.Command, args []string) {
+			changeFileName(flag.Filepath)
+                },
+        }
+	flags := cmd.Flags()
+        flags.StringVar(&flag.Filepath, "dir", "", "Tuned profile dir name")
+        return cmd
+}
+
+func changeFileName(dir string) {
+	srcFilename := fmt.Sprintf("/etc/tuned/%v/tuned.conf", dir)
+	destFilename := fmt.Sprintf("/etc/keentune/profile/%v.conf", dir)
+
+	if !file.IsPathExist(srcFilename) {
+                fmt.Printf("find the profile [%v] does not exist.\n ", srcFilename)
+        }
+
+	fpSrc, _ := os.Open(srcFilename)
+	fpDest, _ := os.OpenFile(destFilename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
+
+	defer fpSrc.Close()
+	defer fpDest.Close()
+
+	buf := make([]byte,4*1024)
+	for{
+		n, err := fpSrc.Read(buf)
+		if err != nil{
+			if err == io.EOF{
+				break
+			}
+		}
+		fpDest.Write(buf[:n])
+	}
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.

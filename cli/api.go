@@ -65,6 +65,10 @@ type VersionFlag struct {
 	VersionNum string
 }
 
+type MigrateFlag struct {
+	Filepath string
+}
+
 var (
 	outputTips = "If the %v name is duplicated, overwrite? Y(yes)/N(no)"
 	deleteTips = "Are you sure you want to permanently delete job data"
