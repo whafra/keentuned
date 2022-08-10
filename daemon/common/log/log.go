@@ -69,6 +69,7 @@ const (
 	SensitizeDel  = "sensitize delete"
 	SensitizeJobs = "sensitize jobs"
 	Benchmark     = "benchmark"
+	RollbackAll   = "rollback all"
 )
 
 var (

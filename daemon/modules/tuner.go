@@ -293,3 +293,7 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 	return tuner.Step
 }
 
+func (tuner *Tuner) original() error {
+	return tuner.concurrent("original", false)
+}
+

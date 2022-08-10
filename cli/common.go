@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 )
+
+var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
+var egVersion = "\tkeentune version"
 
 func subCommands() []*cobra.Command {
 	var subCmds []*cobra.Command
@@ -17,12 +21,31 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
 	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
+	subCmds = append(subCmds, decorateCmd(createRollbackAllCmd()))
 
 	return subCmds
 }
 
-var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
-var egVersion = "\tkeentune version"
+func createRollbackAllCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "rollbackall",
+		Short:   "Restore all to initial state",
+		Long:    "Restore all to initial state",
+		Example: "\tkeentune rollbackall",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 0 {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				os.Exit(1)
+			}
+
+			RunRollbackAllRemote()
+			return
+		},
+	}
+
+	return cmd
+}
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag

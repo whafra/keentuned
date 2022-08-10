@@ -231,7 +231,7 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	switch uri {
 	case "backup":
 		tuner.backupFailure = retFailureInfo
-	case "rollback":
+	case "rollback", "original":
 		tuner.rollbackFailure = retFailureInfo
 		if *sucDetail != "" {
 			if *warnCount == len(tuner.Group) {

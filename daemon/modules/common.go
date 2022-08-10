@@ -34,23 +34,22 @@ func (tuner *Tuner) isInterrupted() bool {
 	}
 }
 
-func Rollback(logName string, tune_type string) (string, error) {
+func Rollback(logName string, callType string) (string, error) {
 	tune := new(Tuner)
 	tune.logName = logName
 	tune.initParams()
-	err := tune.rollback()
+	var err error
+	if callType == "original" {
+		err = tune.original()
+	} else {
+		err = tune.rollback()
+	}
+
 	if err != nil {
 		return tune.rollbackFailure, err
 	}
 
 	return tune.rollbackDetail, nil
-}
-
-func Backup(logName string, tune_type string) error {
-	tune := new(Tuner)
-	tune.logName = logName
-	tune.initParams()
-	return tune.backup()
 }
 
 func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, bool) {
