@@ -8,7 +8,7 @@ import (
 	m "keentune/daemon/modules"
 )
 
-func (s *Service) RollbackAll(flag interface{}, reply *string) error {
+func (s *Service) RollbackAll(flag string, reply *string) error {
 	result := new(string)
 	if com.IsTargetOffline(result) {
 		return fmt.Errorf("Find target: %v offline", *result)
@@ -19,8 +19,8 @@ func (s *Service) RollbackAll(flag interface{}, reply *string) error {
 	}
 
 	defer func() {
-		*reply = log.ClientLogMap[log.ParamRollback]
-		log.ClearCliLog(log.ParamRollback)
+		*reply = log.ClientLogMap[log.RollbackAll]
+		log.ClearCliLog(log.RollbackAll)
 	}()
 
 	detail, err := m.Rollback(log.RollbackAll, "original")
