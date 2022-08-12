@@ -89,13 +89,15 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
 
-		if failedCount == 0 {
-			setResult += fmt.Sprintf("successed %v/%v\n", sucCount, sucCount)
+		successInfo := utils.ColorString("green", fmt.Sprintf("successed %v/%v", sucCount, sucCount+failedCount))
+		if failedCount == 0 {			
+			setResult += fmt.Sprintf("%v\n", successInfo)
 			continue
 		}
 
 		failedDetail := utils.FormatInTable(failedInfoSlice)
-		setResult = fmt.Sprintf("successed %v/%v, failed %v; the failed details:%s\n", sucCount, sucCount+failedCount, failedCount, failedDetail)
+		failedInfo := utils.ColorString("red", fmt.Sprintf("failed %v", failedCount))
+		setResult = fmt.Sprintf("%v, %v; the failed details:%s\n", successInfo, failedInfo, failedDetail)
 	}
 
 	if totalFailed == len(paramCollection) {

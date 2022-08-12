@@ -336,11 +336,13 @@ func cacheLog(cmd, level, format string, args ...interface{}) {
 	} else {
 		msg = fmt.Sprintf(format, args...)
 	}
+
+	trimMsg := strings.TrimSuffix(msg, "\n")
 	switch level {
 	case "ERROR", "WARNING":
-		msg = fmt.Sprintf("[%s] %s\n", level, msg)
+		msg = fmt.Sprintf("[%s] %s\n", level, trimMsg)
 	case "INFO":
-		msg = fmt.Sprintf("%s\n", msg)
+		msg = fmt.Sprintf("%s\n", trimMsg)
 	default:
 		return
 	}

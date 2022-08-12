@@ -339,7 +339,9 @@ func (tuner *Tuner) initProfiles() error {
 			return err
 		}
 
-		tuner.recommend += recommend
+		if !strings.Contains(tuner.recommend, recommend) {
+			tuner.recommend += recommend
+		}
 
 		target.IPs = group.IPs
 		target.Port = group.Port
