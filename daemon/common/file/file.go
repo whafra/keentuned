@@ -147,16 +147,21 @@ func ConvertConfFileToJson(fileName string) (string, map[string]map[string]inter
 	var tmpRecommendMap = make(map[string][]string)
 	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
 	for _, line := range strings.Split(replacedStr, "\n") {
-		if len(strings.TrimSpace(line)) == 0 {
+		pureLine := strings.Replace(strings.TrimSpace(line), "=", ":", 1)
+		if len(pureLine) == 0 {
 			continue
 		}
 
-		if strings.Contains(line, "[") {
+		if strings.HasPrefix(pureLine, "#") {
+			continue
+		}
+
+		if strings.Contains(pureLine, "[") {
 			commonDomain = strings.Trim(strings.Trim(strings.TrimSpace(line), "]"), "[")
 			continue
 		}
 
-		recommend, param, err := readLine(line)
+		recommend, param, err := readLine(pureLine)
 		if err != nil {
 			fmt.Printf("read line [%v] err:%v\n", line, err)
 			continue
@@ -204,7 +209,13 @@ func ConvertConfFileToJson(fileName string) (string, map[string]map[string]inter
 }
 
 func readLine(line string) (string, map[string]interface{}, error) {
-	paramSlice := strings.Split(line, ":")
+	parts := strings.Split(line, "#")
+	if len(parts) <= 0 {
+		return "", nil, fmt.Errorf("empty line")
+	}
+
+	pureLine := parts[0]
+	paramSlice := strings.Split(pureLine, ":")
 	partLen := len(paramSlice)
 	switch {
 	case partLen <= 1:

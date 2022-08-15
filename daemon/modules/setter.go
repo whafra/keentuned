@@ -6,12 +6,12 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	"os"
 	"strings"
 )
 
 type Setter struct {
-	IdMap     map[int]int // key: total group Idx; value: real setter groupIdx
 	Group     []bool
 	ConfFile  []string
 	recommend string
@@ -32,7 +32,8 @@ func (tuner *Tuner) Set() error {
 	}
 
 	if len(tuner.recommend) > 0 {
-		log.Infof(log.ProfSet, "[+] Optimizing Recommendation\n%v", tuner.recommend)
+		fmtStr := fmt.Sprintf("%v\n\n%v", utils.ColorString("green", "[+] Optimizing Recommendation"), tuner.recommend)
+		log.Infof(log.ProfSet, fmtStr)
 	}
 
 	defer func() {
@@ -57,7 +58,7 @@ func (tuner *Tuner) Set() error {
 		return err
 	}
 
-	groupSetResult := "[+] Optimizing Setting\n"
+	groupSetResult := fmt.Sprintf("%v\n\n", utils.ColorString("green", "[+] Optimizing Setting"))
 	groupSetResult += tuner.applySummary
 	log.Infof(log.ProfSet, groupSetResult)
 
@@ -66,7 +67,7 @@ func (tuner *Tuner) Set() error {
 
 func (tuner *Tuner) updateActive() error {
 	activeFile := config.GetProfileWorkPath("active.conf")
-	//先拼接，再写入
+	// 先拼接，再写入
 	var fileSet = fmt.Sprintln("name,group_info")
 	var activeInfo = make(map[string][]string)
 	for groupIndex, settable := range tuner.Setter.Group {
