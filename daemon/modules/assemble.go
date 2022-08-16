@@ -22,8 +22,8 @@ type Group struct {
 	Dump           Configuration
 	MergedParam    map[string]interface{}
 	AllowUpdate    map[string]bool // prevent map concurrency security problems
-	GroupName      string          //target-group-x
-	GroupNo        int             //No. x of target-group-x
+	GroupName      string          // target-group-x
+	GroupNo        int             // No. x of target-group-x
 	Idx            int
 	ProfileSetFlag bool
 }
@@ -365,7 +365,7 @@ func (gp *Group) getConfigParam(fileName string) (string, error) {
 			fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
 	}
 
-	recommend, resultMap, err := file.ConvertConfFileToJson(filePath)
+	recommend, resultMap, err := ConvertConfFileToJson(filePath)
 	if err != nil {
 		return recommend, fmt.Errorf("convert file '%v' %v", filePath, err)
 	}
