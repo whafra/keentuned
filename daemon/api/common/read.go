@@ -19,8 +19,6 @@ type TuneCmdResp struct {
 	TuningRound  int    `json:"tuning_bench_round"`
 	RecheckRound int    `json:"recheck_bench_round"`
 	Algo         string `json:"algorithm"`
-	BenchGroup   string `json:"bench_group"`
-	TargetGroup  string `json:"target_group"`
 }
 
 type TrainCmdResp struct {
@@ -217,14 +215,6 @@ func readTuneInfo(job string, result *string) error {
 			return err
 		}
 	}
-
-	benchGroup, targetGroup, err := config.GetJobGroup(job)
-	if err != nil {
-		return err
-	}
-
-	resp.BenchGroup = benchGroup
-	resp.TargetGroup = targetGroup
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
