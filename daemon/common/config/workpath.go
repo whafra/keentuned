@@ -49,9 +49,29 @@ func GetParamHomePath() string {
 }
 
 func GetProfileHomePath(fileName string) string {
+	profHome := fmt.Sprintf("%s/%s", KeenTune.Home, "profile")
 	if fileName == "" {
-		return fmt.Sprintf("%s/%s", KeenTune.Home, "profile") + "/"
+		return profHome + "/"
 	}
+
+	// absolute path
+	if strings.HasSuffix(fileName, "/") && strings.Count(strings.Trim(fileName, "/"), "/") > 1 {
+		return fileName
+	}
+
+	// file
+	parts := strings.Split(fileName, "/")
+	if len(parts) == 1 {
+		profileFile, err := file.GetWalkPath(GetProfileHomePath(""), fileName)
+		if err != nil {
+			return fileName
+		}
+
+		return profileFile
+	}
+
+	// relative path
+	return fmt.Sprintf("%v%v", GetProfileHomePath(""), strings.TrimPrefix(fileName, "profile/"))
 
 	return assembleFilePath(KeenTune.Home, "profile", fileName)
 }
@@ -70,7 +90,7 @@ func assembleFilePath(prefix, partition, fileName string) string {
 	}
 
 	// absolute path
-	if strings.HasPrefix(fileName, "/") && strings.Count(fileName, "/") > 1 {
+	if strings.HasPrefix(fileName, "/") && strings.Count(strings.Trim(fileName, "/"), "/") > 1 {
 		return fileName
 	}
 
