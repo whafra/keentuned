@@ -29,13 +29,12 @@ type TuneFlag struct {
 }
 
 // Tune run param tune service
-func (s *Service) Tune(flag TuneFlag, reply *string) error {	
+func (s *Service) Tune(flag TuneFlag, reply *string) error {
 	err := config.Backup(flag.Config, flag.Name, "tuning")
 	if err != nil {
 		return fmt.Errorf("backup '%v' failed: %v", flag.Config, err)
 	}
 
-	com.SetAvailableDomain()
 	if err := com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
@@ -62,6 +61,7 @@ func runTuning(flag TuneFlag) {
 	}
 }
 
+// TuningImpl ...
 func TuningImpl(flag TuneFlag, cmd string) error {
 	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchGroup[0].BenchConf)
 	if err != nil {
@@ -82,7 +82,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 	tuner.Tune()
 	return nil
 }
-
+// GetBenchmarkInst ...
 func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 	benchConf := config.GetBenchJsonPath(benchFile)
 	if !file.IsPathExist(benchConf) {
