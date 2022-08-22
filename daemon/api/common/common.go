@@ -8,6 +8,8 @@ package common
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -24,12 +26,14 @@ type deleter struct {
 	fileName string
 }
 
+// DeleteFlag ...
 type DeleteFlag struct {
 	Name  string
 	Cmd   string
 	Force bool
 }
 
+//  RollbackFlag ...
 type RollbackFlag struct {
 	Cmd string
 }
@@ -39,6 +43,31 @@ type DumpFlag struct {
 	Name   string
 	Output []string
 	Force  bool
+}
+
+type ymlTarget struct {
+	IP     string   `yaml:"ip"`
+	Knobs  []string `yaml:"knobs"`
+	Domain []string `yaml:"domain"`
+}
+
+type ymlBrain struct {
+	BrainIP  string   `yaml:"ip"`
+	AlgoTune []string `yaml:"algo_tuning"`
+	AlgoSen  []string `yaml:"algo_sensi"`
+}
+
+type ymlBench struct {
+	IP        string `yaml:"ip"`
+	Dest      string `yaml:"destination"`
+	BenchConf string `yaml:"benchmark"`
+}
+
+type keenTuneYML struct {
+	Bench  []ymlBench  `yaml:"bench"`
+	Brain  ymlBrain    `yaml:"brain"`
+	Hex    string      `yaml:"hex"`
+	Target []ymlTarget `yaml:"target"`
 }
 
 var (
@@ -52,8 +81,9 @@ var (
 	JobBenchmark = "benchmark"
 )
 
+// IsDataReady ...
 func IsDataReady(name string) bool {
-	dataList, _, _, err := GetDataList()
+	dataList, _, _, err := GetAVLDataAndAlgo()
 	if err != nil {
 		return false
 	}
@@ -67,27 +97,32 @@ func IsDataReady(name string) bool {
 	return false
 }
 
-func GetDataList() ([]string, string, string, error) {
+// GetAVLDataAndAlgo get available data, algo from brain
+func GetAVLDataAndAlgo() ([]string, []string, []string, error) {
 	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
 	if err != nil {
-		return nil, "", "", err
+		return nil, nil, nil, err
 	}
 
-	var sensiList struct {
-		Success bool     `json:"suc"`
-		Data    []string `json:"data"`
+	var brainRet struct {
+		Success   bool     `json:"suc"`
+		Data      []string `json:"data"`
+		Explainer []string `json:"explainer"`
+		Tune      []string `json:"tune"`
 	}
 
-	if err = json.Unmarshal(resp, &sensiList); err != nil {
-		return nil, "", "", err
+	if err = json.Unmarshal(resp, &brainRet); err != nil {
+		return nil, nil, nil, err
 	}
 
-	if !sensiList.Success {
-		return nil, "", "", fmt.Errorf("remotecall avaliable return suc is false")
+	if !brainRet.Success {
+		return nil, nil, nil, fmt.Errorf("remotecall available return suc is false")
 	}
-	return sensiList.Data, "", "", nil
+
+	return brainRet.Data, brainRet.Tune, brainRet.Explainer, nil
 }
 
+// KeenTunedService ...
 func KeenTunedService(quit chan os.Signal) {
 	// register router
 	registerRouter()
@@ -207,6 +242,7 @@ func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
 
+// GetParameterPath ...
 func GetParameterPath(fileName string) string {
 	workPath := config.GetTuningPath(fileName)
 	if file.IsPathExist(workPath) {
@@ -226,6 +262,7 @@ func GetParameterPath(fileName string) string {
 	return ""
 }
 
+// GetSensitizePath ...
 func GetSensitizePath(fileName string) string {
 	workPath := config.GetSensitizePath(fileName)
 	if file.IsPathExist(workPath) {
@@ -245,6 +282,7 @@ func GetSensitizePath(fileName string) string {
 	return ""
 }
 
+// IsApplying ...
 func IsApplying() bool {
 	job := m.GetRunningTask()
 	if job == "" || len(strings.Split(job, " ")) < 2 {
@@ -254,6 +292,7 @@ func IsApplying() bool {
 	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
 }
 
+// ResetJob ...
 func ResetJob() {
 	m.ClearTask()
 
@@ -268,11 +307,12 @@ func ResetJob() {
 	}
 }
 
-func SetAvailableDomain() {
-	url := fmt.Sprintf("%s:%s/avaliable", config.KeenTune.Target.Group[0].IPs[0], config.KeenTune.Target.Group[0].Port)
+// GetAVLDomain get available domain
+func GetAVLDomain(host string) ([]string, error) {
+	url := fmt.Sprintf("%v/avaliable", host)
 	resp, err := utilhttp.RemoteCall("GET", url, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	var ret struct {
@@ -281,15 +321,70 @@ func SetAvailableDomain() {
 
 	err = json.Unmarshal(resp, &ret)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	for _, domain := range ret.Domains {
-		if domain == config.NginxDomain {
-			config.PriorityList[domain] = 0
-			continue
+	return ret.Domains, nil
+}
+
+// Initialize  KeenTune available test between brain, bench, target and daemon; Init Yaml create or update.
+func Initialize() (string, error) {
+	var ymlConf = &keenTuneYML{}
+	checkBenchAVL(ymlConf)
+
+	var err error
+	var warningDetail string
+	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
+	_, ymlConf.Brain.AlgoTune, ymlConf.Brain.AlgoSen, err = GetAVLDataAndAlgo()
+	if err != nil {
+		warningDetail = fmt.Sprintf("%v:%v unreachable\n", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+	}
+
+	targetResult := checkTargetAVL(ymlConf)
+	warningDetail += targetResult
+
+	bytes, err := yaml.Marshal(ymlConf)
+	if err != nil {
+		return warningDetail, err
+	}
+
+	err = ioutil.WriteFile(config.KeenTuneYMLFile, bytes, 0644)
+	return warningDetail, err
+}
+
+func checkTargetAVL(ymlConf *keenTuneYML) string {
+	var targetWarning string
+	var err error
+	ymlConf.Target = make([]ymlTarget, len(config.KeenTune.IPMap))
+	for _, target := range config.KeenTune.Group {
+		var tmpTarget ymlTarget
+		for _, ip := range target.IPs {
+			targetHost := fmt.Sprintf("%v:%v", ip, target.Port)
+			tmpTarget.Domain, err = GetAVLDomain(targetHost)
+			if err != nil {
+				targetWarning += fmt.Sprintf("\ttarget host %v:%v unreachable", ip, target.Port)
+				continue
+			}
+
+			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
+			tmpTarget.IP = ip
+			idx := config.KeenTune.IPMap[ip] - 1
+			ymlConf.Target[idx] = tmpTarget
 		}
-		config.PriorityList[domain] = 1
+	}
+
+	return targetWarning
+}
+
+func checkBenchAVL(ymlConf *keenTuneYML) {
+	for _, bench := range config.KeenTune.BenchGroup {
+		var tmpBench ymlBench
+		tmpBench.BenchConf = bench.BenchConf
+		tmpBench.Dest = bench.DestIP
+		for _, ip := range bench.SrcIPs {
+			tmpBench.IP = ip
+			ymlConf.Bench = append(ymlConf.Bench, tmpBench)
+		}
 	}
 }
 
