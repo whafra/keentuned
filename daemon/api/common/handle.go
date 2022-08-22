@@ -71,6 +71,13 @@ func write(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Name == file.GetPlainName(config.GetKeenTunedConfPath("")) && strings.Contains(req.Info, "[brain]") {
+		if strings.Count(strings.ToLower(req.Info), "-group-") >= 2 {
+			*result, err = config.UpdateKeentunedConf(req.Info)
+			return
+		}
+	}
+
 	fullName := getFullPath(req.Name)
 
 	parts := strings.Split(fullName, "/")

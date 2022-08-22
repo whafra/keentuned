@@ -13,11 +13,13 @@ import (
 	"strings"
 )
 
+// SetFlag ...
 type SetFlag struct {
 	Group    []bool
 	ConfFile []string
 }
 
+// Result ...
 type Result struct {
 	Info    string
 	Success bool
@@ -34,7 +36,6 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		return fmt.Errorf("found %v offline, please get them (it) ready before setting", strings.TrimSuffix(*targetMsg, ", "))
 	}
 
-	com.SetAvailableDomain()
 	m.SetRunningTask(com.JobProfile, "set")
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfSet]
@@ -45,6 +46,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 	return SettingImpl(flag)
 }
 
+// SettingImpl ...
 func SettingImpl(flag SetFlag) error {
 	tuner := &m.Tuner{}
 

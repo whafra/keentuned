@@ -238,3 +238,54 @@ func getTargetConf(targetGroup []Group) string {
 	return targetConf
 }
 
+func UpdateKeentunedConf(info string) (string, error) {
+	details := strings.Split(info, "\n")
+	if len(details) == 0 {
+		return "", fmt.Errorf("info is empty")
+	}
+
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse %s, %v", "keentuned.conf", err)
+	}
+
+	var domain, result string
+	for _, line := range details {
+		pureLine := strings.TrimSpace(line)
+		if len(pureLine) == 0 {
+			continue
+		}
+
+		if strings.Contains(pureLine, "[") {
+			domain = strings.Trim(strings.Trim(strings.TrimSpace(line), "]"), "[")
+			continue
+		}
+
+		kvs := strings.Split(pureLine, "=")
+		if len(kvs) != 2 {
+			result += fmt.Sprintln(pureLine)
+			continue
+		}
+
+		cfg.Section(domain).Key(strings.ToUpper(kvs[0])).SetValue(kvs[1])
+
+	}
+
+	err = cfg.SaveTo(keentuneConfigFile)
+	if err != nil {
+		return result, err
+	}
+
+	if result != "" {
+		result = fmt.Sprintf("Warning partial success, failed configure as follows.\n %v", result)
+		return result, nil
+	}
+
+	result = "keentuned configure save success"
+
+	return result, nil
+}
+
