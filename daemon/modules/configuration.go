@@ -20,6 +20,7 @@ type Configuration struct {
 	targetIP   []string
 }
 
+// ReceivedConfigure Received Configure from brain
 type ReceivedConfigure struct {
 	Candidate  []Parameter           `json:"candidate"`
 	Score      map[string]ItemDetail `json:"bench_score,omitempty"`
@@ -28,6 +29,7 @@ type ReceivedConfigure struct {
 	ParamValue string                `json:"parameter_value,omitempty"`
 }
 
+// ItemDetail multi item details
 type ItemDetail struct {
 	Value    float32   `json:"value,omitempty"`
 	Negative bool      `json:"negative"`
@@ -58,9 +60,9 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 	var setResult string
 	var totalFailed int
 	for domain, paramMap := range applyResp {
-		var sucCount, failedCount int
+		var sucCount, failedCount, skippedCount int
 		var failedInfoSlice [][]string
-		setResult += fmt.Sprintf("[%v]\n\t", domain)
+		setResult += fmt.Sprintf("[%v]\t", domain)
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
@@ -89,15 +91,14 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
 		}
 
-		successInfo := utils.ColorString("green", fmt.Sprintf("successed %v/%v", sucCount, sucCount+failedCount))
-		if failedCount == 0 {			
+		successInfo := fmt.Sprintf("%v Succeeded, %v Failed, %v Skipped", sucCount, failedCount, skippedCount)
+		if failedCount == 0 {
 			setResult += fmt.Sprintf("%v\n", successInfo)
 			continue
 		}
 
 		failedDetail := utils.FormatInTable(failedInfoSlice)
-		failedInfo := utils.ColorString("red", fmt.Sprintf("failed %v", failedCount))
-		setResult = fmt.Sprintf("%v, %v; the failed details:%s\n", successInfo, failedInfo, failedDetail)
+		setResult = fmt.Sprintf("%v; the failed details:%s\n", successInfo, failedDetail)
 	}
 
 	if totalFailed == len(paramCollection) {
@@ -161,6 +162,7 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	return applyResp.Data, nil
 }
 
+// GetApplyResult get apply result by waiting for target active reports
 func GetApplyResult(body []byte, id int) (string, map[string]Parameter, error) {
 	applyResp, err := getApplyResult(body, id)
 	if err != nil {

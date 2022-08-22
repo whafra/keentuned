@@ -85,7 +85,7 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 	var errMsg error
 	req.ipIndex = config.KeenTune.IPMap[req.ip]
 	config.IsInnerApplyRequests[req.ipIndex] = true
-	identity := fmt.Sprintf("group-%v.target-%v", tuner.Group[req.groupID].GroupNo, req.id)
+	identity := fmt.Sprintf("Group %v Node %v: %v", tuner.Group[req.groupID].GroupNo, req.id, req.ip)
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[req.ipIndex] = false
@@ -105,11 +105,12 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 		return errMsg
 	}
 
-	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("%v:\n%v", identity, strings.TrimSuffix(applyResult, "\n"))
+	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("---\n%v\n%v\n", identity, applyResult)
 	tuner.timeSpend.apply += utils.Runtime(start).Count
 	return nil
 }
 
+// Set set configure
 func (gp *Group) Set(req request) (string, error) {
 	var setResult string
 	for index := range gp.Params {
@@ -130,6 +131,7 @@ func (gp *Group) Set(req request) (string, error) {
 	return setResult, nil
 }
 
+// Configure handle configure request
 func (gp *Group) Configure(req request) (string, error) {
 	uri := fmt.Sprintf("%v:%v/configure", req.ip, gp.Port)
 	body, err := http.RemoteCall("POST", uri, req.body)
@@ -155,6 +157,7 @@ func (gp *Group) Configure(req request) (string, error) {
 	return applyResult, nil
 }
 
+// Get get configure
 func (gp *Group) Get(req request) (string, error) {
 	gp.ReadOnly = true
 	req.body = gp.applyReq(req.ip, gp.MergedParam)

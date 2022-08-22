@@ -11,18 +11,14 @@ import (
 	"strings"
 )
 
+// Setter ...
 type Setter struct {
 	Group     []bool
 	ConfFile  []string
 	recommend string
 }
 
-type ResultProfileSet struct {
-	Info    string
-	Success bool
-}
-
-// Tune : tuning main process
+// Set profile set  main process
 func (tuner *Tuner) Set() error {
 	var err error
 	tuner.logName = log.ProfSet
@@ -32,7 +28,7 @@ func (tuner *Tuner) Set() error {
 	}
 
 	if len(tuner.recommend) > 0 {
-		fmtStr := fmt.Sprintf("%v\n\n%v", utils.ColorString("green", "[+] Optimizing Recommendation"), tuner.recommend)
+		fmtStr := fmt.Sprintf("%v\n\n%v", utils.ColorString("green", "[+] Optimization Recommendation (Manual Setting)"), tuner.recommend)
 		log.Infof(log.ProfSet, fmtStr)
 	}
 
@@ -58,8 +54,8 @@ func (tuner *Tuner) Set() error {
 		return err
 	}
 
-	groupSetResult := fmt.Sprintf("%v\n\n", utils.ColorString("green", "[+] Optimizing Setting"))
-	groupSetResult += tuner.applySummary
+	groupSetResult := fmt.Sprintf("%v\n\n", utils.ColorString("green", "[+] Optimization Result (Auto Setting)"))
+	groupSetResult += strings.TrimSuffix(tuner.applySummary, "\n")
 	log.Infof(log.ProfSet, groupSetResult)
 
 	return nil
@@ -110,6 +106,7 @@ func (tuner *Tuner) prepareBeforeSet() error {
 	return nil
 }
 
+// UpdateActiveFile ...
 func UpdateActiveFile(fileName string, info []byte) error {
 	if err := ioutil.WriteFile(fileName, info, os.ModePerm); err != nil {
 		return err

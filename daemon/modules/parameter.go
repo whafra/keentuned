@@ -31,6 +31,7 @@ type Parameter struct {
 	Base       interface{}   `json:"base,omitempty"`
 }
 
+// DetectResult detect response
 type DetectResult struct {
 	Success bool        `json:"suc"`
 	Value   int         `json:"value"`
@@ -393,21 +394,7 @@ func ConvertConfFileToJson(fileName string) (string, map[string]map[string]inter
 }
 
 func readLine(line string) (string, map[string]interface{}, error) {
-	var pureLine string
-	re, _ := regexp.Compile(defMarcoString)
-	if re != nil && re.MatchString(line) {
-		pureLine = line
-	} else {
-		// remove comments
-		parts := strings.Split(line, "#")
-		if len(parts) <= 0 {
-			return "", nil, fmt.Errorf("empty line")
-		}
-
-		pureLine = parts[0]
-	}
-
-	paramSlice := strings.Split(pureLine, ":")
+	paramSlice := strings.Split(line, ":")
 	partLen := len(paramSlice)
 	switch {
 	case partLen <= 1:
@@ -425,6 +412,7 @@ func getParam(paramSlice []string) (string, map[string]interface{}, error) {
 	var recommend string
 	paramName := strings.TrimSpace(paramSlice[0])
 	valueStr := strings.ReplaceAll(strings.TrimSpace(paramSlice[1]), "\"", "")
+
 	matched, _ := regexp.MatchString(recommendReg, strings.ToLower(valueStr))
 	if matched {
 		recommend = fmt.Sprintf("\t%v: %v\n", paramName, strings.TrimPrefix(valueStr, "recommend:"))
