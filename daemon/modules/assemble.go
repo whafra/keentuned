@@ -24,8 +24,9 @@ type Group struct {
 	AllowUpdate    map[string]bool // prevent map concurrency security problems
 	GroupName      string          // target-group-x
 	GroupNo        int             // No. x of target-group-x
-	Idx            int
+	ParamTotal     int
 	ProfileSetFlag bool
+	UnAVLParams    []map[string]map[string]string // un available params
 }
 
 const brainNameParts = 2
@@ -300,6 +301,7 @@ func (gp *Group) mergeParam() {
 	for _, paramMaps := range gp.Params {
 		for domain, paramMap := range paramMaps {
 			gp.MergedParam[domain] = paramMap
+			gp.ParamTotal += len(paramMap)
 		}
 	}
 }
@@ -377,5 +379,41 @@ func (gp *Group) getConfigParam(fileName string) (string, error) {
 
 	gp.mergeParam()
 	return recommend, nil
+}
+
+func (gp *Group) deleteUnAVLParam() (string, int) {
+	var warningInfo string
+	var AllUnAVL bool
+
+	for _, unAVLParams := range gp.UnAVLParams {
+		var unAVLCount int
+		for domain, kv := range unAVLParams {
+			unAVLCount += len(kv)
+			warningInfo += fmt.Sprintf("[%v]", domain)
+			for name, msg := range kv {
+
+				for idx := range gp.Params {
+					_, exists := gp.Params[idx][domain][name]
+					if exists {
+						delete(gp.Params[idx][domain], name)
+
+						tmpWarn := fmt.Sprintf("\t%v:\t%v\n", name, msg)
+						if !strings.Contains(warningInfo, tmpWarn) {
+							warningInfo += tmpWarn
+						}
+						continue
+					}
+				}
+			}
+		}
+
+		AllUnAVL = AllUnAVL || unAVLCount == gp.ParamTotal
+	}
+
+	if AllUnAVL {
+		return warningInfo, FAILED
+	}
+
+	return warningInfo, SUCCESS
 }
 

@@ -7,7 +7,6 @@ package system
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/api/param"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
@@ -17,20 +16,23 @@ import (
 	"time"
 )
 
+// Service ...
 type Service struct{}
 
+// BenchmarkFlag ...
 type BenchmarkFlag struct {
 	Round     int
 	BenchConf string
 	Name      string
 }
 
+// Benchmark ...
 func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	if m.GetRunningTask() != "" {
 		return fmt.Errorf("Job %v is running, please wait for it to finish or stop it and retry.", m.GetRunningTask())
 	}
 
-	m.SetRunningTask(com.JobBenchmark, flag.Name)
+	m.SetRunningTask(m.JobBenchmark, flag.Name)
 
 	defer func() {
 		*reply = log.ClientLogMap[log.Benchmark]
@@ -47,17 +49,17 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	step++
 	log.Infof(log.Benchmark, "Step%v. Get benchmark instance successfully.\n", step)
 
-	var sendTimeSpend  time.Duration
-        for _, benchgroup := range config.KeenTune.BenchGroup {
-                for _, benchip := range benchgroup.SrcIPs {
-                        Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
-                        success, _, err := inst.SendScript(&sendTimeSpend, Host)
-                        if err != nil || !success {
-                                log.Errorf(log.Benchmark, "send script file  result: %v err:%v", success, err)
-                                return fmt.Errorf("send file failed")
-                        }
-                }
-        }
+	var sendTimeSpend time.Duration
+	for _, benchgroup := range config.KeenTune.BenchGroup {
+		for _, benchip := range benchgroup.SrcIPs {
+			Host := fmt.Sprintf("%s:%s", benchip, benchgroup.SrcPort)
+			success, _, err := inst.SendScript(&sendTimeSpend, Host)
+			if err != nil || !success {
+				log.Errorf(log.Benchmark, "send script file  result: %v err:%v", success, err)
+				return fmt.Errorf("send file failed")
+			}
+		}
+	}
 
 	step++
 	log.Infof(log.Benchmark, "Step%v. Send benchmark script successfully.\n", step)
@@ -96,3 +98,4 @@ func (s *Service) Benchmark(flag BenchmarkFlag, reply *string) error {
 	log.Infof(log.Benchmark, "\nStep%v. Benchmark result dump to %v susccessfully.", step, fmt.Sprintf("%v/%v.csv", config.GetDumpCSVPath(), flag.Name))
 	return nil
 }
+

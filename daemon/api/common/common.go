@@ -33,7 +33,7 @@ type DeleteFlag struct {
 	Force bool
 }
 
-//  RollbackFlag ...
+// RollbackFlag ...
 type RollbackFlag struct {
 	Cmd string
 }
@@ -72,13 +72,6 @@ type keenTuneYML struct {
 
 var (
 	logHome = "/var/log/keentune"
-)
-
-var (
-	JobTuning    = "tuning"
-	JobProfile   = "profile"
-	JobTraining  = "train"
-	JobBenchmark = "benchmark"
 )
 
 // IsDataReady ...
@@ -289,7 +282,7 @@ func IsApplying() bool {
 		return false
 	}
 
-	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
+	return (strings.Split(job, " ")[0] == m.JobProfile) || (strings.Split(job, " ")[0] == m.JobTuning)
 }
 
 // ResetJob ...

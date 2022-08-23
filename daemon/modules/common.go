@@ -10,15 +10,18 @@ import (
 	"sync"
 )
 
+// StopSig ...
 var StopSig chan os.Signal
 
 const (
+	// SUCCESS status code
 	SUCCESS = iota + 1
 	WARNING
 	FAILED
 )
 
 const (
+	// BackupNotFound error information
 	BackupNotFound = "Can not find backup file"
 	FileNotExist   = "do not exists"
 	NoNeedRollback = "don't need rollback"
@@ -35,6 +38,7 @@ func (tuner *Tuner) isInterrupted() bool {
 	}
 }
 
+// Rollback ...
 func Rollback(logName string, callType string) (string, error) {
 	tune := new(Tuner)
 	tune.logName = logName
@@ -59,6 +63,10 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	var detailInfo = new(string)
 	var failedInfo = new(string)
 
+	if uri == "backup" {
+		gp.UnAVLParams = make([]map[string]map[string]string, len(gp.IPs))
+	}
+
 	for index, ip := range gp.IPs {
 		wg.Add(1)
 		id := config.KeenTune.IPMap[ip]
@@ -66,7 +74,13 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 		go func(index, groupID int, ip string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			url := fmt.Sprintf("%v:%v/%v", ip, gp.Port, uri)
-			msg, status := remoteCall("POST", url, request)
+			var msg string
+			var status int
+			if uri != "backup" {
+				msg, status = remoteCall("POST", url, request)
+			} else {
+				gp.UnAVLParams[index-1], msg, status = callBackup("POST", url, request)
+			}
 
 			switch status {
 			case SUCCESS:
@@ -83,6 +97,15 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	}
 
 	wg.Wait()
+
+	if uri == "backup" {
+		warningInfo, status := gp.deleteUnAVLParam()
+		if status == FAILED {
+			*detailInfo += fmt.Sprintf("Group %v backup all of the param failed\n%v", gp.GroupNo, warningInfo)
+			return *detailInfo, false
+		}
+	}
+
 	if *sucCount == len(gp.IPs) {
 		return *detailInfo, true
 	}
