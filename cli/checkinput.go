@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	m "keentune/daemon/modules"
@@ -26,7 +25,7 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 		return fmt.Errorf("invalid value in trials=%v", flag.Trials)
 	}
 
-	if IsMutexJobRunning(com.JobTuning) {
+	if IsMutexJobRunning(m.JobTuning) {
 		return fmt.Errorf("Another tuning job %v is running, use 'keentune param stop' to shutdown.", m.GetRunningTask())
 	}
 
@@ -119,9 +118,9 @@ func parseJobRunningErrMsg(jobInfo string) string {
 	}
 
 	switch parts[0] {
-	case com.JobTuning, com.JobBenchmark:
+	case m.JobTuning, m.JobBenchmark:
 		return fmt.Sprintf("Another tuning job %v is running, use 'keentune param stop' to shutdown.", parts[1])
-	case com.JobTraining:
+	case m.JobTraining:
 		return fmt.Sprintf("Another sensitizing job %v is running, use 'keentune sensitize stop' to shutdown.", parts[1])
 	default:
 		return fmt.Sprintf("Another setting job %v is running, wait for it to finish.", parts[1])
@@ -163,12 +162,12 @@ func isJobRepeatOrHasRunningJob(cmd, name string, reason *string) bool {
 	command := ""
 	filePath := ""
 	if cmd == "tune" {
-		command = com.JobTuning
+		command = m.JobTuning
 		filePath = config.GetDumpPath(config.TuneCsv)
 	}
 
 	if cmd == "sensitize" {
-		command = com.JobTraining
+		command = m.JobTraining
 		filePath = config.GetDumpPath(config.SensitizeCsv)
 	}
 

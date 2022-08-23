@@ -9,8 +9,17 @@ import (
 	"os"
 )
 
+const (
+	// JobTuning job type is tuning
+	JobTuning    = "tuning"
+	JobProfile   = "profile"
+	JobTraining  = "train"
+	JobBenchmark = "benchmark"
+)
+
 //  table header const
 const (
+	// TabName tuning table column: name
 	TabName     = "name"
 	TabAlgo     = "algorithm"
 	TabStatus   = "status"
@@ -24,6 +33,7 @@ const (
 	TabLog      = "log"
 )
 
+// TuneJobHeader ...
 var TuneJobHeader = []string{
 	TabName, TabAlgo, TabStatus, TabRound, TabCurRound,
 	TabStart, TabEnd, TabCost, TabWSP, TabCmd, TabLog,
@@ -33,6 +43,7 @@ const activeJobCsv = "/var/keentune/runningJob.csv"
 
 //  table header const
 const (
+	// TabTrainName train table column: name
 	TabTrainName   = "name"
 	TabTrainStart  = "start_time"
 	TabTrainEnd    = "end_time"
@@ -77,6 +88,7 @@ const (
 
 // tune job column index
 const (
+	// TuneNameIdx tuning index for name column
 	TuneNameIdx = iota
 	TuneAlgoIdx
 	TuneStatusIdx
@@ -90,8 +102,9 @@ const (
 	tuneLogIdx
 )
 
-// tune job column index
+// train job column index
 const (
+	// TrainNameIdx training index of name column
 	TrainNameIdx = iota
 	TrainStartIdx
 	TrainEndIdx
@@ -104,6 +117,7 @@ const (
 	trainDataPath
 )
 
+// CreateTuneJob ...
 func (tuner *Tuner) CreateTuneJob() error {
 	cmd := fmt.Sprintf("keentune param tune --job %v -i %v --config %v", tuner.Name, tuner.MAXIteration, config.GetCacheConfig())
 
@@ -140,16 +154,19 @@ func (tuner *Tuner) updateStatus(info string) {
 	}
 }
 
+// GetRunningTask ...
 func GetRunningTask() string {
 	file, _ := ioutil.ReadFile(activeJobCsv)
 	return string(file)
 }
 
+// SetRunningTask ...
 func SetRunningTask(class, name string) {
 	content := fmt.Sprintf("%s %s", class, name)
 	ioutil.WriteFile(activeJobCsv, []byte(content), 0666)
 }
 
+// ClearTask ...
 func ClearTask() {
 	os.Remove(activeJobCsv)
 }

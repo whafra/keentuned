@@ -44,7 +44,7 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 }
 
 func runTuning(flag TuneFlag) {
-	m.SetRunningTask(com.JobTuning, flag.Name)
+	m.SetRunningTask(m.JobTuning, flag.Name)
 	log.ParamTune = "param tune" + ":" + flag.Log
 	// create log file
 	ioutil.WriteFile(flag.Log, []byte{}, 0755)

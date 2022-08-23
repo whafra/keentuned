@@ -36,7 +36,7 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		return fmt.Errorf("found %v offline, please get them (it) ready before setting", strings.TrimSuffix(*targetMsg, ", "))
 	}
 
-	m.SetRunningTask(com.JobProfile, "set")
+	m.SetRunningTask(m.JobProfile, "set")
 	defer func() {
 		*reply = log.ClientLogMap[log.ProfSet]
 		log.ClearCliLog(log.ProfSet)
@@ -54,6 +54,7 @@ func SettingImpl(flag SetFlag) error {
 	tuner.Setter.ConfFile = make([]string, len(flag.ConfFile))
 	copy(tuner.Setter.Group, flag.Group)
 	copy(tuner.Setter.ConfFile, flag.ConfFile)
+	tuner.Flag = m.JobProfile
 
 	return tuner.Set()
 }

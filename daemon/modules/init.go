@@ -193,37 +193,35 @@ func (tuner *Tuner) rollback() error {
 	return tuner.concurrent("rollback", false)
 }
 
-func (tuner *Tuner) backup() error {
-	return tuner.concurrent("backup", true)
-}
-
 func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	var sucCount = new(int)
 	var warnCount = new(int)
 	var sucDetail = new(string)
 	var failedDetail = new(string)
+	var warningDetail = new(string)
 	wg := sync.WaitGroup{}
-	for i, target := range tuner.Group {
+	for i := range tuner.Group {
 		wg.Add(1)
-		go func(i int, target Group, wg *sync.WaitGroup) {
+		go func(i int, wg *sync.WaitGroup) {
 			defer wg.Done()
 			var request interface{}
 			if needReq {
-				request = target.MergedParam
+				request = tuner.Group[i].MergedParam
 			}
 
-			result, allSuc := target.concurrentSuccess(uri, request)
+			result, allSuc := tuner.Group[i].concurrentSuccess(uri, request)
 			if allSuc {
 				*sucCount++
 				if result != "" {
 					*warnCount++
+					*warningDetail += result
 				}
 				*sucDetail += result
 				return
 			}
 
 			*failedDetail += result
-		}(i, target, &wg)
+		}(i, &wg)
 	}
 
 	wg.Wait()
@@ -231,6 +229,7 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	switch uri {
 	case "backup":
 		tuner.backupFailure = retFailureInfo
+		tuner.backupWarning = *warningDetail
 	case "rollback", "original":
 		tuner.rollbackFailure = retFailureInfo
 		if *sucDetail != "" {
