@@ -1,5 +1,5 @@
 {
-    "mycnf":{
+    "my_cnf":{
         "max_connections":{
             "desc":"默认值：151",
             "dtype":"int",
