@@ -43,10 +43,6 @@ func (tuner *Tuner) Set() error {
 		return fmt.Errorf("prepare for setting %v", err)
 	}
 
-	if tuner.backupWarning != "" {
-		log.Warnf(log.ProfSet, "%v", tuner.backupWarning)
-	}
-
 	err = tuner.setConfigure()
 	if err != nil {
 		log.Errorf(log.ProfSet, "Set failed: %v", err)

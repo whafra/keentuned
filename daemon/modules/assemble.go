@@ -346,7 +346,7 @@ func (tuner *Tuner) initProfiles() error {
 		}
 
 		if abnormal.Warning != "" {
-			log.Warnf(tuner.logName, "Group %v warning info\n%v\n", group.GroupNo, abnormal.Warning)
+			log.Warnf(tuner.logName, "Group %v Remove abnormal parameters:\n%v\n", group.GroupNo, abnormal.Warning)
 		}
 
 		target.IPs = group.IPs
@@ -391,11 +391,11 @@ func (gp *Group) deleteUnAVLParam() (string, int) {
 
 	for _, unAVLParams := range gp.UnAVLParams {
 		var unAVLCount int
-		for domain, kv := range unAVLParams {
-			unAVLCount += len(kv)
-			warningInfo += fmt.Sprintf("[%v]", domain)
-			for name, msg := range kv {
 
+		for domain, kv := range unAVLParams {
+			var oneDomainWarning string
+			unAVLCount += len(kv)
+			for name, msg := range kv {
 				for idx := range gp.Params {
 					_, exists := gp.Params[idx][domain][name]
 					if exists {
@@ -403,11 +403,19 @@ func (gp *Group) deleteUnAVLParam() (string, int) {
 
 						tmpWarn := fmt.Sprintf("\t%v:\t%v\n", name, msg)
 						if !strings.Contains(warningInfo, tmpWarn) {
-							warningInfo += tmpWarn
+							oneDomainWarning += tmpWarn
+						}
+
+						if len(gp.Params[idx][domain]) == 0 {
+							delete(gp.Params[idx], domain)
 						}
 						continue
 					}
 				}
+			}
+
+			if len(oneDomainWarning) > 0 {
+				warningInfo += fmt.Sprintf("[%v] %v\n", domain, strings.TrimPrefix(oneDomainWarning, "\t"))
 			}
 		}
 

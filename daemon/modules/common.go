@@ -104,6 +104,8 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 			*detailInfo += fmt.Sprintf("Group %v backup all of the param failed\n%v", gp.GroupNo, warningInfo)
 			return *detailInfo, false
 		}
+
+		return warningInfo, true
 	}
 
 	if *sucCount == len(gp.IPs) {

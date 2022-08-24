@@ -2,6 +2,7 @@ package modules
 
 import (
 	"encoding/json"
+	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
 )
 
@@ -14,12 +15,16 @@ type backupDetail struct {
 
 func (tuner *Tuner) backup() error {
 	err := tuner.concurrent("backup", true)
-	if tuner.Flag == JobProfile {
-		return err
+	if tuner.backupWarning != "" {
+		log.Warnf(tuner.logName, "Remove backup failure parameters:\n%v", tuner.backupWarning)
 	}
 
 	if err != nil {
 		return err
+	}
+
+	if tuner.Flag == JobProfile {
+		return nil
 	}
 
 	if tuner.backupWarning != "" {
@@ -49,7 +54,7 @@ func callBackup(method, url string, request interface{}) (map[string]map[string]
 
 	for domain, param := range req {
 		_, notExist := unAVLParam[domain]
-		if notExist {
+		if !notExist {
 			unAVLParam[domain] = make(map[string]string)
 		}
 		parameter := param.(map[string]interface{})
@@ -58,7 +63,7 @@ func callBackup(method, url string, request interface{}) (map[string]map[string]
 			if !exists || !response[domain][name].Available {
 				msgBytes, _ := json.Marshal(response[domain][name].Msg)
 				msg := string(msgBytes)
-				if msg == "" {
+				if msg == "" || msg == "null" {
 					msg = "domain can not backup"
 				}
 
