@@ -2,9 +2,23 @@ package modules
 
 import (
 	"encoding/json"
-	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils/http"
 )
+
+var (
+	backupENVNotMetFmt = "Can't find %v, please check %v is installed"
+)
+
+// application
+const (
+	myConfApp = "MySQL"
+)
+
+const (
+	myConfBackupFile = "/etc/my.cnf"
+)
+
+const backupAllErr = "All of the domain backup failed"
 
 type backupDetail struct {
 	// Available ...
@@ -15,16 +29,12 @@ type backupDetail struct {
 
 func (tuner *Tuner) backup() error {
 	err := tuner.concurrent("backup", true)
-	if tuner.backupWarning != "" {
-		log.Warnf(tuner.logName, "Remove backup failure parameters:\n%v", tuner.backupWarning)
+	if tuner.Flag == JobProfile {
+		return err
 	}
 
 	if err != nil {
 		return err
-	}
-
-	if tuner.Flag == JobProfile {
-		return nil
 	}
 
 	if tuner.backupWarning != "" {

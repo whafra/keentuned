@@ -228,6 +228,12 @@ func (tuner *Tuner) concurrent(uri string, needReq bool) error {
 	retFailureInfo := strings.TrimSuffix(*failedDetail, "; ")
 	switch uri {
 	case "backup":
+		if len(retFailureInfo) > 0 {
+			tuner.backupFailure = backupAllErr
+			tuner.backupWarning = retFailureInfo
+			break
+		}
+		
 		tuner.backupFailure = retFailureInfo
 		tuner.backupWarning = *warningDetail
 	case "rollback", "original":

@@ -105,7 +105,7 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 		return errMsg
 	}
 
-	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("---\n%v\n%v\n", identity, applyResult)
+	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("\t%v\n\t\t%v\n", identity, applyResult)
 	tuner.timeSpend.apply += utils.Runtime(start).Count
 	return nil
 }

@@ -62,10 +62,7 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	var sucCount = new(int)
 	var detailInfo = new(string)
 	var failedInfo = new(string)
-
-	if uri == "backup" {
-		gp.UnAVLParams = make([]map[string]map[string]string, len(gp.IPs))
-	}
+	unAVLParams := make([]map[string]map[string]string, len(gp.IPs))
 
 	for index, ip := range gp.IPs {
 		wg.Add(1)
@@ -79,7 +76,7 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 			if uri != "backup" {
 				msg, status = remoteCall("POST", url, request)
 			} else {
-				gp.UnAVLParams[index-1], msg, status = callBackup("POST", url, request)
+				unAVLParams[index-1], msg, status = callBackup("POST", url, request)
 			}
 
 			switch status {
@@ -99,10 +96,21 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	wg.Wait()
 
 	if uri == "backup" {
-		warningInfo, status := gp.deleteUnAVLParam()
+		warningInfo, status := gp.deleteUnAVLConf(unAVLParams)
+		for _, warn := range strings.Split(warningInfo, ";") {
+			parts := strings.Split(warn, "\t")
+			if len(parts) != 2 {
+				continue
+			}
+			*detailInfo += fmt.Sprintf(backupENVNotMetFmt, parts[0], parts[1])
+		}
+		
 		if status == FAILED {
-			*detailInfo += fmt.Sprintf("Group %v backup all of the param failed\n%v", gp.GroupNo, warningInfo)
 			return *detailInfo, false
+		}
+
+		if status == WARNING {
+			return *detailInfo, true
 		}
 
 		return warningInfo, true
