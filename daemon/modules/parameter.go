@@ -8,7 +8,6 @@ import (
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
-	"keentune/daemon/common/utils/http"
 	"math"
 	"regexp"
 	"strconv"
@@ -126,52 +125,6 @@ func modifyParam(originMap *map[string]interface{}, compareMap map[string]interf
 	return nil
 }
 
-func detectParam(param *Parameter) error {
-	if len(param.Scope) > 0 {
-		var range2Int []interface{}
-		var detectedMacroValue = make(map[string]int)
-		for _, v := range param.Scope {
-			value, ok := v.(float64)
-			if ok {
-				range2Int = append(range2Int, int(value))
-				continue
-			}
-			macroString, ok := v.(string)
-			re, _ := regexp.Compile(defMarcoString)
-			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(macroString, " ", ""), -1))
-			calcResult, err := getExtremeValue(macros, detectedMacroValue, macroString)
-			if err != nil {
-				return fmt.Errorf("'%v' calculate range err: %v", param.ParaName, err)
-			}
-			range2Int = append(range2Int, int(calcResult))
-		}
-		param.Scope = range2Int
-	}
-
-	if len(param.Options) > 0 {
-		var newOptions []string
-		var detectedMacroValue = make(map[string]int)
-		for _, v := range param.Options {
-			re, _ := regexp.Compile(defMarcoString)
-			if !re.MatchString(v) {
-				newOptions = append(newOptions, v)
-				continue
-			}
-
-			macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(v, " ", ""), -1))
-			calcResult, err := getExtremeValue(macros, detectedMacroValue, v)
-			if err != nil {
-				return fmt.Errorf("'%v' calculate option err: %v", param.ParaName, err)
-			}
-
-			newOptions = append(newOptions, fmt.Sprintf("%v", int(calcResult)))
-		}
-		param.Options = newOptions
-	}
-
-	return nil
-}
-
 func getExtremeValue(macros []string, detectedMacroValue map[string]int, macroString string) (int64, error) {
 	if len(macros) == 0 {
 		return 0, fmt.Errorf("range type is '%v', but macros length is 0", macroString)
@@ -281,56 +234,63 @@ func getMacroValue(macros []string, detectedMacroValue map[string]int) error {
 	return detect(macroMap, macroNames, detectedMacroValue)
 }
 
-func detect(macroMap map[string]string, macroNames []string, detectedMacroValue map[string]int) error {
-	requestMap := map[string]interface{}{
-		"data": macroMap,
-	}
-
-	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.BenchGroup[0].DestIP, config.KeenTune.Group[0].Port)
-	resp, err := http.RemoteCall("POST", url, requestMap)
-	if err != nil {
-		return fmt.Errorf("remote call err:%v", err)
-	}
-
-	var respMap map[string]DetectResult
-	err = json.Unmarshal(resp, &respMap)
-	if err != nil {
-		return fmt.Errorf("unmarshal detect response err:%v", err)
-	}
-
-	for _, name := range macroNames {
-		result, ok := respMap[strings.ToLower(name)]
-		if !ok {
-			return fmt.Errorf("get response %v err:%v", name, err)
-		}
-		if !result.Success {
-			return fmt.Errorf("get response %v failed:%v", name, result.Message)
-		}
-		macro := fmt.Sprintf("#!%v#", name)
-		detectedMacroValue[macro] = result.Value
-	}
-
-	return nil
-}
-
 // ConvertConfFileToJson convert conf file to json
-func ConvertConfFileToJson(fileName string) (string, map[string]map[string]interface{}, error) {
+func ConvertConfFileToJson(fileName string) (ABNLResult, map[string]map[string]interface{}, error) {
+	var abnormal = ABNLResult{}
 	paramBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return "", nil, fmt.Errorf("read file err: %v", err)
+		return abnormal, nil, fmt.Errorf("read file err: %v", err)
 	}
 
 	if len(paramBytes) == 0 {
-		return "", nil, fmt.Errorf("read file is empty")
+		return abnormal, nil, fmt.Errorf("read file is empty")
 	}
 
-	var resultMap = make(map[string]map[string]interface{})
-	var domainMap = make(map[string][]map[string]interface{})
-
-	commonDomain := ""
-	recommends := ""
-	var tmpRecommendMap = make(map[string][]string)
 	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
+	commonDomain, recommendMap, domainMap := parseConfStrToMapSlice(replacedStr, &abnormal)
+
+	for key, value := range recommendMap {
+		abnormal.Recommend += fmt.Sprintf("[%v]\n%v\n", key, strings.Join(value, ""))
+	}
+
+	if len(domainMap) == 0 {
+		if abnormal.Recommend != "" {
+			return abnormal, nil, nil
+		}
+
+		return abnormal, nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
+	}
+
+	return changeMapSliceToDBLMap(domainMap, abnormal)
+}
+
+func changeMapSliceToDBLMap(domainMap map[string][]map[string]interface{}, abnormal ABNLResult) (ABNLResult, map[string]map[string]interface{}, error) {
+	var resultMap = make(map[string]map[string]interface{})
+	for domain, paramSlice := range domainMap {
+		if len(paramSlice) == 0 {
+			return abnormal, nil, fmt.Errorf("domain '%v' content is empty", domain)
+		}
+
+		var paramMap = make(map[string]interface{})
+		for _, paramInfo := range paramSlice {
+			name, ok := paramInfo["name"].(string)
+			if !ok {
+				abnormal.Warning += fmt.Sprintf("%v name does not exist", paramInfo)
+				continue
+			}
+			delete(paramInfo, "name")
+			paramMap[name] = paramInfo
+		}
+		resultMap[domain] = paramMap
+	}
+	return abnormal, resultMap, nil
+}
+
+func parseConfStrToMapSlice(replacedStr string, abnormal *ABNLResult) (string, map[string][]string, map[string][]map[string]interface{}) {
+	var deleteDomains []string
+	var recommendMap = make(map[string][]string)
+	var domainMap = make(map[string][]map[string]interface{})
+	var commonDomain string
 	for _, line := range strings.Split(replacedStr, "\n") {
 		pureLine := strings.Replace(strings.TrimSpace(line), "=", ":", 1)
 		if len(pureLine) == 0 {
@@ -346,59 +306,46 @@ func ConvertConfFileToJson(fileName string) (string, map[string]map[string]inter
 			continue
 		}
 
-		recommend, param, err := readLine(pureLine)
+		recommend, condition, param, err := readLine(pureLine)
 		if err != nil {
-			fmt.Printf("read line [%v] err:%v\n", line, err)
+			abnormal.Warning += fmt.Sprintf("content '%v' abnormal\n", pureLine)
 			continue
 		}
 
 		if len(recommend) != 0 {
-			tmpRecommendMap[commonDomain] = append(tmpRecommendMap[commonDomain], recommend)
+			recommendMap[commonDomain] = append(recommendMap[commonDomain], recommend)
+			continue
+		}
+
+		if len(condition) != 0 {
+			deleteDomains = append(deleteDomains, commonDomain)
+			abnormal.Warning += fmt.Sprintf("domain '%v' condition '%v'is not matched, required: %v\n", commonDomain, condition, pureLine)
+			continue
+		}
+
+		// when condition is empty, param maybe null
+		if param == nil {
 			continue
 		}
 
 		domainMap[commonDomain] = append(domainMap[commonDomain], param)
 	}
 
-	for key, value := range tmpRecommendMap {
-		recommends += fmt.Sprintf("[%v]\n%v\n", key, strings.Join(value, ""))
+	if len(deleteDomains) > 0 {
+		for _, domain := range deleteDomains {
+			delete(domainMap, domain)
+		}
 	}
 
-	if len(domainMap) == 0 {
-		if recommends != "" {
-			return recommends, nil, nil
-		}
-
-		return recommends, nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-	}
-
-	for domain, paramSlice := range domainMap {
-		if len(paramSlice) == 0 {
-			return recommends, nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-		}
-
-		var paramMap = make(map[string]interface{})
-		for _, paramInfo := range paramSlice {
-			name, ok := paramInfo["name"].(string)
-			if !ok {
-				fmt.Printf("parse name from [%v] failed\n", paramInfo)
-				continue
-			}
-			delete(paramInfo, "name")
-			paramMap[name] = paramInfo
-		}
-		resultMap[domain] = paramMap
-	}
-
-	return recommends, resultMap, nil
+	return commonDomain, recommendMap, domainMap
 }
 
-func readLine(line string) (string, map[string]interface{}, error) {
+func readLine(line string) (string, string, map[string]interface{}, error) {
 	paramSlice := strings.Split(line, ":")
 	partLen := len(paramSlice)
 	switch {
 	case partLen <= 1:
-		return "", nil, fmt.Errorf("param %v length %v is invalid, required: 2", paramSlice, len(paramSlice))
+		return "", "", nil, fmt.Errorf("param %v length %v is invalid, required: 2", paramSlice, len(paramSlice))
 	case partLen == 2:
 		return getParam(paramSlice)
 	default:
@@ -408,7 +355,7 @@ func readLine(line string) (string, map[string]interface{}, error) {
 	}
 }
 
-func getParam(paramSlice []string) (string, map[string]interface{}, error) {
+func getParam(paramSlice []string) (string, string, map[string]interface{}, error) {
 	var recommend string
 	paramName := strings.TrimSpace(paramSlice[0])
 	valueStr := strings.ReplaceAll(strings.TrimSpace(paramSlice[1]), "\"", "")
@@ -416,12 +363,13 @@ func getParam(paramSlice []string) (string, map[string]interface{}, error) {
 	matched, _ := regexp.MatchString(recommendReg, strings.ToLower(valueStr))
 	if matched {
 		recommend = fmt.Sprintf("\t%v: %v\n", paramName, strings.TrimPrefix(valueStr, "recommend:"))
-		return recommend, nil, nil
+		return recommend, "", nil, nil
 	}
 
 	re, _ := regexp.Compile(defMarcoString)
 	if re != nil && re.MatchString(valueStr) {
-		return detectConfValue(re, valueStr, paramName)
+		condition, param, err := detectConfValue(re, valueStr, paramName)
+		return "", condition, param, err
 	}
 
 	var param map[string]interface{}
@@ -432,7 +380,7 @@ func getParam(paramSlice []string) (string, map[string]interface{}, error) {
 			"dtype": "string",
 			"name":  paramName,
 		}
-		return "", param, nil
+		return "", "", param, nil
 	}
 
 	param = map[string]interface{}{
@@ -440,23 +388,6 @@ func getParam(paramSlice []string) (string, map[string]interface{}, error) {
 		"dtype": "int",
 		"name":  paramName,
 	}
-	return "", param, nil
-}
-
-func detectConfValue(re *regexp.Regexp, valueStr string, paramName string) (string, map[string]interface{}, error) {
-	macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(valueStr, " ", ""), -1))
-	detectedMacroValue := make(map[string]int)
-	value, err := getExtremeValue(macros, detectedMacroValue, valueStr)
-	if err != nil {
-		return "", nil, fmt.Errorf("detect '%v'err: %v", paramName, err)
-	}
-
-	param := map[string]interface{}{
-		"value": value,
-		"dtype": "int",
-		"name":  paramName,
-	}
-
-	return "", param, nil
+	return "", "", param, nil
 }
 

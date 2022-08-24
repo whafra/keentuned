@@ -336,13 +336,17 @@ func (tuner *Tuner) initProfiles() error {
 
 		var target = new(Group)
 		confFile := tuner.Setter.ConfFile[groupIdx]
-		recommend, err := target.getConfigParam(confFile)
+		abnormal, err := target.getConfigParam(confFile)
 		if err != nil {
 			return err
 		}
 
-		if !strings.Contains(tuner.recommend, recommend) {
-			tuner.recommend += recommend
+		if !strings.Contains(tuner.recommend, abnormal.Recommend) {
+			tuner.recommend += abnormal.Recommend
+		}
+
+		if abnormal.Warning != "" {
+			log.Warnf(tuner.logName, "Group %v warning info\n%v\n", group.GroupNo, abnormal.Warning)
 		}
 
 		target.IPs = group.IPs
@@ -359,26 +363,26 @@ func (tuner *Tuner) initProfiles() error {
 	return nil
 }
 
-func (gp *Group) getConfigParam(fileName string) (string, error) {
+func (gp *Group) getConfigParam(fileName string) (ABNLResult, error) {
 	filePath := config.GetProfilePath(fileName)
 	if filePath == "" {
-		return "", fmt.Errorf("file '%v' does not exist, expect in '%v' nor in '%v'", fileName,
+		return ABNLResult{}, fmt.Errorf("file '%v' does not exist, expect in '%v' nor in '%v'", fileName,
 			fmt.Sprintf("%s/profile", config.KeenTune.Home),
 			fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
 	}
 
-	recommend, resultMap, err := ConvertConfFileToJson(filePath)
+	abnormal, resultMap, err := ConvertConfFileToJson(filePath)
 	if err != nil {
-		return recommend, fmt.Errorf("convert file '%v' %v", filePath, err)
+		return abnormal, fmt.Errorf("convert file '%v' %v", filePath, err)
 	}
 
 	gp.Params, err = config.GetPriorityParams(resultMap)
 	if err != nil {
-		return recommend, err
+		return abnormal, err
 	}
 
 	gp.mergeParam()
-	return recommend, nil
+	return abnormal, nil
 }
 
 func (gp *Group) deleteUnAVLParam() (string, int) {
