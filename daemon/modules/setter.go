@@ -13,23 +13,28 @@ import (
 
 // Setter ...
 type Setter struct {
-	Group     []bool
-	ConfFile  []string
-	recommend string
+	Group         []bool
+	ConfFile      []string
+	recommend     string
+	preSetWarning string
 }
 
 // Set profile set  main process
-func (tuner *Tuner) Set() error {
+func (tuner *Tuner) Set() {
 	var err error
 	tuner.logName = log.ProfSet
 	if err = tuner.initProfiles(); err != nil {
 		log.Errorf(log.ProfSet, "init profiles %v", err)
-		return fmt.Errorf("init profiles %v", err)
+		return
 	}
 
 	if len(tuner.recommend) > 0 {
-		fmtStr := fmt.Sprintf("%v\n\n%v", utils.ColorString("green", "[+] Optimization Recommendation (Manual Setting)"), tuner.recommend)
+		fmtStr := fmt.Sprintf("%v\n%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"), tuner.recommend)
 		log.Infof(log.ProfSet, fmtStr)
+	}
+
+	if len(tuner.preSetWarning) > 0 {
+		log.Warn(log.ProfSet, tuner.preSetWarning)
 	}
 
 	defer func() {
@@ -39,26 +44,31 @@ func (tuner *Tuner) Set() error {
 	}()
 
 	if err = tuner.prepareBeforeSet(); err != nil {
-		log.Errorf(log.ProfSet, "prepare for setting %v", err)
-		return fmt.Errorf("prepare for setting %v", err)
+		log.Error(log.ProfSet, err.Error())
+		return
 	}
+
+	groupSetResult := fmt.Sprintf("%v\n", utils.ColorString("green", "[+] Profile Result (Auto Settings)"))
+	if len(log.ClientLogMap[log.ProfSet]) > 0 {
+		groupSetResult = fmt.Sprintf("\n%v", groupSetResult)
+	}
+
+	log.Infof(log.ProfSet, groupSetResult)
 
 	err = tuner.setConfigure()
 	if err != nil {
 		log.Errorf(log.ProfSet, "Set failed: %v", err)
-		return err
+		return
 	}
 
 	err = tuner.updateActive()
 	if err != nil {
-		return err
+		return
 	}
 
-	groupSetResult := fmt.Sprintf("%v\n\n", utils.ColorString("green", "[+] Optimization Result (Auto Setting)"))
-	groupSetResult += strings.TrimSuffix(tuner.applySummary, "\n")
-	log.Infof(log.ProfSet, groupSetResult)
+	log.Info(log.ProfSet, tuner.applySummary)
 
-	return nil
+	return
 }
 
 func (tuner *Tuner) updateActive() error {
@@ -100,8 +110,12 @@ func (tuner *Tuner) prepareBeforeSet() error {
 
 	// step3. backup the target machine
 	err = tuner.backup()
+	if tuner.backupWarning != "" {
+		log.Warnf(tuner.logName, "%v", tuner.backupWarning)
+	}
+
 	if err != nil {
-		return fmt.Errorf("backup failed:\n%v", tuner.backupFailure)
+		return fmt.Errorf("%v", tuner.backupFailure)
 	}
 	return nil
 }

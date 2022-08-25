@@ -12,6 +12,19 @@ import (
 
 const conditionReg = "[|&<>=!]"
 
+var (
+	detectENVNotMetFmt = "Settings in [%v] domain only suites for %v Env, please set your parameters refer to %v\n"
+)
+
+// domain
+const (
+	myConfDomain = "my_cnf"
+)
+
+const (
+	myConfCondition = "8 CPU 32G Memory"
+)
+
 // ABNLResult abnormal result
 type ABNLResult struct {
 	Recommend string
@@ -19,9 +32,10 @@ type ABNLResult struct {
 }
 
 func calculateCondition(content string, macros []string) (string, bool) {
+	// detectedMacroValue used for replace macro with value by func convertString
 	detectedMacroValue := make(map[string]int)
 	if err := getMacroValue(macros, detectedMacroValue); err != nil {
-		return "", false
+		return err.Error(), false
 	}
 
 	express, _, _ := convertString(content, detectedMacroValue)

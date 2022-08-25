@@ -43,11 +43,12 @@ func (s *Service) Set(flag SetFlag, reply *string) error {
 		m.ClearTask()
 	}()
 
-	return SettingImpl(flag)
+	SettingImpl(flag)
+	return nil
 }
 
 // SettingImpl ...
-func SettingImpl(flag SetFlag) error {
+func SettingImpl(flag SetFlag) {
 	tuner := &m.Tuner{}
 
 	tuner.Setter.Group = make([]bool, len(flag.Group))
@@ -55,7 +56,6 @@ func SettingImpl(flag SetFlag) error {
 	copy(tuner.Setter.Group, flag.Group)
 	copy(tuner.Setter.ConfFile, flag.ConfFile)
 	tuner.Flag = m.JobProfile
-
-	return tuner.Set()
+	tuner.Set()
 }
 
