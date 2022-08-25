@@ -34,7 +34,12 @@ func (tuner *Tuner) Set() {
 	}
 
 	if len(tuner.preSetWarning) > 0 {
-		log.Warn(log.ProfSet, tuner.preSetWarning)
+		for _, preWarning := range strings.Split(tuner.preSetWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(preWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(log.ProfSet, preWarning)
+			}
+		}
 	}
 
 	defer func() {
@@ -111,7 +116,12 @@ func (tuner *Tuner) prepareBeforeSet() error {
 	// step3. backup the target machine
 	err = tuner.backup()
 	if tuner.backupWarning != "" {
-		log.Warnf(tuner.logName, "%v", tuner.backupWarning)
+		for _, backupWarning := range strings.Split(tuner.backupWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(backupWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(tuner.logName, backupWarning)
+			}
+		}
 	}
 
 	if err != nil {

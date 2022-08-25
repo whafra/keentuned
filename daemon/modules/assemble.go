@@ -426,7 +426,7 @@ func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (st
 				allUnAVLAPPInfo = append(allUnAVLAPPInfo, fmt.Sprintf("%v\t%v", myConfBackupFile, myConfApp))
 				continue
 			}
-			allUnAVLAPPInfo = append(allUnAVLAPPInfo, fmt.Sprintf("%v\t%v", domain+" backup file", "the APP"))
+			allUnAVLAPPInfo = append(allUnAVLAPPInfo, fmt.Sprintf("[%v] backup file\t%v", domain, "the APP"))
 		}
 	}
 

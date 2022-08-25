@@ -311,17 +311,19 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 		if len(condition) != 0 {
 			deleteDomains = append(deleteDomains, commonDomain)
 			if commonDomain == myConfDomain {
-				abnormal.Warning += fmt.Sprintf(detectENVNotMetFmt, commonDomain, myConfCondition, file.GetPlainName(fileName))
+				notMetInfo := fmt.Sprintf(detectENVNotMetFmt, commonDomain, myConfCondition, file.GetPlainName(fileName))
+				abnormal.Warning += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
 				continue
 			}
 
-			abnormal.Warning += fmt.Sprintf(detectENVNotMetFmt, commonDomain, condition, file.GetPlainName(fileName))
+			notMetInfo := fmt.Sprintf(detectENVNotMetFmt, commonDomain, condition, file.GetPlainName(fileName))
+			abnormal.Warning += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
 
 			continue
 		}
 
 		if err != nil {
-			abnormal.Warning += fmt.Sprintf("content '%v' abnormal\n", pureLine)
+			abnormal.Warning += fmt.Sprintf("content '%v' abnormal%v", pureLine, multiRecordSeparator)
 			continue
 		}
 
