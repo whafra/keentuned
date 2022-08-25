@@ -62,7 +62,7 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 	for domain, paramMap := range applyResp {
 		var sucCount, failedCount, skippedCount int
 		var failedInfoSlice [][]string
-		setResult += fmt.Sprintf("[%v]\t", domain)
+		setResult += fmt.Sprintf("\t\t[%v]\t", domain)
 		for name, orgValue := range paramMap {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)

@@ -13,6 +13,7 @@ import (
 // StopSig ...
 var StopSig chan os.Signal
 
+// Status code
 const (
 	// SUCCESS status code
 	SUCCESS = iota + 1
@@ -20,6 +21,9 @@ const (
 	FAILED
 )
 
+const multiRecordSeparator = "*#++#*"
+
+// backup doesn't exist
 const (
 	// BackupNotFound error information
 	BackupNotFound = "Can not find backup file"
@@ -102,9 +106,10 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 			if len(parts) != 2 {
 				continue
 			}
-			*detailInfo += fmt.Sprintf(backupENVNotMetFmt, parts[0], parts[1])
+			notMetInfo := fmt.Sprintf(backupENVNotMetFmt, parts[0], parts[1])
+			*detailInfo += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
 		}
-		
+
 		if status == FAILED {
 			return *detailInfo, false
 		}
