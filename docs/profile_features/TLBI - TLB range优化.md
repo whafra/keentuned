@@ -21,3 +21,5 @@ __tlbi_user(rvale1is, addr);
 更多可参考
 [https://developer.arm.com/documentation/ddi0595/2021-12/AArch64-Instructions/TLBI-RVALE1IS--TLBI-RVALE1ISNXS--TLB-Range-Invalidate-by-VA--Last-level--EL1--Inner-Shareable](https://developer.arm.com/documentation/ddi0595/2021-12/AArch64-Instructions/TLBI-RVALE1IS--TLBI-RVALE1ISNXS--TLB-Range-Invalidate-by-VA--Last-level--EL1--Inner-Shareable)
 # 使用方法
+### 使用Alinux3.2208及以后版本
+Alinux3在2208版本（内核版本5.10.134-12_rc1）已默认启用该特性
