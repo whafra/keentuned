@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/utils"
 	"os"
 	"runtime"
 	"strings"
@@ -345,10 +346,10 @@ func cacheLog(cmd, level, format string, args ...interface{}) {
 	switch level {
 	case "ERROR", "WARNING":
 		if cmd == ProfSet {
-			msg = fmt.Sprintf("\t[%s] %s\n", level, trimMsg)
+			msg = fmt.Sprintf("\t[%s] %s\n", colorLevel(level), trimMsg)
 			break
 		}
-		msg = fmt.Sprintf("[%s] %s\n", level, trimMsg)
+		msg = fmt.Sprintf("[%s] %s\n", colorLevel(level), trimMsg)
 	case "INFO":
 		msg = fmt.Sprintf("%s\n", trimMsg)
 	default:
@@ -357,6 +358,17 @@ func cacheLog(cmd, level, format string, args ...interface{}) {
 
 	if cmd != "" {
 		updateClientLog(cmd, msg)
+	}
+}
+
+func colorLevel(lev string) string {
+	switch lev {
+	case "ERROR":
+		return utils.ColorString("red", lev)
+	case "WARNING":
+		return utils.ColorString("yellow", lev)
+	default:
+		return lev
 	}
 }
 

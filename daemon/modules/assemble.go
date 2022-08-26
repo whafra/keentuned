@@ -337,16 +337,16 @@ func (tuner *Tuner) initProfiles() error {
 		var target = new(Group)
 		confFile := tuner.Setter.ConfFile[groupIdx]
 		abnormal, err := target.getConfigParam(confFile)
-		if err != nil {
-			return err
-		}
-
 		if !strings.Contains(tuner.recommend, abnormal.Recommend) {
 			tuner.recommend += abnormal.Recommend
 		}
 
 		if abnormal.Warning != "" {
 			tuner.preSetWarning += abnormal.Warning
+		}
+
+		if err != nil {
+			return err
 		}
 
 		target.IPs = group.IPs
@@ -374,6 +374,10 @@ func (gp *Group) getConfigParam(fileName string) (ABNLResult, error) {
 	abnormal, resultMap, err := ConvertConfFileToJson(filePath)
 	if err != nil {
 		return abnormal, fmt.Errorf("convert file '%v' %v", filePath, err)
+	}
+
+	if len(resultMap) == 0 {
+		return abnormal, fmt.Errorf("No valid domain can be used. Please check and set valid configurations in %v", fileName)
 	}
 
 	gp.Params, err = config.GetPriorityParams(resultMap)

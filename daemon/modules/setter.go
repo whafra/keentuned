@@ -23,11 +23,7 @@ type Setter struct {
 func (tuner *Tuner) Set() {
 	var err error
 	tuner.logName = log.ProfSet
-	if err = tuner.initProfiles(); err != nil {
-		log.Errorf(log.ProfSet, "init profiles %v", err)
-		return
-	}
-
+	err = tuner.initProfiles()
 	if len(tuner.recommend) > 0 {
 		fmtStr := fmt.Sprintf("%v\n%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"), tuner.recommend)
 		log.Infof(log.ProfSet, fmtStr)
@@ -40,6 +36,11 @@ func (tuner *Tuner) Set() {
 				log.Warn(log.ProfSet, preWarning)
 			}
 		}
+	}
+
+	if err != nil {
+		log.Errorf(log.ProfSet, "%v", err)
+		return
 	}
 
 	defer func() {
