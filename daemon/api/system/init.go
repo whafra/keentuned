@@ -13,9 +13,11 @@ func (s *Service) Init(flag string, reply *string) error {
 	if err != nil {
 		*reply = fmt.Sprintf("%v %v", utils.ColorString("yellow", "[Warning]"), result)
 		log.Warnln("", result)
+		return nil
 	}
 
-	*reply = fmt.Sprintf("%v KeenTune Init success", utils.ColorString("green", "[OK]"))
+	*reply = fmt.Sprintf("%v KeenTune Init success\n", utils.ColorString("green", "[OK]"))
+	log.Info("", "KeenTune Init success")
 	return nil
 }
 
