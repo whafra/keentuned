@@ -55,7 +55,7 @@ func GetProfileHomePath(fileName string) string {
 	}
 
 	// absolute path
-	if strings.HasSuffix(fileName, "/") && strings.Count(strings.Trim(fileName, "/"), "/") > 1 {
+	if strings.HasPrefix(fileName, "/") && strings.Count(strings.Trim(fileName, "/"), "/") > 1 {
 		return fileName
 	}
 

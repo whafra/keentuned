@@ -23,18 +23,10 @@ func createSensitizeCmds() *cobra.Command {
 		Short:   "Sensitive parameter identification and explanation with AI algorithms",
 		Long:    "Sensitive parameter identification and explanation with AI algorithms",
 		Example: fmt.Sprintf("%s\n%s\n%s\n%s", egDelete, egSensitiveJobs, egSensitiveStop, egTrain),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" /*&& args[0] != "collect" */ && args[0] != "jobs" && args[0] != "delete" && args[0] != "train" && args[0] != "stop" {
-					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				}
-			}
-
-			if len(args) == 0 {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-			}
-
-			return cmd.Help()
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+			cmd.Usage()
+			os.Exit(1)
 		},
 	}
 
@@ -60,8 +52,8 @@ func trainCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(trainflags.Data, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			initWorkDirectory()
@@ -113,8 +105,8 @@ func deleteSensitivityCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			flag.Cmd = "sensitize"

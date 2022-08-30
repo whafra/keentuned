@@ -127,8 +127,8 @@ func benchCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			RunBenchRemote(cmd.Context(), flag)
