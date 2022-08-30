@@ -378,8 +378,13 @@ func getParam(paramSlice []string) (string, string, map[string]interface{}, erro
 
 	re, _ := regexp.Compile(defMarcoString)
 	if re != nil && re.MatchString(valueStr) {
-		_, param, err := detectConfValue(re, valueStr, paramName)
-		return "", valueStr, param, err
+		expression, param, err := detectConfValue(re, valueStr, paramName)
+		// replace expression to real condition when expression is not empty
+		if expression != "" {
+			return "", valueStr, nil, nil
+		}
+
+		return "", "", param, err
 	}
 
 	var param map[string]interface{}
