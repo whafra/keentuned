@@ -22,7 +22,7 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
 	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
 	subCmds = append(subCmds, decorateCmd(createRollbackAllCmd()))
-	subCmds = append(subCmds, decorateCmd(initCmd()))
+	// subCmds = append(subCmds, decorateCmd(initCmd()))
 
 	return subCmds
 }
@@ -148,7 +148,7 @@ func versionCmd() *cobra.Command {
 		Use:     "version",
 		Short:   "Print the version number of keentune",
 		Long:    "Print the version number of keentune",
-		Example: egBenchmark,
+		Example: egVersion,
 		Run: func(cmd *cobra.Command, args []string) {
 			initWorkDirectory()
 			flag.VersionNum = config.KeenTune.VersionConf

@@ -37,7 +37,6 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %systemd_post keentuned.service
 if [ -f "%{_prefix}/lib/systemd/system/keentuned.service" ]; then
     systemctl enable keentuned.service || :
-    systemctl start keentuned.service || :
 fi
 
 %preun

@@ -26,7 +26,7 @@ func (tuner *Tuner) Set() {
 	err = tuner.initProfiles()
 	if len(tuner.recommend) > 0 {
 		fmtStr := fmt.Sprintf("%v\n%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"), tuner.recommend)
-		log.Infof(log.ProfSet, fmtStr)
+		log.Info(log.ProfSet, fmtStr)
 	}
 
 	if len(tuner.preSetWarning) > 0 {
