@@ -43,7 +43,7 @@ class TestParamDump(unittest.TestCase):
     def test_param_dump_RBT_lose_job_param(self):
         cmd = 'keentune param dump'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_dump_RBT_lose_job_value(self):
@@ -55,11 +55,11 @@ class TestParamDump(unittest.TestCase):
     def test_param_dump_RBT_job_value_empty(self):
         cmd = "echo y | keentune param dump -j ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_param_dump_RBT_job_value_null(self):
         cmd = "echo y | keentune param dump -j ''"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))

@@ -42,7 +42,7 @@ class TestProfileSet(unittest.TestCase):
     def test_profile_set_RBT_lose_name_param(self):
         cmd = 'keentune profile set'
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_set_RBT_lose_name_value(self):
@@ -54,13 +54,13 @@ class TestProfileSet(unittest.TestCase):
     def test_profile_set_RBT_name_value_null(self):
         cmd = "keentune profile set --group1 ''"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_set_RBT_name_value_empty(self):
         cmd = "keentune profile set --group1 ' '"
         self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
+        self.assertEqual(self.status, 1)
         self.assertTrue(self.out.__contains__('Incomplete or Unmatched command'))
 
     def test_profile_set_RBT_full_path(self):
@@ -68,4 +68,4 @@ class TestProfileSet(unittest.TestCase):
         cmd = "keentune profile set --group1 {}".format(path)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Set /var/keentune/profile/param1_group1.conf successfully'))
+        self.assertTrue(self.out.__contains__('Succeeded'))
