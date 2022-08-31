@@ -1,0 +1,271 @@
+{
+    "nginx_conf": {
+        "worker_rlimit_nofile": {
+            "desc": "默认值：500",
+            "dtype": "int",
+            "range": [
+                655350,
+                157286400
+            ]
+        },
+        "worker_connections": {
+            "desc": "默认值：500",
+            "dtype": "int",
+            "range": [
+                300,
+                160000
+            ]
+        },
+        "multi_accept": {
+            "desc": "默认值：off",
+            "dtype": "string",
+            "options": [
+                "on",
+                "off"
+            ]
+        },
+        "sendfile": {
+            "desc": "默认值：on",
+            "dtype": "string",
+            "options": [
+                "on",
+                "off"
+            ]
+        },
+        "tcp_nopush": {
+            "desc": "默认值：on",
+            "dtype": "string",
+            "options": [
+                "on",
+                "off"
+            ]
+        },
+        "tcp_nodelay": {
+            "desc": "默认值：on",
+            "dtype": "string",
+            "options": [
+                "on",
+                "off"
+            ]
+        },
+        "keepalive_timeout": {
+            "desc": "默认值：30",
+            "dtype": "int",
+            "range": [
+                10,
+                100
+            ]
+        },
+        "keepalive_requests": {
+            "desc": "默认值：100",
+            "dtype": "int",
+            "range": [
+                1000,
+                161061273600
+            ]
+        },
+        "client_body_timeout": {
+            "desc": "默认值：30",
+            "dtype": "int",
+            "range": [
+                10,
+                100
+            ]
+        },
+        "send_timeout": {
+            "desc": "默认值：30",
+            "dtype": "int",
+            "range": [
+                10,
+                100
+            ]
+        },
+        "client_body_buffer_size": {
+            "desc": "默认值：64k",
+            "dtype": "string",
+            "options": [
+                "8k",
+                "16k",
+                "32k",
+                "64k",
+                "128k",
+                "526k",
+                "1024k"
+            ]
+        },
+        "client_max_body_size": {
+            "desc": "默认值：32m",
+            "dtype": "string",
+            "options": [
+                "4m",
+                "8m",
+                "16m",
+                "32m",
+                "64m",
+                "128m",
+                "256m"
+            ]
+        },
+        "client_header_buffer_size": {
+            "desc": "默认值：4k",
+            "dtype": "string",
+            "options": [
+                "2k",
+                "4k",
+                "8k",
+                "16k",
+                "32k",
+                "64k"
+            ]
+        },
+        "client_header_timeout": {
+            "desc": "默认值：30",
+            "dtype": "int",
+            "range": [
+                10,
+                100
+            ]
+        },
+        "open_file_cache": {
+            "desc": "默认值：max=10240 inactive=10s",
+            "dtype": "string",
+            "options": [
+                "max=1024 inactive=10s",
+                "max=10240 inactive=10s",
+		"max=10240000 inactive=60s"
+            ]
+        },
+        "open_file_cache_valid": {
+            "desc": "默认值：30s",
+            "dtype": "string",
+            "options": [
+                "10s",
+                "30s",
+                "60s",
+		"80s",
+                "90s",
+                "120s",
+                "150s"
+            ]
+        },
+        "open_file_cache_min_uses": {
+            "desc": "默认值：2",
+            "dtype": "int",
+            "range": [
+                2,
+                10
+            ]
+        },
+        "gzip": {
+            "desc": "默认值：off",
+            "dtype": "string",
+            "options": [
+                "on",
+                "off"
+            ]
+        },
+        "gzip_min_length": {
+            "desc": "默认值：1024",
+            "dtype": "int",
+            "range": [
+                1024,
+                102400
+            ]
+        },
+        "gzip_buffers": {
+            "desc": "默认值：4 4k",
+            "dtype": "string",
+            "options": [
+                "4 4k",
+                "4 8k",
+                "8 8k",
+                "16 8k",
+                "16 16k",
+                "16 32k"
+            ]
+        },
+        "gzip_comp_level": {
+            "desc": "默认值：5",
+            "dtype": "int",
+            "range": [
+                1,
+                9
+            ]
+        },
+        "ssl_session_cache": {
+            "desc": "默认值：shared:SSL:1m",
+            "dtype": "string",
+            "options": [
+                "off",
+                "none",
+                "builtin:1000",
+                "shared:SSL:1m"
+            ]
+        },
+        "ssl_session_timeout": {
+            "desc": "默认值：5m",
+            "dtype": "string",
+            "options": [
+                "2m",
+                "5m",
+                "10m",
+                "20m"
+            ]
+        },
+        "proxy_connect_timeout": {
+            "desc": "默认值：5",
+            "dtype": "int",
+            "range": [
+                1,
+                50
+            ]
+        },
+        "proxy_read_timeout": {
+            "desc": "默认值：60",
+            "dtype": "int",
+            "range": [
+                6,
+                600
+            ]
+        },
+        "proxy_send_timeout": {
+            "desc": "默认值：60",
+            "dtype": "int",
+            "range": [
+                6,
+                600
+            ]
+        },
+        "ssl_buffer_size": {
+            "desc": "默认值：64",
+            "dtype": "string",
+            "options": [
+                "64",
+                "128",
+                "526",
+                "4k",
+                "64k",
+                "256k",
+                "1m",
+                "4m"
+            ]
+        },
+	"sendfile_max_chunk": {
+            "desc": "默认值：64",
+            "dtype": "string",
+            "options": [
+                "100k",
+                "200k",
+                "300k",
+                "400k",
+                "500k",
+                "600k",
+                "700k",
+                "800k",
+		"900k",
+		"1024k"
+            ]
+        }
+
+    }
+}
