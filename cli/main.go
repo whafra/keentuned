@@ -18,7 +18,7 @@ var rootCmd = &cobra.Command{
 	Long:  "KeenTune is an AI tuning tool for Linux system and cloud applications",
 	Example: "\tkeentune param -h" +
 		"\n\tkeentune profile -h" +
-		"\n\tkeentune rollbackall -h\n\tkeentune sensitize -h" +
+		"\n\tkeentune sensitize -h" +
 		"\n\tkeentune version -h",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return cmd.Help()

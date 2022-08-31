@@ -145,11 +145,3 @@ func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
 
-func RunRollbackAllRemote() {
-	remoteImpl("system.RollbackAll", "")
-}
-
-func RunInitRemote() {
-	remoteImpl("system.Init", "")
-}
-
