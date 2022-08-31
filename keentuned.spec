@@ -2,7 +2,7 @@
 %define anolis_release 1
 
 Name:           keentuned
-Version:        1.3.0
+Version:        1.3.2
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
@@ -63,6 +63,12 @@ fi
 %{_mandir}/man7/keentune-detect.7*
 
 %changelog
+* Wed Aug 31 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.2-1
+- fix some issues
+
+* Fri Aug 26 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.3.1-1
+- add yitian optimization
+
 * Thu Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
 - fix: missing of man dir
 

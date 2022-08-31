@@ -21,6 +21,7 @@ func createConfigCmd() *cobra.Command {
 			cmd.Usage()
 			os.Exit(1)
 		},
+		Hidden: true,
 	}
 
 	var availableCmd []*cobra.Command
