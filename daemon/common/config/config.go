@@ -16,7 +16,7 @@ import (
 	"github.com/go-ini/ini"
 )
 
-// KeentunedConf
+// KeentunedConf ...
 type KeentunedConf struct {
 	Default `ini:"keentuned"`
 	Bench   `ini:"-"`
@@ -24,6 +24,7 @@ type KeentunedConf struct {
 	Brain   `ini:"brain"`
 }
 
+// Brain ...
 type Brain struct {
 	BrainIP   string `ini:"BRAIN_IP"`
 	BrainPort string `ini:"BRAIN_PORT"`
@@ -31,6 +32,7 @@ type Brain struct {
 	Explainer string `ini:"SENSITIZE_ALGORITHM"`
 }
 
+// Default ...
 type Default struct {
 	Home          string `ini:"KEENTUNED_HOME"`
 	Port          string `ini:"PORT"`
@@ -54,11 +56,13 @@ type Default struct {
 	AfterRound int `ini:"RECHECK_BENCH_ROUND"`
 }
 
+// Bench ...
 type Bench struct {
 	BenchGroup []BenchGroup   `ini:"-"`
 	BenchIPMap map[string]int `ini:"-"`
 }
 
+// BenchGroup ...
 type BenchGroup struct {
 	SrcIPs    []string
 	SrcPort   string
@@ -66,15 +70,17 @@ type BenchGroup struct {
 	BenchConf string
 }
 
+// Group ...
 type Group struct {
 	ParamMap  []DBLMap
 	ParamConf string
 	IPs       []string
 	Port      string
-	GroupName string //target-group-x
-	GroupNo   int    //No. x of target-group-x
+	GroupName string // target-group-x
+	GroupNo   int    // No. x of target-group-x
 }
 
+// Target ...
 type Target struct {
 	Group []Group
 	IPMap map[string]int
@@ -85,6 +91,9 @@ type DBLMap = map[string]map[string]interface{}
 
 const (
 	keentuneConfigFile = "/etc/keentune/conf/keentuned.conf"
+
+	// KeenTuneYMLFile ...
+	KeenTuneYMLFile = "/etc/keentune/conf/init.yaml"
 )
 
 var (
@@ -116,6 +125,7 @@ const (
 	BenchSectionPrefix  = "bench-group"
 )
 
+// Init ...
 func Init() {
 	KeenTune = new(KeentunedConf)
 	err := KeenTune.Save()
@@ -148,6 +158,7 @@ func initChanAndIPMap() {
 	}
 }
 
+// Save ...
 func (c *KeentunedConf) Save() error {
 	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
@@ -216,7 +227,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		group.Port = target.Key("TARGET_PORT").MustString("9873")
 
 		group.GroupName = groupName
-		groupName = groupName[13:] //截取“target-group-”后面的内容
+		groupName = groupName[13:] // 截取“target-group-”后面的内容
 		groupNo, err := strconv.Atoi(groupName)
 		if err != nil || groupNo <= 0 {
 			return fmt.Errorf("target-group is error, please check configure first")
@@ -306,6 +317,7 @@ func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]stri
 	return nil
 }
 
+// GetLogConf ...
 func (c *KeentunedConf) GetLogConf(cfg *ini.File) {
 	logInst := cfg.Section("keentuned")
 	c.LogFileLvl = logInst.Key("LOGFILE_LEVEL").MustString("DEBUG")
@@ -347,6 +359,7 @@ func changeStringToSlice(ipString string) ([]string, error) {
 	return validIPs, nil
 }
 
+// InitWorkDir ...
 func InitWorkDir() error {
 	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
@@ -366,6 +379,7 @@ func getWorkDir(cfg *ini.File) {
 	KeenTune.VersionConf = keentune.Key("VERSION_NUM").MustString("")
 }
 
+//  InitTargetGroup ...
 func InitTargetGroup() error {
 	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
 	if err != nil {
@@ -384,6 +398,7 @@ func InitTargetGroup() error {
 	return nil
 }
 
+// GetJobParamConfig ...
 func GetJobParamConfig(job string) (string, string, error) {
 	jobPath := GetTuningPath(job)
 	if !file.IsPathExist(jobPath) {

@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -144,23 +145,7 @@ func isIP(ip string) bool {
 	return address != nil
 }
 
-func ConcurrentSecurityMap(origin map[string]interface{}, keys []string, values []interface{}) map[string]interface{} {
-	var newMap = make(map[string]interface{})
-	for key, value := range origin {
-		newMap[key] = value
-	}
-
-	if len(keys) != len(values) {
-		return newMap
-	}
-
-	for i, value := range values {
-		newMap[keys[i]] = value
-	}
-
-	return newMap
-}
-
+// FormatInTable format content to a table string
 func FormatInTable(data [][]string) string {
 	if len(data) == 0 || len(data[0]) == 0 {
 		return ""
@@ -222,6 +207,7 @@ func RemoveRepeated(s []string) []string {
 	return result
 }
 
+// DeepCopy deep copy from src to dst
 func DeepCopy(dst, src interface{}) error {
 	bytes, err := json.Marshal(src)
 	if err != nil {
@@ -229,5 +215,47 @@ func DeepCopy(dst, src interface{}) error {
 	}
 
 	return json.Unmarshal(bytes, dst)
+}
+
+// Ping detect ip whether is reachable
+func Ping(ip string, port string) error {
+	if ip != "localhost" {
+		ipMatch := net.ParseIP(ip)
+		if ipMatch == nil {
+			return fmt.Errorf("ip %v is invalid", ip)
+		}
+	}
+
+	if pingTong(ip) {
+		return nil
+	}
+
+	return dail(ip, port)
+}
+
+func dail(ip, port string) error {
+	addr := net.JoinHostPort(ip, port)
+	connect, err := net.DialTimeout("tcp", addr, 3*time.Second)
+	if err != nil || connect == nil {
+		return fmt.Errorf("'%v:%v' is unreachable", ip, port)
+	}
+
+	connect.Close()
+
+	return nil
+}
+
+func pingTong(ip string) bool {
+	var success = "true"
+	whichPing := "which ping > /dev/null && echo true || echo false"
+	output, _ := exec.Command("/bin/bash", "-c", whichPing).Output()
+	if strings.TrimSpace(string(output)) != success {
+		return false
+	}
+
+	pingCmd := fmt.Sprintf("ping -c 1 -w 2 %s > /dev/null && echo true || echo false", ip)
+	output, _ = exec.Command("/bin/bash", "-c", pingCmd).Output()
+
+	return success == strings.TrimSpace(string(output))
 }
 

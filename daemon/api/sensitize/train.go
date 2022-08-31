@@ -16,6 +16,7 @@ import (
 	"time"
 )
 
+// TrainFlag ...
 type TrainFlag struct {
 	Job    string
 	Data   string
@@ -45,7 +46,7 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 }
 
 func runTrain(flags TrainFlag) {
-	m.SetRunningTask(com.JobTraining, flags.Job)
+	m.SetRunningTask(m.JobTraining, flags.Job)
 	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
@@ -63,6 +64,7 @@ func runTrain(flags TrainFlag) {
 	return
 }
 
+// TrainImpl ...
 func TrainImpl(flag TrainFlag, cmd string) error {
 
 	tuner := &m.Tuner{

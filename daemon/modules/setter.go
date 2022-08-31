@@ -6,33 +6,41 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	"os"
 	"strings"
 )
 
+// Setter ...
 type Setter struct {
-	IdMap     map[int]int // key: total group Idx; value: real setter groupIdx
-	Group     []bool
-	ConfFile  []string
-	recommend string
+	Group         []bool
+	ConfFile      []string
+	recommend     string
+	preSetWarning string
 }
 
-type ResultProfileSet struct {
-	Info    string
-	Success bool
-}
-
-// Tune : tuning main process
-func (tuner *Tuner) Set() error {
+// Set profile set  main process
+func (tuner *Tuner) Set() {
 	var err error
 	tuner.logName = log.ProfSet
-	if err = tuner.initProfiles(); err != nil {
-		log.Errorf(log.ProfSet, "init profiles %v", err)
-		return fmt.Errorf("init profiles %v", err)
+	err = tuner.initProfiles()
+	if len(tuner.recommend) > 0 {
+		fmtStr := fmt.Sprintf("%v\n%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"), tuner.recommend)
+		log.Infof(log.ProfSet, fmtStr)
 	}
 
-	if len(tuner.recommend) > 0 {
-		log.Infof(log.ProfSet, "[+] Optimizing Recommendation\n%v", tuner.recommend)
+	if len(tuner.preSetWarning) > 0 {
+		for _, preWarning := range strings.Split(tuner.preSetWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(preWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(log.ProfSet, preWarning)
+			}
+		}
+	}
+
+	if err != nil {
+		log.Errorf(log.ProfSet, "%v", err)
+		return
 	}
 
 	defer func() {
@@ -42,31 +50,36 @@ func (tuner *Tuner) Set() error {
 	}()
 
 	if err = tuner.prepareBeforeSet(); err != nil {
-		log.Errorf(log.ProfSet, "prepare for setting %v", err)
-		return fmt.Errorf("prepare for setting %v", err)
+		log.Error(log.ProfSet, err.Error())
+		return
 	}
+
+	groupSetResult := fmt.Sprintf("%v\n", utils.ColorString("green", "[+] Profile Result (Auto Settings)"))
+	if len(log.ClientLogMap[log.ProfSet]) > 0 {
+		groupSetResult = fmt.Sprintf("\n%v", groupSetResult)
+	}
+
+	log.Infof(log.ProfSet, groupSetResult)
 
 	err = tuner.setConfigure()
 	if err != nil {
 		log.Errorf(log.ProfSet, "Set failed: %v", err)
-		return err
+		return
 	}
 
 	err = tuner.updateActive()
 	if err != nil {
-		return err
+		return
 	}
 
-	groupSetResult := "[+] Optimizing Setting\n"
-	groupSetResult += tuner.applySummary
-	log.Infof(log.ProfSet, groupSetResult)
+	log.Info(log.ProfSet, tuner.applySummary)
 
-	return nil
+	return
 }
 
 func (tuner *Tuner) updateActive() error {
 	activeFile := config.GetProfileWorkPath("active.conf")
-	//先拼接，再写入
+	// 先拼接，再写入
 	var fileSet = fmt.Sprintln("name,group_info")
 	var activeInfo = make(map[string][]string)
 	for groupIndex, settable := range tuner.Setter.Group {
@@ -103,12 +116,22 @@ func (tuner *Tuner) prepareBeforeSet() error {
 
 	// step3. backup the target machine
 	err = tuner.backup()
+	if tuner.backupWarning != "" {
+		for _, backupWarning := range strings.Split(tuner.backupWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(backupWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(tuner.logName, backupWarning)
+			}
+		}
+	}
+
 	if err != nil {
-		return fmt.Errorf("backup failed:\n%v", tuner.backupFailure)
+		return fmt.Errorf("%v", tuner.backupFailure)
 	}
 	return nil
 }
 
+// UpdateActiveFile ...
 func UpdateActiveFile(fileName string, info []byte) error {
 	if err := ioutil.WriteFile(fileName, info, os.ModePerm); err != nil {
 		return err

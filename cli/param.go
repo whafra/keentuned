@@ -26,18 +26,10 @@ func createParamCmds() *cobra.Command {
 		Short:   "Dynamic parameter tuning with AI algorithms",
 		Long:    "Dynamic parameter tuning with AI algorithms",
 		Example: fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s\n%s", egParamDel, egDump, egJobs, egParamList, egParamRollback, egParamStop, egTune),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" && args[0] != "tune" && args[0] != "list" && args[0] != "jobs" && args[0] != "delete" && args[0] != "dump" && args[0] != "rollback" && args[0] != "stop" {
-					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				}
-			}
-
-			if len(args) == 0 {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-			}
-
-			return cmd.Help()
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+			cmd.Usage()
+			os.Exit(1)
 		},
 	}
 
@@ -64,8 +56,8 @@ func tuneCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			initWorkDirectory()
@@ -124,8 +116,8 @@ func deleteParamJobCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 			flag.Cmd = "param"
 
@@ -168,8 +160,8 @@ func dumpCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(dump.Name, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			err := checkDumpParam(&dump)

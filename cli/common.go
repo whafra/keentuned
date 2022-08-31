@@ -22,8 +22,30 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(versionCmd()))
 	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
 	subCmds = append(subCmds, decorateCmd(createRollbackAllCmd()))
+	subCmds = append(subCmds, decorateCmd(initCmd()))
 
 	return subCmds
+}
+
+func initCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "init",
+		Short:   "Initialize configuration",
+		Long:    "Initialize configuration, Ping connectivity between nodes",
+		Example: "\tkeentune init",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 0 {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				os.Exit(1)
+			}
+
+			RunInitRemote()
+			return
+		},
+	}
+
+	return cmd
 }
 
 func createRollbackAllCmd() *cobra.Command {
@@ -105,8 +127,8 @@ func benchCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			if strings.Trim(flag.Name, " ") == "" || strings.Trim(flag.BenchConf, " ") == "" {
 				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				cmd.Help()
-				return
+				cmd.Usage()
+				os.Exit(1)
 			}
 
 			RunBenchRemote(cmd.Context(), flag)

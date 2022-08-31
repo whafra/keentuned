@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"keentune/daemon/common/config"
+	"keentune/daemon/common/utils"
 	"os"
 	"runtime"
 	"strings"
@@ -18,6 +19,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// ConsoleLevel Console Log Level
 const ConsoleLevel = "ERROR"
 
 var fLogger *logrus.Logger
@@ -72,12 +74,13 @@ const (
 	RollbackAll   = "rollback all"
 )
 
+// record task to Log file 
 var (
-	ParamTune        = "param tune"
-	SensitizeCollect = "sensitize collect"
-	SensitizeTrain   = "sensitize train"
+	ParamTune      = "param tune"
+	SensitizeTrain = "sensitize train"
 )
 
+// ClientLogMap ...
 var ClientLogMap = make(map[string]string)
 
 func getLevel(lvl string) logrus.Level {
@@ -89,6 +92,7 @@ func getLevel(lvl string) logrus.Level {
 	return ret
 }
 
+//  Init ...
 func Init() {
 	fLogger = &logrus.Logger{Level: getLevel(config.KeenTune.LogFileLvl)}
 	cLogger = &logrus.Logger{Level: getLevel(ConsoleLevel)}
@@ -140,7 +144,7 @@ func (s *consoleLogFormater) Format(entry *logrus.Entry) ([]byte, error) {
 
 func updateClientLog(cmd, msg string) {
 	// update tune, collect, train log client log to file
-	if (strings.Contains(cmd, ParamTune) || strings.Contains(cmd, SensitizeCollect) || strings.Contains(cmd, SensitizeTrain)) && msg != "" {
+	if (strings.Contains(cmd, ParamTune) || strings.Contains(cmd, SensitizeTrain)) && msg != "" {
 		cmdParts := strings.Split(cmd, ":")
 		if len(cmdParts) != 2 {
 			return
@@ -170,9 +174,10 @@ func updateClientLog(cmd, msg string) {
 	}
 }
 
+// ClearCliLog clear cache log info
 func ClearCliLog(cmd string) {
 	// clear other log from memory
-	if !strings.Contains(cmd, ParamTune) && !strings.Contains(cmd, SensitizeCollect) && !strings.Contains(cmd, SensitizeTrain) {
+	if !strings.Contains(cmd, ParamTune) && !strings.Contains(cmd, SensitizeTrain) {
 		ClientLogMap[cmd] = ""
 	}
 }
@@ -336,17 +341,34 @@ func cacheLog(cmd, level, format string, args ...interface{}) {
 	} else {
 		msg = fmt.Sprintf(format, args...)
 	}
+
+	trimMsg := strings.TrimSuffix(msg, "\n")
 	switch level {
 	case "ERROR", "WARNING":
-		msg = fmt.Sprintf("[%s] %s\n", level, msg)
+		if cmd == ProfSet {
+			msg = fmt.Sprintf("\t[%s] %s\n", colorLevel(level), trimMsg)
+			break
+		}
+		msg = fmt.Sprintf("[%s] %s\n", colorLevel(level), trimMsg)
 	case "INFO":
-		msg = fmt.Sprintf("%s\n", msg)
+		msg = fmt.Sprintf("%s\n", trimMsg)
 	default:
 		return
 	}
 
 	if cmd != "" {
 		updateClientLog(cmd, msg)
+	}
+}
+
+func colorLevel(lev string) string {
+	switch lev {
+	case "ERROR":
+		return utils.ColorString("red", lev)
+	case "WARNING":
+		return utils.ColorString("yellow", lev)
+	default:
+		return lev
 	}
 }
 

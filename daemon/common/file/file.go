@@ -12,13 +12,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 )
-
-const recommendReg = "^recommend.+$"
 
 // IsPathExist ...
 func IsPathExist(path string) bool {
@@ -128,125 +124,7 @@ func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]s
 	return result, nil
 }
 
-// ConvertConfFileToJson convert conf file to json
-func ConvertConfFileToJson(fileName string) (string, map[string]map[string]interface{}, error) {
-	paramBytes, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return "", nil, fmt.Errorf("read file err: %v", err)
-	}
-
-	if len(paramBytes) == 0 {
-		return "", nil, fmt.Errorf("read file is empty")
-	}
-
-	var resultMap = make(map[string]map[string]interface{})
-	var domainMap = make(map[string][]map[string]interface{})
-
-	commonDomain := ""
-	recommends := ""
-	var tmpRecommendMap = make(map[string][]string)
-	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
-	for _, line := range strings.Split(replacedStr, "\n") {
-		if len(strings.TrimSpace(line)) == 0 {
-			continue
-		}
-
-		if strings.Contains(line, "[") {
-			commonDomain = strings.Trim(strings.Trim(strings.TrimSpace(line), "]"), "[")
-			continue
-		}
-
-		recommend, param, err := readLine(line)
-		if err != nil {
-			fmt.Printf("read line [%v] err:%v\n", line, err)
-			continue
-		}
-
-		if len(recommend) != 0 {
-			tmpRecommendMap[commonDomain] = append(tmpRecommendMap[commonDomain], recommend)
-			continue
-		}
-
-		domainMap[commonDomain] = append(domainMap[commonDomain], param)
-	}
-
-	for key, value := range tmpRecommendMap {
-		recommends += fmt.Sprintf("[%v]\n%v\n", key, strings.Join(value, ""))
-	}
-
-	if len(domainMap) == 0 {
-		if recommends != "" {
-			return recommends, nil, nil
-		}
-
-		return recommends, nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-	}
-
-	for domain, paramSlice := range domainMap {
-		if len(paramSlice) == 0 {
-			return recommends, nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-		}
-
-		var paramMap = make(map[string]interface{})
-		for _, paramInfo := range paramSlice {
-			name, ok := paramInfo["name"].(string)
-			if !ok {
-				fmt.Printf("parse name from [%v] failed\n", paramInfo)
-				continue
-			}
-			delete(paramInfo, "name")
-			paramMap[name] = paramInfo
-		}
-		resultMap[domain] = paramMap
-	}
-
-	return recommends, resultMap, nil
-}
-
-func readLine(line string) (string, map[string]interface{}, error) {
-	paramSlice := strings.Split(line, ":")
-	partLen := len(paramSlice)
-	switch {
-	case partLen <= 1:
-		return "", nil, fmt.Errorf("param %v length %v is invalid, required: 2", paramSlice, len(paramSlice))
-	case partLen == 2:
-		return getParam(paramSlice)
-	default:
-		newSlice := []string{paramSlice[0]}
-		newSlice = append(newSlice, strings.Join(paramSlice[1:], ":"))
-		return getParam(newSlice)
-	}
-}
-
-func getParam(paramSlice []string) (string, map[string]interface{}, error) {
-	var param map[string]interface{}
-	var recommend string
-	paramName := strings.TrimSpace(paramSlice[0])
-	valueStr := strings.ReplaceAll(strings.TrimSpace(paramSlice[1]), "\"", "")
-	matched, _ := regexp.MatchString(recommendReg, strings.ToLower(valueStr))
-	if matched {
-		recommend = fmt.Sprintf("\t%v: %v\n", paramName, strings.TrimPrefix(valueStr, "recommend:"))
-		return recommend, nil, nil
-	}
-
-	value, err := strconv.ParseInt(valueStr, 10, 64)
-	if err != nil {
-		param = map[string]interface{}{
-			"value": valueStr,
-			"dtype": "string",
-			"name":  paramName,
-		}
-		return recommend, param, nil
-	}
-
-	param = map[string]interface{}{
-		"value": value,
-		"dtype": "int",
-		"name":  paramName,
-	}
-	return recommend, param, nil
-}
-
+// Save2CSV save data to csv file
 func Save2CSV(path, fileName string, data map[string][]float32) error {
 	if !IsPathExist(path) {
 		err := os.MkdirAll(path, os.ModePerm)
@@ -296,6 +174,7 @@ func Save2CSV(path, fileName string, data map[string][]float32) error {
 	return nil
 }
 
+// GetWalkPath get match file path
 func GetWalkPath(folder, match string) (string, error) {
 	var result string
 	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
@@ -313,6 +192,7 @@ func GetWalkPath(folder, match string) (string, error) {
 	return result, nil
 }
 
+// GetPlainName get plain file name without any path
 func GetPlainName(fileName string) string {
 	if !strings.Contains(fileName, "/") || fileName == "" {
 		return fileName

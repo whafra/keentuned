@@ -149,3 +149,7 @@ func RunRollbackAllRemote() {
 	remoteImpl("system.RollbackAll", "")
 }
 
+func RunInitRemote() {
+	remoteImpl("system.Init", "")
+}
+

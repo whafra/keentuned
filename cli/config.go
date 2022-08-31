@@ -16,18 +16,10 @@ func createConfigCmd() *cobra.Command {
 		Short:   "KeenTuned configuration operation command",
 		Long:    "KeenTuned configuration operation command",
 		Example: "keentune config target",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) > 0 {
-				if args[0] != "--help" && args[0] != "-h" && args[0] != "target" {
-					fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-				}
-			}
-
-			if len(args) == 0 {
-				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
-			}
-
-			return cmd.Help()
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+			cmd.Usage()
+			os.Exit(1)
 		},
 	}
 

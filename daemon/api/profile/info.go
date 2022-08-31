@@ -15,7 +15,7 @@ func (s *Service) Info(fileName string, reply *string) error {
 		log.ClearCliLog(log.ProfInfo)
 	}()
 
-	fullName := config.GetAbsolutePath(fileName, "profile", ".conf", "")
+	fullName := config.GetProfilePath(fileName)
 	if !file.IsPathExist(fullName) {
 		log.Errorf(log.ProfInfo, "File %v is non-existent.", fileName)
 		return fmt.Errorf("File %v is non-existent.", fileName)
