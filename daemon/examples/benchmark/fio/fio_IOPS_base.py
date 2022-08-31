@@ -24,25 +24,38 @@ e.g.
 """
 
 #const
-FileName = "/dev/sdb"
-Block_Size = "512B"
-DEFAULT_rw = "read"
+FileName = "/dev/sda"
+TestType = "read"
+COMMAND = "-ioengine=psync -time_based=1 -rw={0} -direct=1 -buffered=0 -thread -size=110g -runtime=300 -lockmem=1G -group_reporting -name={0}".format(TestType)
+DEFAULT = "-bs=512B -numjobs=8 -iodepth=1"
 
 class Benchmark():
-    def __init__(self, filename=FileName, bs=Block_Size, rw=DEFAULT_rw):
+    def __init__(self, filename=FileName, default=DEFAULT, command=COMMAND):
         """Init benchmark
         """
         self.filename = filename
-        self.bs = bs
-        self.rw = rw
+        self.command = command
+        self.default = DEFAULT
+
+    def __transfMeasurement(self,value,measurement):
+        if measurement == '':
+            return value
+
+        # measurement of IOPS
+        elif measurement == "k":
+            return value * 10 ** 3
+        elif measurement == 'M':
+            return value * 10 ** 6
+        elif measurement == 'G':
+            return value * 10 ** 9
+
 
     def run(self):
         """Run benchmark and parse output
 
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        cmd = 'fio -filename={} -ioengine=psync -time_based=1 -rw={} -direct=1 -buffered=0 -thread -size=110g -bs={} -numjobs=16 -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read'.format(
-                self.filename,self.rw,self.bs)
+        cmd = 'fio -filename={} {} {}'.format(self.filename, self.default, self.command)
         logger.info(cmd)
         result = subprocess.run(
                     cmd,
@@ -54,15 +67,18 @@ class Benchmark():
         self.out = result.stdout.decode('UTF-8','strict')
         self.error = result.stderr.decode('UTF-8','strict')
         if result.returncode == 0:
-            pattern_iops = re.compile(r'IOPS=([\d.]+)')
-            pattern_bw = re.compile(r'BW=([\d.]+)')
+            pattern_iops = re.compile(r'[iI][oO][pP][sS]=([\d\.]+)(\w*)')
+            pattern_bw = re.compile(r'[bB][wW]=([\d\.]+)')
 
             if not re.search(pattern_iops,self.out) \
                 or not re.search(pattern_bw,self.out):
                 logger.error("can not parse output: {}".format(self.out))
                 return False, []
 
-            iops = float(re.search(pattern_iops,self.out).group(1))
+            _iops = float(re.search(pattern_iops,self.out).group(1))
+            iops_measurement = re.search(pattern_iops,self.out).group(2)
+            iops = self.__transfMeasurement(_iops, iops_measurement)
+
             bw = float(re.search(pattern_bw,self.out).group(1))
             result = {
                 "IOPS": iops,

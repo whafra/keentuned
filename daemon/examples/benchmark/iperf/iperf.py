@@ -4,22 +4,24 @@ import re
 import sys
 import subprocess
 import logging
+import time
 logger = logging.getLogger(__name__)
 
 """
-Wrk Http long link benchmark
+iperf benchmark
 e.g.
 'iperf3 -c 127.0.0.1 -u -t 10 -P 1 -b 1M  -M 100 -w 10240 -l 8192 -Z'
 """
 
 # const
-TIME_DATA = 15
-PARALLEL_DATA = 1
-COMMAND = "-t 15 -M 1500 -P 1 -w 10240 -l 10240"
+TIME = 15
+PARALLEL = 10
+COMMAND = "-t {} -i 3".format(TIME)
+DEFAULT = "-P 10 -w 10240 -l 131072"
 
 
 class Benchmark():
-    def __init__(self, url, time_data=TIME_DATA, parallel_data=PARALLEL_DATA, command=COMMAND):
+    def __init__(self, url, default=DEFAULT, time=TIME, command=COMMAND, parallel=PARALLEL):
         """Init benchmark
 
         Args:
@@ -29,9 +31,9 @@ class Benchmark():
             duration (int, optional): Duration of test. Defaults to 30.
         """
         self.url = url
-        self.time = time_data
-        self.parallel = parallel_data
-        self.command = command
+        self.time = time
+        self.parallel = parallel
+        self.command = ' '.join((command, default))
         self.out = ""
         self.error = ""
     
@@ -107,6 +109,7 @@ class Benchmark():
             }
             
             result_str = ", ".join(["{}={}".format(k,v) for k,v in result.items()])
+            time.sleep(60)
             print(result_str)
             return True, result_str
 
@@ -117,7 +120,8 @@ class Benchmark():
 
 if __name__ == "__main__":
     if sys.argv.__len__() <= 1:
-        print("'Keentuned ip' is wanted: python3 ack_nginx_http_short.py [Target ip]")
+        print("'Target ip' is wanted: python3 iperf.py [Target ip]")
         exit(1)
     bench = Benchmark(sys.argv[1])
     suc, res = bench.run()
+
