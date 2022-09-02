@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// LimitBytes
+	// LimitBytes ...
 	LimitBytes = 1024 * 1024 * 5
 )
 
@@ -230,7 +230,7 @@ func execCmd(inputCmd string, result *string) error {
 	stderr, _ := cmd.StderrPipe()
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("can not obtain stdout pipe for command:%s\n", err)
+		return fmt.Errorf("can not obtain stdout pipe for command: %s", err)
 	}
 
 	if err = cmd.Start(); err != nil {
@@ -275,12 +275,10 @@ func getMsg(origin, cmd string) string {
 		return origin
 	}
 
-	pureMSg := strings.ReplaceAll(
-		strings.ReplaceAll(
-			strings.ReplaceAll(
-				origin, "\x1b[1;40;32m", ""),
-			"\x1b[0m", ""),
-		"\x1b[1;40;31m", "")
+	// replace color control special chars
+	matchStr := "\u001B\\[1;40;3[1-3]m(.*?)\u001B\\[0m"
+	re := regexp.MustCompile(matchStr)
+	pureMSg := re.ReplaceAllString(strings.TrimSpace(origin), "$1")
 
 	changeLinefeed := strings.ReplaceAll(pureMSg, "\n", "\\n")
 	changeTab := strings.ReplaceAll(changeLinefeed, "\t", " ")
