@@ -9,6 +9,7 @@ import (
 	"os"
 )
 
+// job type ...
 const (
 	// JobTuning job type is tuning
 	JobTuning    = "tuning"
@@ -17,7 +18,7 @@ const (
 	JobBenchmark = "benchmark"
 )
 
-//  table header const
+// tuning job table header const
 const (
 	// TabName tuning table column: name
 	TabName     = "name"
@@ -41,7 +42,7 @@ var TuneJobHeader = []string{
 
 const activeJobCsv = "/var/keentune/runningJob.csv"
 
-//  table header const
+// train job table header const
 const (
 	// TabTrainName train table column: name
 	TabTrainName   = "name"
@@ -56,6 +57,7 @@ const (
 	TabTrainPath   = "data_path"
 )
 
+// SensitizeJobHeader ...
 var SensitizeJobHeader = []string{
 	TabTrainName, TabTrainStart, TabTrainEnd, TabTrainCost, TabTrainRound,
 	TabTrainStatus, TabTrainLog, TabTrainWSP, TabTrainAlgo,
@@ -70,6 +72,7 @@ func getSensitizeJobFile() string {
 	return fmt.Sprint(config.GetDumpPath(config.SensitizeCsv))
 }
 
+// format and job status
 const (
 	NA     = "-"
 	Format = "2006-01-02 15:04:05"
@@ -82,6 +85,7 @@ const (
 	Kill   = "kill"
 )
 
+// table column count
 const (
 	TuneCols = 11
 )
@@ -129,7 +133,24 @@ func (tuner *Tuner) CreateTuneJob() error {
 		config.GetTuningPath(tuner.Name), cmd, log,
 	}
 
+	tuner.backupConfFile()
 	return file.Insert(getTuneJobFile(), jobInfo)
+}
+
+func (tuner *Tuner) backupConfFile() {
+	var workPath, filePath string
+	if tuner.Flag == JobTuning {
+		workPath = config.GetTuningPath(tuner.Name)
+	}
+
+	if tuner.Flag == JobTraining {
+		workPath = config.GetSensitizePath(tuner.Job)
+	}
+
+	os.Mkdir(workPath, 0755)
+
+	filePath = fmt.Sprintf("%v/keentuned.conf", workPath)
+	file.Copy(config.GetKeenTunedConfPath(""), filePath)
 }
 
 func (tuner *Tuner) updateJob(info map[int]interface{}) {
