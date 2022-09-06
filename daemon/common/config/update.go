@@ -238,6 +238,7 @@ func getTargetConf(targetGroup []Group) string {
 	return targetConf
 }
 
+// UpdateKeentunedConf ...
 func UpdateKeentunedConf(info string) (string, error) {
 	details := strings.Split(info, "\n")
 	if len(details) == 0 {
@@ -288,5 +289,35 @@ func UpdateKeentunedConf(info string) (string, error) {
 	result = "keentuned configure save success"
 
 	return result, nil
+}
+
+// reloadConf ...
+func reloadConf() error {
+	var mutex = &sync.RWMutex{}
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	KeenTune = new(KeentunedConf)
+	err := KeenTune.Save()
+	if err != nil {
+		return err
+	}
+
+	initChanAndIPMap()
+	return nil
+}
+
+// CheckAndReloadConf check md5 of ENV keentuned.conf and reload conf to cache
+func CheckAndReloadConf() error {
+	md5Hash := GetKeenTuneConfFileMD5()
+	if KeenTuneConfMD5 != md5Hash {
+		KeenTuneConfMD5 = md5Hash
+		err := reloadConf()
+		if err != nil {
+			return fmt.Errorf("reload conf failed: %v", err)
+		}
+	}
+
+	return nil
 }
 

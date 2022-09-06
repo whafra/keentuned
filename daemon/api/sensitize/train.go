@@ -28,9 +28,9 @@ type TrainFlag struct {
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	err := config.Backup(flags.Config, flags.Job, "training")
+	err := config.CheckAndReloadConf()
 	if err != nil {
-		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
+		return err
 	}
 
 	if err := com.CheckBrainClient(); err != nil {

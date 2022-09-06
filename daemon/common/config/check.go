@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -8,6 +9,10 @@ import (
 	"keentune/daemon/common/utils"
 	"strings"
 )
+
+const hexTable = "0123456789abcdef"
+
+var KeenTuneConfMD5 string
 
 type Parameter struct {
 	Domain   string        `json:"domain"`
@@ -344,6 +349,7 @@ func isDataTypeOK(dtype string) bool {
 	}
 }
 
+// GetPriorityParams get param array by Priority
 func GetPriorityParams(userParamMap DBLMap) ([]DBLMap, error) {
 	var mergedParam = make([]DBLMap, PRILevel)
 	for domainName, domainMap := range userParamMap {
@@ -373,5 +379,20 @@ func GetPriorityParams(userParamMap DBLMap) ([]DBLMap, error) {
 		}
 	}
 	return mergedParam, nil
+}
+
+// GetKeenTuneConfFileMD5 get md5 of keentuned.conf file
+func GetKeenTuneConfFileMD5() string {
+	infos, _ := ioutil.ReadFile(keentuneConfigFile)
+	src := md5.Sum(infos)
+	var dst = make([]byte, 32)
+	j := 0
+	for _, v := range src {
+		dst[j] = hexTable[v>>4]
+		dst[j+1] = hexTable[v&0x0f]
+		j += 2
+	}
+
+	return string(dst)
 }
 
