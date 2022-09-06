@@ -247,7 +247,7 @@ func UpdateKeentunedConf(info string) (string, error) {
 	var mutex = &sync.RWMutex{}
 	mutex.Lock()
 	defer mutex.Unlock()
-	cfg, err := ini.InsensitiveLoad(keentuneConfigFile)
+	cfg, err := ini.Load(keentuneConfigFile)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse %s, %v", "keentuned.conf", err)
 	}
@@ -270,7 +270,8 @@ func UpdateKeentunedConf(info string) (string, error) {
 			continue
 		}
 
-		cfg.Section(domain).Key(strings.ToUpper(kvs[0])).SetValue(kvs[1])
+		value := strings.TrimSpace(strings.Trim(kvs[1], "\""))
+		cfg.Section(domain).Key(strings.TrimSpace(strings.ToUpper(kvs[0]))).SetValue(value)
 
 	}
 
