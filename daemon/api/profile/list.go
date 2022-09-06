@@ -34,9 +34,9 @@ func (s *Service) List(flag string, reply *string) error {
 		activeFlag := false
 		for _, record := range records {
 			if len(record) == 2 && record[0] == value {
-				activeInfo := strings.Join(record, "\ttarget_info: ")
+				activeInfo := fmt.Sprintf("[active]\t%v", strings.Join(record, "\ttarget_info: "))
 				activeFlag = true
-				fileListInfo += utils.ColorString("GREEN", fmt.Sprintf("%s\t%v\n", "[active]", activeInfo))
+				fileListInfo += fmt.Sprintln(utils.ColorString("GREEN", activeInfo))
 				break
 			}
 		}
