@@ -8,11 +8,10 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	utilhttp "keentune/daemon/common/utils/http"
 	m "keentune/daemon/modules"
 	"net/http"
@@ -45,30 +44,6 @@ type DumpFlag struct {
 	Force  bool
 }
 
-type ymlTarget struct {
-	IP     string   `yaml:"ip"`
-	Knobs  []string `yaml:"knobs"`
-	Domain []string `yaml:"domain"`
-}
-
-type ymlBrain struct {
-	BrainIP  string   `yaml:"ip"`
-	AlgoTune []string `yaml:"algo_tuning"`
-	AlgoSen  []string `yaml:"algo_sensi"`
-}
-
-type ymlBench struct {
-	IP        string `yaml:"ip"`
-	Dest      string `yaml:"destination"`
-	BenchConf string `yaml:"benchmark"`
-}
-
-type keenTuneYML struct {
-	Bench  []ymlBench  `yaml:"bench"`
-	Brain  ymlBrain    `yaml:"brain"`
-	Hex    string      `yaml:"hex"`
-	Target []ymlTarget `yaml:"target"`
-}
 
 var (
 	logHome = "/var/log/keentune"
@@ -92,6 +67,11 @@ func IsDataReady(name string) bool {
 
 // GetAVLDataAndAlgo get available data, algo from brain
 func GetAVLDataAndAlgo() ([]string, []string, []string, error) {
+	err := utils.Ping(config.KeenTune.BrainIP, config.KeenTune.BrainPort)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
 	if err != nil {
 		return nil, nil, nil, err
@@ -301,7 +281,13 @@ func ResetJob() {
 }
 
 // GetAVLDomain get available domain
-func GetAVLDomain(host string) ([]string, error) {
+func GetAVLDomain(ip, port string) ([]string, error) {
+	err := utils.Ping(ip, port)
+	if err != nil {
+		return nil, err
+	}
+
+	host := fmt.Sprintf("%v:%v", ip, port)
 	url := fmt.Sprintf("%v/avaliable", host)
 	resp, err := utilhttp.RemoteCall("GET", url, nil)
 	if err != nil {
@@ -318,66 +304,5 @@ func GetAVLDomain(host string) ([]string, error) {
 	}
 
 	return ret.Domains, nil
-}
-
-// Initialize  KeenTune available test between brain, bench, target and daemon; Init Yaml create or update.
-func Initialize() (string, error) {
-	var ymlConf = &keenTuneYML{}
-	checkBenchAVL(ymlConf)
-
-	var err error
-	var warningDetail string
-	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
-	_, ymlConf.Brain.AlgoTune, ymlConf.Brain.AlgoSen, err = GetAVLDataAndAlgo()
-	if err != nil {
-		warningDetail = fmt.Sprintf("%v:%v unreachable\n", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
-	}
-
-	targetResult := checkTargetAVL(ymlConf)
-	warningDetail += targetResult
-
-	bytes, err := yaml.Marshal(ymlConf)
-	if err != nil {
-		return warningDetail, err
-	}
-
-	err = ioutil.WriteFile(config.KeenTuneYMLFile, bytes, 0644)
-	return warningDetail, err
-}
-
-func checkTargetAVL(ymlConf *keenTuneYML) string {
-	var targetWarning string
-	var err error
-	ymlConf.Target = make([]ymlTarget, len(config.KeenTune.IPMap))
-	for _, target := range config.KeenTune.Group {
-		var tmpTarget ymlTarget
-		for _, ip := range target.IPs {
-			targetHost := fmt.Sprintf("%v:%v", ip, target.Port)
-			tmpTarget.Domain, err = GetAVLDomain(targetHost)
-			if err != nil {
-				targetWarning += fmt.Sprintf("\ttarget host %v:%v unreachable", ip, target.Port)
-				continue
-			}
-
-			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
-			tmpTarget.IP = ip
-			idx := config.KeenTune.IPMap[ip] - 1
-			ymlConf.Target[idx] = tmpTarget
-		}
-	}
-
-	return targetWarning
-}
-
-func checkBenchAVL(ymlConf *keenTuneYML) {
-	for _, bench := range config.KeenTune.BenchGroup {
-		var tmpBench ymlBench
-		tmpBench.BenchConf = bench.BenchConf
-		tmpBench.Dest = bench.DestIP
-		for _, ip := range bench.SrcIPs {
-			tmpBench.IP = ip
-			ymlConf.Bench = append(ymlConf.Bench, tmpBench)
-		}
-	}
 }
 
