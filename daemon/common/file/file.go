@@ -202,3 +202,14 @@ func GetPlainName(fileName string) string {
 	return parts[len(parts)-1]
 }
 
+// Copy copy file from src to dst
+func Copy(src, dst string) error {
+	input, err := ioutil.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(dst, input, 0666)
+	return err
+}
+

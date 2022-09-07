@@ -55,6 +55,8 @@ func (tuner *Tuner) CreateTrainJob() error {
 		tuner.Job, tuner.StartTime.Format(Format), NA, NA, fmt.Sprint(tuner.Trials), Run,
 		log, config.GetSensitizeWorkPath(tuner.Job), tuner.Algorithm, tuner.Data,
 	}
+
+	tuner.backupConfFile()
 	return file.Insert(getSensitizeJobFile(), jobInfo)
 }
 
