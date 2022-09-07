@@ -293,7 +293,7 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 	var domainMap = make(map[string][]map[string]interface{})
 	var commonDomain string
 	for _, line := range strings.Split(replacedStr, "\n") {
-		pureLine := strings.Replace(strings.TrimSpace(line), "=", ":", 1)
+		pureLine := strings.TrimSpace(replaceEqualSign(line))
 		if len(pureLine) == 0 {
 			continue
 		}
@@ -404,5 +404,16 @@ func getParam(paramSlice []string) (string, string, map[string]interface{}, erro
 		"name":  paramName,
 	}
 	return "", "", param, nil
+}
+
+func replaceEqualSign(origin string) string {
+	equalIdx := strings.Index(origin, "=")
+	colonIdx := strings.Index(origin, ":")
+	// First, '=' exists; if ':' not exist or '=' before ':', replace '=' by ':'
+	if equalIdx > 0 && (colonIdx < 0 || equalIdx < colonIdx) {
+		return strings.Replace(origin, "=", ":", 1)
+	}
+
+	return origin
 }
 
