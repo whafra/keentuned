@@ -30,12 +30,12 @@ type TuneFlag struct {
 
 // Tune run param tune service
 func (s *Service) Tune(flag TuneFlag, reply *string) error {
-	err := config.Backup(flag.Config, flag.Name, "tuning")
+	err := config.CheckAndReloadConf()
 	if err != nil {
-		return fmt.Errorf("backup '%v' failed: %v", flag.Config, err)
+		return err
 	}
 
-	if err := com.HeartbeatCheck(); err != nil {
+	if err = com.HeartbeatCheck(); err != nil {
 		return fmt.Errorf("check %v", err)
 	}
 
@@ -82,7 +82,8 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 	tuner.Tune()
 	return nil
 }
-// GetBenchmarkInst ...
+
+// GetBenchmarkInst get benchmark instance from bench.json
 func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 	benchConf := config.GetBenchJsonPath(benchFile)
 	if !file.IsPathExist(benchConf) {

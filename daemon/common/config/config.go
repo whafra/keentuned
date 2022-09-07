@@ -139,6 +139,8 @@ func Init() {
 		RealLocalIP = "localhost"
 	}
 
+	KeenTuneConfMD5 = GetKeenTuneConfFileMD5()
+
 	initChanAndIPMap()
 }
 

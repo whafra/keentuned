@@ -55,11 +55,15 @@ func (s *Service) Init(flag string, reply *string) error {
 	return nil
 }
 
-// initialize  KeenTune available test between brain, bench, target and daemon; Create or Update init.yaml file.
+// initialize  KeenTune available test between brain, bench, target and daemon; Init Yaml create or update.
 func initialize() (string, error) {
+	err := config.CheckAndReloadConf()
+	if err != nil {
+		return "", err
+	}
+
 	var ymlConf = &keenTuneYML{}
 	var warningDetail string
-	var err error
 	warningDetail = checkBenchAVL(ymlConf)
 
 	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
@@ -70,6 +74,8 @@ func initialize() (string, error) {
 
 	targetResult := checkTargetAVL(ymlConf)
 	warningDetail += targetResult
+
+	ymlConf.Hex = config.KeenTuneConfMD5
 
 	bytes, err := yaml.Marshal(ymlConf)
 	if err != nil {
