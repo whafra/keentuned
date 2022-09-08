@@ -121,7 +121,7 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 		if pureValue == "localhost" || pureValue == "127.0.0.1" || pureValue == "::1" {
 			localIP := "localhost"
 			if !orgMap[localIP] {
-				valid = append(valid, localIP)
+				valid = append(valid, pureValue)
 				orgMap[localIP] = true
 				continue
 			}
