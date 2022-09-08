@@ -25,7 +25,7 @@ class TestVersion(unittest.TestCase):
         logger.info('the test_version testcase finished')
 
     def test_version_FUN(self):
-        cmd = 'keentune version'
+        cmd = 'keentune -v'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertIn("keentune version", self.out)
