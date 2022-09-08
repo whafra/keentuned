@@ -14,7 +14,7 @@ const (
 	// JobTuning job type is tuning
 	JobTuning    = "tuning"
 	JobProfile   = "profile"
-	JobTraining  = "train"
+	JobTraining  = "training"
 	JobBenchmark = "benchmark"
 )
 
@@ -72,7 +72,7 @@ func getSensitizeJobFile() string {
 	return fmt.Sprint(config.GetDumpPath(config.SensitizeCsv))
 }
 
-// format and job status
+// format and job status ...
 const (
 	NA     = "-"
 	Format = "2006-01-02 15:04:05"
@@ -87,7 +87,8 @@ const (
 
 // table column count
 const (
-	TuneCols = 11
+	TuneCols  = 11
+	TrainCols = 10
 )
 
 // tune job column index
@@ -101,7 +102,7 @@ const (
 	TuneStartIdx
 	TuneEndIdx
 	tuneCostIdx
-	tuneWSPIdx
+	TuneWSPIdx
 	tuneCmdIdx
 	tuneLogIdx
 )
@@ -118,7 +119,7 @@ const (
 	trainLogIdx
 	trainWSPIdx
 	TrainAlgoIdx
-	trainDataPath
+	TrainDataIdx
 )
 
 // CreateTuneJob ...

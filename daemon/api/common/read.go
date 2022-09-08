@@ -8,11 +8,13 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
+// TuneCmdResp ...
 type TuneCmdResp struct {
 	Iteration    int    `json:"iteration"`
 	BaseRound    int    `json:"baseline_bench_round"`
@@ -21,18 +23,12 @@ type TuneCmdResp struct {
 	Algo         string `json:"algorithm"`
 }
 
+// TrainCmdResp ...
 type TrainCmdResp struct {
 	Trial int    `json:"trial"`
 	Algo  string `json:"algorithm"`
 	Data  string `json:"data"`
 }
-
-const (
-	trainJobHeaderLen = 10
-	trainTrialsIdx    = 4
-	trainAlgoIdx      = 8
-	trainDataIdx      = 9
-)
 
 func read(w http.ResponseWriter, r *http.Request) {
 	var result = new(string)
@@ -112,14 +108,14 @@ func readTrainInfo(job string, result *string) error {
 		return fmt.Errorf("search '%v' err: %v", job, err)
 	}
 
-	if len(record) != trainJobHeaderLen {
+	if len(record) != m.TrainCols {
 		return fmt.Errorf("search '%v' record '%v' Incomplete", job, strings.Join(record, ","))
 	}
 
 	var resp TrainCmdResp
-	resp.Trial, _ = strconv.Atoi(record[trainTrialsIdx])
-	resp.Algo = record[trainAlgoIdx]
-	resp.Data = record[trainDataIdx]
+	resp.Trial, _ = strconv.Atoi(record[m.TrainTrialsIdx])
+	resp.Algo = record[m.TrainAlgoIdx]
+	resp.Data = record[m.TrainDataIdx]
 	bytes, err := json.Marshal(resp)
 	if err != nil {
 		return err
@@ -178,48 +174,38 @@ func parseRound(info, key string) (int, error) {
 }
 
 func readTuneInfo(job string, result *string) error {
-	cmd := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "cmd")
-	if cmd == "" {
+	records, err := file.GetOneRecord(config.GetDumpPath(config.TuneCsv), job, "name")
+	if err != nil {
 		return fmt.Errorf("'%v' not exists", job)
 	}
 
+	if len(records) != m.TuneCols {
+		return fmt.Errorf("invalid record '%v': column size %v, expected %v", job, len(records), m.TuneCols)
+	}
+
 	var resp = TuneCmdResp{}
-	iterationStr := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "iteration")
-	iteration, err := strconv.Atoi(strings.Trim(iterationStr, " "))
+	iteration, err := strconv.Atoi(strings.Trim(records[m.TuneRoundIdx], " "))
 	if err != nil || iteration <= 0 {
 		return fmt.Errorf("'%v' not exists", "iteration")
 	}
 
+	resp.Algo = records[m.TuneAlgoIdx]
 	resp.Iteration = iteration
 
-	replacedCmd := strings.ReplaceAll(cmd, "'", "\"")
-	matchedConfig, err := parseConfigFlag(replacedCmd)
+	m, err := config.GetRerunConf(records[m.TuneWSPIdx] + "/keentuned.conf")
 	if err != nil {
 		return err
 	}
-	for _, info := range strings.Split(matchedConfig, "\\n") {
-		if strings.TrimSpace(info) == "" {
-			continue
-		}
 
-		if strings.Contains(strings.ToLower(info), "algorithm") {
-			algoPart := strings.Split(info, "=")
-			if len(algoPart) != 2 {
-				return fmt.Errorf("algorithm not found")
-			}
-			resp.Algo = strings.Trim(algoPart[1], " ")
-		}
-
-		err = parseBenchRound(info, &resp)
-		if err != nil {
-			return err
-		}
-	}
+	resp.BaseRound = m["BaseRound"].(int)
+	resp.TuningRound = m["TuningRound"].(int)
+	resp.RecheckRound = m["RecheckRound"].(int)
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
 		return err
 	}
+
 	*result = string(bytes)
 	return nil
 }

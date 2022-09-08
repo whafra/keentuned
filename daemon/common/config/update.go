@@ -16,6 +16,7 @@ var (
 	tuneConfig string
 )
 
+// ReSet ...
 func ReSet() error {
 	backupConf := new(KeentunedConf)
 	err := backupConf.Save()
@@ -156,6 +157,7 @@ func dumpDefaultConfig(cfg *ini.File) {
 	}
 }
 
+// Backup ...
 func Backup(fileName, jobName string, cmd string) error {
 	var err error
 	defer func() {
@@ -201,10 +203,12 @@ func (c *KeentunedConf) getConfigFlag() string {
 	return configFlag
 }
 
+// SetCacheConfig ...
 func SetCacheConfig(info string) {
 	tuneConfig = strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(info, "\n", "\\n"), "\"", "'"), "''", "'")
 }
 
+// GetCacheConfig ...
 func GetCacheConfig() string {
 	var retConfig string
 	retConfig = tuneConfig
@@ -319,5 +323,21 @@ func CheckAndReloadConf() error {
 	}
 
 	return nil
+}
+
+// GetRerunConf get rerun configuration
+func GetRerunConf(jobConf string) (map[string]interface{}, error) {
+	cfg, err := ini.InsensitiveLoad(jobConf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse %s, %v", keentuneConfigFile, err)
+	}
+
+	var retConf = make(map[string]interface{})
+	kd := cfg.Section("keentuned")
+	retConf["BaseRound"] = kd.Key("BASELINE_BENCH_ROUND").MustInt()
+	retConf["TuningRound"] = kd.Key("TUNING_BENCH_ROUND").MustInt()
+	retConf["RecheckRound"] = kd.Key("RECHECK_BENCH_ROUND").MustInt()
+
+	return retConf, nil
 }
 
