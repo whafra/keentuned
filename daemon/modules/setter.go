@@ -13,10 +13,11 @@ import (
 
 // Setter ...
 type Setter struct {
-	Group         []bool
-	ConfFile      []string
-	recommend     string
-	preSetWarning string
+	Group       []bool
+	ConfFile    []string
+	recommend   string
+	initWarning string
+	prefixReco  string // prefix for recommendation
 }
 
 // Set profile set  main process
@@ -24,21 +25,10 @@ func (tuner *Tuner) Set() {
 	var err error
 	tuner.logName = log.ProfSet
 	err = tuner.initProfiles()
-	if len(tuner.recommend) > 0 {
-		fmtStr := fmt.Sprintf("%v\n%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"), tuner.recommend)
-		log.Infof(log.ProfSet, fmtStr)
-	}
-
-	if len(tuner.preSetWarning) > 0 {
-		for _, preWarning := range strings.Split(tuner.preSetWarning, multiRecordSeparator) {
-			pureInfo := strings.TrimSpace(preWarning)
-			if len(pureInfo) > 0 {
-				log.Warn(log.ProfSet, preWarning)
-			}
-		}
-	}
-
+	// ps: must show recommendation before check err
+	tuner.showReco()
 	if err != nil {
+		tuner.showPrefixReco()
 		log.Errorf(log.ProfSet, "%v", err)
 		return
 	}
@@ -50,6 +40,7 @@ func (tuner *Tuner) Set() {
 	}()
 
 	if err = tuner.prepareBeforeSet(); err != nil {
+		tuner.showPrefixReco()
 		log.Error(log.ProfSet, err.Error())
 		return
 	}
@@ -75,6 +66,34 @@ func (tuner *Tuner) Set() {
 	log.Info(log.ProfSet, tuner.applySummary)
 
 	return
+}
+
+// showReco show recommendation
+func (tuner *Tuner) showReco() {
+	tuner.prefixReco = fmt.Sprintf("%v\n", utils.ColorString("green", "[+] Recommendation (Manual Settings)"))
+
+	if len(tuner.recommend) > 0 {
+		fmtStr := fmt.Sprintf("%v%v\n", tuner.prefixReco, tuner.recommend)
+		log.Info(log.ProfSet, fmtStr)
+	}
+
+	if len(tuner.initWarning) > 0 {
+		tuner.showPrefixReco()
+
+		for _, preWarning := range strings.Split(tuner.initWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(preWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(log.ProfSet, preWarning)
+			}
+		}
+	}
+}
+
+// showPrefixReco show prefix for recommendation log
+func (tuner *Tuner) showPrefixReco() {
+	if len(log.ClientLogMap[log.ProfSet]) == 0 {
+		log.Info(tuner.logName, tuner.prefixReco)
+	}
 }
 
 func (tuner *Tuner) updateActive() error {
@@ -117,6 +136,7 @@ func (tuner *Tuner) prepareBeforeSet() error {
 	// step3. backup the target machine
 	err = tuner.backup()
 	if tuner.backupWarning != "" {
+		tuner.showPrefixReco()
 		for _, backupWarning := range strings.Split(tuner.backupWarning, multiRecordSeparator) {
 			pureInfo := strings.TrimSpace(backupWarning)
 			if len(pureInfo) > 0 {

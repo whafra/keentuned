@@ -342,7 +342,7 @@ func (tuner *Tuner) initProfiles() error {
 		}
 
 		if abnormal.Warning != "" {
-			tuner.preSetWarning += abnormal.Warning
+			tuner.initWarning += abnormal.Warning
 		}
 
 		if err != nil {
