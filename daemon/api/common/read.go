@@ -76,7 +76,10 @@ func read(w http.ResponseWriter, r *http.Request) {
 		err = readTrainInfo(req.Name, result)
 		return
 	case "param-bench":
-		err = readConfigParam(req.Name, result)
+		err = readParamAndBenchConf(req.Name, result)
+		return
+	case "target-group":
+		readTargetGroup(req.Name, result)
 		return
 	default:
 		err = fmt.Errorf("type '%v' is not supported", req.Type)
@@ -84,7 +87,8 @@ func read(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readConfigParam(job string, result *string) error {
+// readParamAndBenchConf read parameter and benchmark config path from job backup conf
+func readParamAndBenchConf(job string, result *string) error {
 	params, bench, err := config.GetJobParamConfig(job)
 	if err != nil {
 		return err
@@ -102,6 +106,7 @@ func readConfigParam(job string, result *string) error {
 	return err
 }
 
+// readTrainInfo read training rerun info from job records
 func readTrainInfo(job string, result *string) error {
 	record, err := file.GetOneRecord(config.GetDumpPath(config.SensitizeCsv), job, "name")
 	if err != nil {
@@ -125,54 +130,7 @@ func readTrainInfo(job string, result *string) error {
 	return nil
 }
 
-func parseBenchRound(info string, resp *TuneCmdResp) error {
-	if strings.Contains(strings.ToLower(info), "baseline_bench_round") {
-		num, err := parseRound(info, "baseline_bench_round")
-		if err != nil {
-			return err
-		}
-
-		resp.BaseRound = num
-	}
-
-	if strings.Contains(strings.ToLower(info), "tuning_bench_round") {
-		num, err := parseRound(info, "tuning_bench_round")
-		if err != nil {
-			return err
-		}
-		resp.TuningRound = num
-	}
-
-	if strings.Contains(strings.ToLower(info), "recheck_bench_round") {
-		num, err := parseRound(info, "recheck_bench_round")
-		if err != nil {
-			return err
-		}
-
-		resp.RecheckRound = num
-	}
-
-	return nil
-}
-
-func parseRound(info, key string) (int, error) {
-	if !strings.Contains(strings.ToLower(info), key) {
-		return 0, nil
-	}
-
-	flagParts := strings.Split(info, "=")
-	if len(flagParts) != 2 {
-		return 0, fmt.Errorf("algorithm not found")
-	}
-
-	num, err := strconv.Atoi(strings.TrimSpace(flagParts[1]))
-	if err != nil {
-		return 0, fmt.Errorf("get %v number err %v", key, err)
-	}
-
-	return num, nil
-}
-
+// readTuneInfo read tuning rerun info from job records and backup conf
 func readTuneInfo(job string, result *string) error {
 	records, err := file.GetOneRecord(config.GetDumpPath(config.TuneCsv), job, "name")
 	if err != nil {
@@ -208,5 +166,45 @@ func readTuneInfo(job string, result *string) error {
 
 	*result = string(bytes)
 	return nil
+}
+
+// readTargetGroup  read target group info by grep condition
+// 1) grep is empty, represents getting the total group;
+// 2) grep is non-empty, e.g.: "cpu_high_load.conf", an active status profile name,
+//        represents grep the profile set target group(s).
+func readTargetGroup(grep string, result *string) {
+	if grep == "" {
+		for _, group := range config.KeenTune.Target.Group {
+			*result += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
+			*result += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+		}
+
+		return
+	}
+
+	filePath := config.GetProfileWorkPath("active.conf")
+	activeGroup := file.GetRecord(filePath, "name", grep, "group_info")
+	if len(activeGroup) == 0 {
+		*result = "No matching group found"
+		return
+	}
+
+	actives := strings.Split(activeGroup, " ")
+	for _, group := range config.KeenTune.Target.Group {
+		for _, info := range actives {
+			if strings.Contains(group.GroupName, strings.Trim(info, "group")) {
+				*result += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
+				*result += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+				break
+			}
+		}
+	}
+
+	if *result == "" {
+		*result = "No matching group found"
+		return
+	}
+
+	return
 }
 
