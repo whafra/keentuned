@@ -298,7 +298,7 @@ func getCmd(body io.ReadCloser) (string, error) {
 		return "", err
 	}
 
-	if strings.Contains(reqInfo.Cmd, "delete") {
+	if strings.Contains(reqInfo.Cmd, "delete") || strings.Contains(reqInfo.Cmd, "dump") {
 		return "echo y|" + reqInfo.Cmd, nil
 	}
 
