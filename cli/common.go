@@ -6,12 +6,10 @@ import (
 	"keentune/daemon/common/file"
 	"os"
 	"strings"
-
 	"github.com/spf13/cobra"
 )
 
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
-var egVersion = "\tkeentune version"
 
 func subCommands() []*cobra.Command {
 	var subCmds []*cobra.Command
@@ -19,7 +17,6 @@ func subCommands() []*cobra.Command {
 	subCmds = append(subCmds, decorateCmd(createParamCmds()))
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
-	subCmds = append(subCmds, decorateCmd(versionCmd()))
 	subCmds = append(subCmds, decorateCmd(createRollbackAllCmd()))
 	subCmds = append(subCmds, decorateCmd(initCmd()))
 
@@ -141,20 +138,28 @@ func benchCmd() *cobra.Command {
 	return cmd
 }
 
-func versionCmd() *cobra.Command {
-	var flag VersionFlag
-	var cmd = &cobra.Command{
-		Use:     "version",
-		Short:   "Print the version number of keentune",
-		Long:    "Print the version number of keentune",
-		Example: egBenchmark,
-		Run: func(cmd *cobra.Command, args []string) {
-			initWorkDirectory()
-			flag.VersionNum = config.KeenTune.VersionConf
-			fmt.Printf("keentune version %v\n", flag.VersionNum)
-		},
-	}
-	return cmd
+func newRootCmd() *cobra.Command {
+        var isCatVersion bool
+        cmd := &cobra.Command{
+                Use:    "keentune [command]",
+                Short:  "KeenTune is an AI tuning tool for Linux system and cloud applications",
+                Long:   "KeenTune is an AI tuning tool for Linux system and cloud applications",
+		Example: "\tkeentune init -h" +
+                "\n\tkeentune param -h\n\tkeentune profile -h" +
+                "\n\tkeentune rollbackall -h\n\tkeentune sensitize -h",
+                RunE: func(cmd *cobra.Command, args []string) error {
+                        if isCatVersion {
+                                initWorkDirectory()
+                                fmt.Printf("keentune version %v\n", config.KeenTune.VersionConf)
+                                return nil
+                        }
+
+                        return cmd.Help()
+                },
+        }
+
+        cmd.Flags().BoolVarP(&isCatVersion, "version", "v", false, "version message")
+        return cmd
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.

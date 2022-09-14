@@ -3,7 +3,7 @@
 _keentune()  
 {
     COMPREPLY=()
-    local commands="--help param profile sensitize version rollbackall"
+    local commands="--help param profile sensitize rollbackall --version -v"
     local cur=${COMP_WORDS[COMP_CWORD]};
     local cmd=${COMP_WORDS[COMP_CWORD-1]};
     case $cmd in
@@ -35,10 +35,8 @@ _keentune()
     fi
 
     #param/profile/sensitize delete command
-    if [[ "$cmd" == "delete" && "${COMP_WORDS[1]}" == "sensitize" ]]; then
+    if [[ "$cmd" == "delete" && ( "${COMP_WORDS[1]}" == "sensitize" || ${COMP_WORDS[1]}" == "param" )]]; then
 	    COMPREPLY=( $(compgen -W '--data' -- $cur) )
-    elif [[ "$cmd" == "delete" && "${COMP_WORDS[1]}" == "param" ]]; then 
-	    COMPREPLY=( $(compgen -W '--job' -- $cur) )
     elif [[ "$cmd" == "delete" && "${COMP_WORDS[1]}" == "profile" ]]; then
 	    COMPREPLY=( $(compgen -W '--name' -- $cur) )
     fi
