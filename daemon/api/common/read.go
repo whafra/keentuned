@@ -49,7 +49,7 @@ func read(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": %s}", *result)))
+		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
 	}()
 
 	bytes, err := ioutil.ReadAll(&io.LimitedReader{R: r.Body, N: LimitBytes})
@@ -79,7 +79,7 @@ func read(w http.ResponseWriter, r *http.Request) {
 		err = readParamAndBenchConf(req.Name, result)
 		return
 	case "target-group":
-		readTargetGroup(req.Name, result)
+		err = readTargetGroup(req.Name, result)
 		return
 	default:
 		err = fmt.Errorf("type '%v' is not supported", req.Type)
@@ -172,39 +172,37 @@ func readTuneInfo(job string, result *string) error {
 // 1) grep is empty, represents getting the total group;
 // 2) grep is non-empty, e.g.: "cpu_high_load.conf", an active status profile name,
 //        represents grep the profile set target group(s).
-func readTargetGroup(grep string, result *string) {
+func readTargetGroup(grep string, result *string) error {
 	if grep == "" {
 		for _, group := range config.KeenTune.Target.Group {
-			*result += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
-			*result += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+			*result += fmt.Sprintf("[target-group-%v]\\n", group.GroupNo)
+			*result += fmt.Sprintf("TARGET_IP = %v\\n", strings.Join(group.IPs, ","))
 		}
 
-		return
+		return nil
 	}
 
 	filePath := config.GetProfileWorkPath("active.conf")
 	activeGroup := file.GetRecord(filePath, "name", grep, "group_info")
 	if len(activeGroup) == 0 {
-		*result = "No matching group found"
-		return
+		return fmt.Errorf("No records found")
 	}
 
 	actives := strings.Split(activeGroup, " ")
 	for _, group := range config.KeenTune.Target.Group {
 		for _, info := range actives {
 			if strings.Contains(group.GroupName, strings.Trim(info, "group")) {
-				*result += fmt.Sprintf("[target-group-%v]\n", group.GroupNo)
-				*result += fmt.Sprintf("TARGET_IP = %v\n", strings.Join(group.IPs, ","))
+				*result += fmt.Sprintf("[target-group-%v]\\n", group.GroupNo)
+				*result += fmt.Sprintf("TARGET_IP = %v\\n", strings.Join(group.IPs, ","))
 				break
 			}
 		}
 	}
 
 	if *result == "" {
-		*result = "No matching group found"
-		return
+		return fmt.Errorf("No matched group found")
 	}
 
-	return
+	return nil
 }
 
