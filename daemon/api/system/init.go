@@ -45,7 +45,7 @@ func (s *Service) Init(flag string, reply *string) error {
 	}
 
 	if result != "" {
-		*reply = fmt.Sprintf("%v %v", utils.ColorString("yellow", "[Warning]"), result)
+		*reply = fmt.Sprintf("%v  Connection failure Details:\n%v\n", utils.ColorString("yellow", "[Warning]"), result)
 		log.Warnf("", "keentune init: %v", result)
 		return nil
 	}
@@ -69,7 +69,7 @@ func initialize() (string, error) {
 	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
 	_, ymlConf.Brain.AlgoTune, ymlConf.Brain.AlgoSen, err = com.GetAVLDataAndAlgo()
 	if err != nil {
-		warningDetail += fmt.Sprintf("brain host %v unreachable\n", config.KeenTune.BrainIP)
+		warningDetail += fmt.Sprintf("\tbrain host %v unreachable\n", config.KeenTune.BrainIP)
 	}
 
 	targetResult := checkTargetAVL(ymlConf)
@@ -95,7 +95,7 @@ func checkTargetAVL(ymlConf *keenTuneYML) string {
 		for _, ip := range target.IPs {
 			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
 			if err != nil {
-				targetWarning += fmt.Sprintf("\ttarget host %v unreachable", ip)
+				targetWarning += fmt.Sprintf("\ttarget host %v unreachable\n", ip)
 				continue
 			}
 
@@ -119,8 +119,7 @@ func checkBenchAVL(ymlConf *keenTuneYML) string {
 		for _, ip := range bench.SrcIPs {
 			err := utils.Ping(ip, bench.SrcPort)
 			if err != nil {
-				warningDetails += fmt.Sprintf("bench src host %v unreachable\n", ip)
-				fmt.Printf("ip %v\n", warningDetails)
+				warningDetails += fmt.Sprintf("\tbench src host %v unreachable\n", ip)
 				continue
 			}
 
