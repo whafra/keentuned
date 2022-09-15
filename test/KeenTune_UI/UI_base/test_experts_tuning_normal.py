@@ -35,11 +35,11 @@ class TestKeenTuneUiNormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
 
-        self.driver.get("http://{}:8082/list/static-page".format(self.web_ip))
+        self.driver.get("http://{}:8082/list/profile".format(self.web_ip))
 
     @classmethod
     def tearDownClass(self) -> None:
-        self.driver.get("http://{}:8082/list/static-page".format(self.web_ip))
+        self.driver.get("http://{}:8082/list/profile".format(self.web_ip))
         for i in range(9):
             first_text = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//tr[@data-row-key="1"]//td[1]//div[1]//span[1]'))).text
             if first_text != 'cpu_high_load.conf':
