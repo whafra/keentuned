@@ -49,7 +49,7 @@ func read(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
+		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": %s}", *result)))
 	}()
 
 	bytes, err := ioutil.ReadAll(&io.LimitedReader{R: r.Body, N: LimitBytes})
@@ -173,6 +173,12 @@ func readTuneInfo(job string, result *string) error {
 // 2) grep is non-empty, e.g.: "cpu_high_load.conf", an active status profile name,
 //        represents grep the profile set target group(s).
 func readTargetGroup(grep string, result *string) error {
+	defer func() {
+		if len(*result) > 0 {
+			*result = fmt.Sprintf("\"%v\"", *result)
+		}
+	}()
+
 	if grep == "" {
 		for _, group := range config.KeenTune.Target.Group {
 			*result += fmt.Sprintf("[target-group-%v]\\n", group.GroupNo)
