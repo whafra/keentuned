@@ -161,10 +161,7 @@ class TestMultiTarget(unittest.TestCase):
             cmd = "keentune profile set --group1 param1_group1.conf --group2 param1_group2.conf --group3 param1_group3.conf --group4 param1_group4.conf"
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
-            self.assertIn("Set param1_group1.conf successfully", self.out)
-            self.assertIn("Set param1_group2.conf successfully", self.out)
-            self.assertIn("Set param1_group3.conf successfully", self.out)
-            self.assertIn("Set param1_group4.conf successfully", self.out)
+            self.assertIn("Succeeded", self.out)
 
     def test_multi_bench_FUN_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)
