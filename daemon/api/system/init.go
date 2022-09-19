@@ -115,15 +115,21 @@ func checkBenchAVL(ymlConf *keenTuneYML) string {
 	for _, bench := range config.KeenTune.BenchGroup {
 		var tmpBench ymlBench
 		tmpBench.BenchConf = bench.BenchConf
-		tmpBench.Dest = bench.DestIP
+
 		for _, ip := range bench.SrcIPs {
-			err := utils.Ping(ip, bench.SrcPort)
+			isBenchAVL, avlAgent, err := com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
 			if err != nil {
-				warningDetails += fmt.Sprintf("\tbench src host %v unreachable\n", ip)
+				warningDetails += fmt.Sprintf("%v", err)
+				if isBenchAVL {
+					tmpBench.IP = ip
+				}
+				
+				ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
 				continue
 			}
 
 			tmpBench.IP = ip
+			tmpBench.Dest = avlAgent
 			ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
 		}
 	}

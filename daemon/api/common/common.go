@@ -44,7 +44,6 @@ type DumpFlag struct {
 	Force  bool
 }
 
-
 var (
 	logHome = "/var/log/keentune"
 )
@@ -67,12 +66,7 @@ func IsDataReady(name string) bool {
 
 // GetAVLDataAndAlgo get available data, algo from brain
 func GetAVLDataAndAlgo() ([]string, []string, []string, error) {
-	err := utils.Ping(config.KeenTune.BrainIP, config.KeenTune.BrainPort)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
+	resp, err := pingAndCallAVL(config.KeenTune.BrainIP, config.KeenTune.BrainPort)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -165,7 +159,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 	return nil
 }
 
-// RunDelete run delete file service
+// RunTrainDelete run training delete file service
 func RunTrainDelete(flag DeleteFlag, reply *string) error {
 	fullName := GetSensitizePath(flag.Name)
 
@@ -282,14 +276,7 @@ func ResetJob() {
 
 // GetAVLDomain get available domain
 func GetAVLDomain(ip, port string) ([]string, error) {
-	err := utils.Ping(ip, port)
-	if err != nil {
-		return nil, err
-	}
-
-	host := fmt.Sprintf("%v:%v", ip, port)
-	url := fmt.Sprintf("%v/avaliable", host)
-	resp, err := utilhttp.RemoteCall("GET", url, nil)
+	resp, err := pingAndCallAVL(ip, port)
 	if err != nil {
 		return nil, err
 	}
@@ -304,5 +291,48 @@ func GetAVLDomain(ip, port string) ([]string, error) {
 	}
 
 	return ret.Domains, nil
+}
+
+func pingAndCallAVL(ip, port string, request ...interface{}) ([]byte, error) {
+	err := utils.Ping(ip, port)
+	if err != nil {
+		return nil, err
+	}
+
+	url := fmt.Sprintf("%v:%v/avaliable", ip, port)
+	if request == nil {
+		return utilhttp.RemoteCall("GET", url, nil)
+	}
+
+	return utilhttp.RemoteCall("POST", url, request[0])
+}
+
+// GetAVLAgentAddr ...
+// return:
+//       0: ping benchmark host result;
+//       1: reachable agent ip;
+//       2: err msg
+func GetAVLAgentAddr(ip, port, agent string) (bool, string, error) {
+	request := map[string]interface{}{
+		"agent_address": agent,
+	}
+
+	resp, err := pingAndCallAVL(ip, port, request)
+	if err != nil {
+		return false, "", fmt.Errorf("\tbench src host %v unreachable\n", ip)
+	}
+
+	var ret map[string]bool
+
+	err = json.Unmarshal(resp, &ret)
+	if err != nil {
+		return false, "", err
+	}
+
+	if ret[agent] {
+		return true, agent, nil
+	}
+
+	return true, "", fmt.Errorf("\tbenchmark access agent %v failed\n", agent)
 }
 
