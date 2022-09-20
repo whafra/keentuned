@@ -45,12 +45,12 @@ func write(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		w.WriteHeader(http.StatusOK)
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", err.Error())))
-			log.Errorf("", "write operation: %v", err)
+			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", getMsg(err.Error(), ""))))
+			log.Errorf("", "write operation: %v", getMsg(err.Error(), ""))
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
+		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", getMsg(*result, ""))))
 		log.Infof("", "write operation: %v", *result)
 	}()
 
@@ -275,8 +275,12 @@ func getMsg(origin, cmd string) string {
 
 	// replace color control special chars
 	matchStr := "\u001B\\[1;40;3[1-3]m(.*?)\u001B\\[0m"
-	re := regexp.MustCompile(matchStr)
-	pureMSg := re.ReplaceAllString(strings.TrimSpace(origin), "$1")
+	pureMSg := origin
+	matched, _ := regexp.MatchString(matchStr, pureMSg)
+	if matched {
+		re := regexp.MustCompile(matchStr)
+		pureMSg = re.ReplaceAllString(strings.TrimSpace(origin), "$1")
+	}
 
 	changeLinefeed := strings.ReplaceAll(pureMSg, "\n", "\\n")
 	changeTab := strings.ReplaceAll(changeLinefeed, "\t", " ")

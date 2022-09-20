@@ -112,9 +112,9 @@ func GetExternalIP() (string, error) {
 	return "", fmt.Errorf("ip not found")
 }
 
-// CheckIPValidity argv 0: origin slice; return 0: valid slice; 1: invalid slice
-func CheckIPValidity(origin []string) ([]string, []string) {
-	var valid, invalid []string
+// CheckIPValidity argv 0: origin slice; return 0: valid IPs; 1: invalid IPs; 2: repeated IPs
+func CheckIPValidity(origin []string) ([]string, []string, []string) {
+	var valid, invalid, repeated []string
 	var orgMap = make(map[string]bool, len(origin))
 	for _, v := range origin {
 		pureValue := strings.Trim(v, " ")
@@ -125,7 +125,7 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 				orgMap[localIP] = true
 				continue
 			}
-			invalid = append(invalid, pureValue)
+			repeated = append(repeated, pureValue)
 			continue
 		}
 
@@ -134,10 +134,11 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 			valid = append(valid, pureValue)
 			continue
 		}
-		invalid = append(invalid, v)
+		
+		invalid = append(invalid, pureValue)
 	}
 
-	return valid, invalid
+	return valid, invalid, repeated
 }
 
 func isIP(ip string) bool {

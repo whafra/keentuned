@@ -223,7 +223,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		ipString := target.Key("TARGET_IP").MustString("localhost")
 		group.IPs, err = changeStringToSlice(ipString)
 		if err != nil {
-			return fmt.Errorf("keentune check target ip %v", err)
+			return fmt.Errorf("[%v] %v", groupName, err)
 		}
 
 		group.Port = target.Key("TARGET_PORT").MustString("9873")
@@ -232,7 +232,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		groupName = groupName[13:] // 截取“target-group-”后面的内容
 		groupNo, err := strconv.Atoi(groupName)
 		if err != nil || groupNo <= 0 {
-			return fmt.Errorf("target-group is error, please check configure first")
+			return fmt.Errorf("get Invalid NO. '%v' from [%v]", groupName, group.GroupName)
 		}
 
 		group.GroupNo = groupNo
@@ -245,7 +245,7 @@ func (c *KeentunedConf) getTargetGroup(cfg *ini.File) error {
 		}
 
 		if err = checkIPRepeated(groupName, group.IPs, allGroupIPs); err != nil {
-			return fmt.Errorf("%v", err)
+			return fmt.Errorf("check IP Repeated:\n%v", err)
 		}
 		c.Target.Group = append(c.Target.Group, group)
 		c.addTargetIPMap(group.IPs, ipExist, id)
@@ -282,13 +282,13 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 		ipStringSrc := bench.Key("BENCH_SRC_IP").MustString("localhost")
 		group.SrcIPs, err = changeStringToSlice(ipStringSrc)
 		if err != nil {
-			return fmt.Errorf("keentune check bench ip %v", err)
+			return fmt.Errorf("[%v] %v", groupName, err)
 		}
 
 		group.SrcPort = bench.Key("BENCH_SRC_PORT").MustString("9874")
 
 		if err = checkIPRepeated(groupName, group.SrcIPs, allGroupIPs); err != nil {
-			return fmt.Errorf("%v", err)
+			return fmt.Errorf("check IP Repeated:\n%v", err)
 		}
 
 		group.DestIP = bench.Key("BENCH_DEST_IP").MustString("localhost")
@@ -306,14 +306,32 @@ func (c *KeentunedConf) getBenchGroup(cfg *ini.File) error {
 }
 
 func checkIPRepeated(groupName string, ips []string, allGroupIPs map[string]string) error {
+	var duplicateInfo string
 	for _, ip := range ips {
+		if ip == "localhost" || ip == "127.0.0.1" {
+			localIP := "localhost"
+			_, exist := allGroupIPs[localIP]
+			if !exist {
+				allGroupIPs[localIP] = groupName
+				continue
+			}
+
+			duplicateInfo += fmt.Sprintf("\tDuplicate ip '%v' in groups %v and %v!\n", ip, allGroupIPs[localIP], groupName)
+			continue
+		}
+
 		_, exist := allGroupIPs[ip]
 		if !exist {
 			allGroupIPs[ip] = groupName
 			continue
 		}
 
-		return fmt.Errorf("Duplicate ip '%v' in groups %v and %v!", ip, allGroupIPs[ip], groupName)
+		duplicateInfo += fmt.Sprintf("\tDuplicate ip '%v' in groups %v and %v!\n", ip, allGroupIPs[ip], groupName)
+		continue
+	}
+
+	if len(duplicateInfo) != 0 {
+		return fmt.Errorf(duplicateInfo)
 	}
 
 	return nil
@@ -349,13 +367,22 @@ func (c *KeentunedConf) addBenchIPMap(ips []string, ipExist map[string]bool, id 
 }
 
 func changeStringToSlice(ipString string) ([]string, error) {
-	validIPs, invalidIPs := utils.CheckIPValidity(strings.Split(ipString, ","))
+	validIPs, invalidIPs, repeatedIPs := utils.CheckIPValidity(strings.Split(ipString, ","))
+	var errMsg string
 	if len(invalidIPs) != 0 {
-		return validIPs, fmt.Errorf("find invalid or repeated ip %v, please check and restart", invalidIPs)
+		errMsg = fmt.Sprintf("find invalid ip: %v\n", strings.Join(invalidIPs, ", "))
+	}
+
+	if len(repeatedIPs) != 0 {
+		errMsg += fmt.Sprintf("find repeated ip: %v\n", strings.Join(repeatedIPs, ", "))
+	}
+
+	if len(errMsg) != 0 {
+		return validIPs, fmt.Errorf("%v", errMsg)
 	}
 
 	if len(validIPs) == 0 {
-		return nil, fmt.Errorf("find valid ip is null, invalid ip is %v, please check and restart", invalidIPs)
+		return nil, fmt.Errorf("find valid ip is null")
 	}
 
 	return validIPs, nil

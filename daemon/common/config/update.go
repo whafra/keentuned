@@ -280,6 +280,13 @@ func UpdateKeentunedConf(info string) (string, error) {
 
 	}
 
+	if strings.Contains(info, "-group-") {
+		err = checkInitGroup(cfg)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	err = cfg.SaveTo(keentuneConfigFile)
 	if err != nil {
 		return result, err
@@ -293,6 +300,19 @@ func UpdateKeentunedConf(info string) (string, error) {
 	result = "keentuned configure save success"
 
 	return result, nil
+}
+
+func checkInitGroup(cfg *ini.File) error {
+	kdConf := new(KeentunedConf)
+	if err := kdConf.getTargetGroup(cfg); err != nil {
+		return err
+	}
+
+	if err := kdConf.getBenchGroup(cfg); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // reloadConf ...
