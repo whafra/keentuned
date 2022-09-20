@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from UI_base.test_experts_tuning_normal import TestKeenTuneUiNormal
 from UI_base.test_smart_tuning_normal import TestKeenTuneUiSmartNormal
+from UI_base.test_sensitive_tuning_normal import TestKeenTuneUiSensitiveNormal
 
 
 def RunBasicCase():
@@ -32,7 +33,17 @@ def RunBasicCase():
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_setting"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_sorting"))
 
-    suite = unittest.TestSuite([profile_suite, param_suite])
+    sensi_suite = unittest.TestSuite()
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_create_job"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_create_job2"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_detail"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_rerun"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_delete"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_refresh"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_setting"))
+    # sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_sorting"))
+
+    suite = unittest.TestSuite([profile_suite, param_suite, sensi_suite])
     return suite
 
 
@@ -42,5 +53,6 @@ if __name__ == '__main__':
         exit(1)
     TestKeenTuneUiNormal.web_ip = sys.argv[1]
     TestKeenTuneUiSmartNormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSensitiveNormal.web_ip = sys.argv[1]
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(RunBasicCase())

@@ -6,6 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from UI_reliablity.test_experts_tuning_abnormal import TestKeenTuneUiAbnormal
 from UI_reliablity.test_smart_tuning_abnormal import TestKeenTuneUiSmartAbnormal
+from UI_reliablity.test_sensitive_tuning_abnormal import TestKeenTuneUiSensitiveAbnormal
 
 
 def RunReliabilityCase():
@@ -31,7 +32,15 @@ def RunReliabilityCase():
     param_suite.addTest(TestKeenTuneUiSmartAbnormal("test_rerun_name_exsit"))
     param_suite.addTest(TestKeenTuneUiSmartAbnormal("test_rerun_Abnormal_input"))
 
-    suite = unittest.TestSuite([profile_suite, param_suite])
+    sensi_suite = unittest.TestSuite()
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_required_para_empty"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_create_name_exsit"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_Abnormal_input"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_rerun_required_para_empty"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_rerun_name_exsit"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveAbnormal("test_rerun_Abnormal_input"))
+
+    suite = unittest.TestSuite([profile_suite, param_suite, sensi_suite])
     return suite
 
 
@@ -41,5 +50,6 @@ if __name__ == '__main__':
         exit(1)
     TestKeenTuneUiAbnormal.web_ip = sys.argv[1]
     TestKeenTuneUiSmartAbnormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSensitiveAbnormal.web_ip = sys.argv[1]
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(RunReliabilityCase())
