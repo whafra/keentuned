@@ -88,9 +88,9 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 				*sucCount++
 			case WARNING:
 				*sucCount++
-				*detailInfo += fmt.Sprintf("target%v-%v, ", groupID, index)
+				*detailInfo += fmt.Sprintf("Group %v Node %v: %v ", groupID, index, ip)
 			case FAILED:
-				*failedInfo += fmt.Sprintf("target%v-%v %v; ", groupID, index, msg)
+				*failedInfo += fmt.Sprintf("\tGroup %v Node %v: %v\n%v\n", groupID, index, ip, msg)
 			}
 
 			return
@@ -148,13 +148,13 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 	}
 
 	if !response.Suc {
-		return fmt.Sprintf("%v", response.Msg), FAILED
+		return parseMsg(response.Msg), FAILED
 	}
 
-	return "", parseMsg(response.Msg)
+	return "", parseStatusCode(response.Msg)
 }
 
-func parseMsg(msg interface{}) int {
+func parseStatusCode(msg interface{}) int {
 	switch info := msg.(type) {
 	case map[string]interface{}:
 		var count int
@@ -179,5 +179,36 @@ func parseMsg(msg interface{}) int {
 	}
 
 	return SUCCESS
+}
+
+func parseMsg(originMsg interface{}) string {
+	var resp map[string]struct {
+		Suc bool   `json:"suc"`
+		Msg string `json:"msg"`
+	}
+
+	msg, _ := json.Marshal(originMsg)
+	err := json.Unmarshal(msg, &resp)
+	if err != nil {
+		return string(msg)
+	}
+
+	var retMsg string
+
+	for domain, info := range resp {
+		if info.Suc {
+			continue
+		}
+
+		replaced := strings.ReplaceAll(info.Msg, "\n", "\n\t\t\t")
+
+		retMsg += fmt.Sprintf("\t\t[%s]\t%v\n", domain, replaced)
+	}
+
+	if len(retMsg) != 0 {
+		return retMsg
+	}
+
+	return string(msg)
 }
 

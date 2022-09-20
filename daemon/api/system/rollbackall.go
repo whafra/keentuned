@@ -6,12 +6,13 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	m "keentune/daemon/modules"
+	"strings"
 )
 
 func (s *Service) RollbackAll(flag string, reply *string) error {
 	result := new(string)
 	if com.IsTargetOffline(result) {
-		return fmt.Errorf("Find target: %v offline", *result)
+		return fmt.Errorf("Find target offline, details:\n%v", strings.TrimSuffix(*result, "\n"))
 	}
 
 	if com.IsApplying() {
@@ -25,7 +26,7 @@ func (s *Service) RollbackAll(flag string, reply *string) error {
 
 	detail, err := m.Rollback(log.RollbackAll, "original")
 	if err != nil {
-		return fmt.Errorf("%v", detail)
+		return fmt.Errorf("Rollback All Failed:\n%v", strings.TrimSuffix(detail, "\n"))
 	}
 
 	if detail != "" {
