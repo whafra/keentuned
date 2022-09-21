@@ -36,7 +36,7 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 	}
 
 	if err = com.HeartbeatCheck(); err != nil {
-		return fmt.Errorf("check %v", err)
+		return fmt.Errorf("Failed to access service:\n\t%v", err)
 	}
 
 	go runTuning(flag)
