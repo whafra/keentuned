@@ -29,14 +29,10 @@ func checkTrainingFlags(cmdName string, flag *TrainFlag) error {
 		return fmt.Errorf("Another tuning job %v is running, use 'keentune param stop' to shutdown.", m.GetRunningTask())
 	}
 
-	flag.Config = config.GetKeenTunedConfPath(flag.Config)
-	if !file.IsPathExist(flag.Config) {
-		fmt.Printf("config file '%v' does not exist", flag.Config)
-	}
-
 	return nil
 }
 
+// IsMutexJobRunning ...
 func IsMutexJobRunning(mutexJob string) bool {
 	job := m.GetRunningTask()
 	if job == "" {
@@ -101,11 +97,6 @@ func checkTuningFlags(cmdName string, flag *TuneFlag) error {
 
 	if m.GetRunningTask() != "" {
 		return fmt.Errorf("%v", parseJobRunningErrMsg(m.GetRunningTask()))
-	}
-
-	flag.Config = config.GetKeenTunedConfPath(flag.Config)
-	if !file.IsPathExist(flag.Config) {
-		return fmt.Errorf("config file '%v' does not exist", flag.Config)
 	}
 
 	return nil

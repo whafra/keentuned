@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/rpc"
@@ -10,7 +9,6 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	Config  string
 	Name    string // job specific name
 	Round   int
 	Verbose bool
@@ -31,38 +29,38 @@ type GenFlag struct {
 	Force  bool
 }
 
+// SetFlag ...
 type SetFlag struct {
 	Group    []bool
 	ConfFile []string
 }
 
+// TrainFlag ...
 type TrainFlag struct {
 	Job    string
 	Data   string
 	Trials int
 	Force  bool
 	Log    string // log file
-	Config string
 }
 
+// DeleteFlag ...
 type DeleteFlag struct {
 	Name  string
 	Cmd   string
 	Force bool
 }
 
+// RollbackFlag ...
 type RollbackFlag struct {
 	Cmd string
 }
 
+// BenchmarkFlag ...
 type BenchmarkFlag struct {
 	Round     int
 	BenchConf string
 	Name      string
-}
-
-type VersionFlag struct {
-	VersionNum string
 }
 
 var (
@@ -87,7 +85,8 @@ func remoteImpl(callName string, flag interface{}) {
 	return
 }
 
-func RunTuneRemote(ctx context.Context, flag TuneFlag) {
+// RunTuneRemote ...
+func RunTuneRemote(flag TuneFlag) {
 	remoteImpl("param.Tune", flag)
 
 	fmt.Printf("%v Running Param Tune Success.\n", ColorString("green", "[ok]"))
@@ -96,35 +95,43 @@ func RunTuneRemote(ctx context.Context, flag TuneFlag) {
 	return
 }
 
-func RunDumpRemote(ctx context.Context, flag DumpFlag) {
+// RunDumpRemote ...
+func RunDumpRemote(flag DumpFlag) {
 	remoteImpl("param.Dump", flag)
 }
 
-func RunListRemote(ctx context.Context, flag string) {
+// RunListRemote ...
+func RunListRemote(flag string) {
 	remoteImpl(fmt.Sprintf("%s.List", flag), flag)
 }
 
-func RunRollbackRemote(ctx context.Context, flag RollbackFlag) {
+// RunRollbackRemote ...
+func RunRollbackRemote(flag RollbackFlag) {
 	remoteImpl(fmt.Sprintf("%s.Rollback", flag.Cmd), flag)
 }
 
-func RunDeleteRemote(ctx context.Context, flag DeleteFlag) {
+// RunDeleteRemote ...
+func RunDeleteRemote(flag DeleteFlag) {
 	remoteImpl(fmt.Sprintf("%s.Delete", flag.Cmd), flag)
 }
 
-func RunInfoRemote(ctx context.Context, flag string) {
+// RunInfoRemote ...
+func RunInfoRemote(flag string) {
 	remoteImpl("profile.Info", flag)
 }
 
-func RunSetRemote(ctx context.Context, flag SetFlag) {
+// RunSetRemote ...
+func RunSetRemote(flag SetFlag) {
 	remoteImpl("profile.Set", flag)
 }
 
-func RunGenerateRemote(ctx context.Context, flag GenFlag) {
+// RunGenerateRemote ...
+func RunGenerateRemote(flag GenFlag) {
 	remoteImpl("profile.Generate", flag)
 }
 
-func RunTrainRemote(ctx context.Context, flag TrainFlag) {
+// RunTrainRemote ...
+func RunTrainRemote(flag TrainFlag) {
 	remoteImpl("sensitize.Train", flag)
 
 	fmt.Printf("%v Running Sensitize Train Success.\n", ColorString("green", "[ok]"))
@@ -133,22 +140,27 @@ func RunTrainRemote(ctx context.Context, flag TrainFlag) {
 	return
 }
 
-func StopRemote(ctx context.Context, flag string) {
+// StopRemote ...
+func StopRemote(flag string) {
 	remoteImpl(fmt.Sprintf("%s.Stop", flag), flag)
 }
 
-func RunJobsRemote(ctx context.Context, flag string) {
+// RunJobsRemote ...
+func RunJobsRemote(flag string) {
 	remoteImpl(fmt.Sprintf("%s.Jobs", flag), flag)
 }
 
-func RunBenchRemote(ctx context.Context, flag BenchmarkFlag) {
+// RunBenchRemote ...
+func RunBenchRemote(flag BenchmarkFlag) {
 	remoteImpl("system.Benchmark", flag)
 }
 
+// RunRollbackAllRemote ...
 func RunRollbackAllRemote() {
 	remoteImpl("system.RollbackAll", "")
 }
 
+// RunInitRemote ...
 func RunInitRemote() {
 	remoteImpl("system.Init", "")
 }

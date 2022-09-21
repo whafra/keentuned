@@ -21,7 +21,6 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	Config  string
 	Name    string
 	Round   int
 	Verbose bool

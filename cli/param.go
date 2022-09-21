@@ -68,7 +68,7 @@ func tuneCmd() *cobra.Command {
 
 			flag.Log = fmt.Sprintf("%v/%v.log", "/var/log/keentune", flag.Name)
 
-			RunTuneRemote(cmd.Context(), flag)
+			RunTuneRemote(flag)
 		},
 	}
 
@@ -83,7 +83,7 @@ func listParamCmd() *cobra.Command {
 		Long:    "List parameter and benchmark configuration files",
 		Example: egParamList,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunListRemote(cmd.Context(), "param")
+			RunListRemote("param")
 			return
 		},
 	}
@@ -98,7 +98,7 @@ func jobCmd() *cobra.Command {
 		Long:    "List parameter optimizing jobs",
 		Example: egJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunJobsRemote(cmd.Context(), "param")
+			RunJobsRemote("param")
 			return
 		},
 	}
@@ -139,7 +139,7 @@ func deleteParamJobCmd() *cobra.Command {
 					fmt.Println("[-] Give Up Delete")
 					return
 				}
-				RunDeleteRemote(cmd.Context(), flag)
+				RunDeleteRemote(flag)
 				return
 			}
 		},
@@ -170,7 +170,7 @@ func dumpCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			RunDumpRemote(cmd.Context(), dump)
+			RunDumpRemote(dump)
 			return
 		},
 	}

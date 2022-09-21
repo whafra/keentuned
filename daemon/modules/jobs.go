@@ -124,7 +124,7 @@ const (
 
 // CreateTuneJob ...
 func (tuner *Tuner) CreateTuneJob() error {
-	cmd := fmt.Sprintf("keentune param tune --job %v -i %v --config %v", tuner.Name, tuner.MAXIteration, config.GetCacheConfig())
+	cmd := fmt.Sprintf("keentune param tune --job %v -i %v", tuner.Name, tuner.MAXIteration)
 
 	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", tuner.Name)
 

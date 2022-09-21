@@ -23,7 +23,6 @@ type TrainFlag struct {
 	Trials int
 	Force  bool
 	Log    string
-	Config string
 }
 
 // Train run sensitize train service
