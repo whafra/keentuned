@@ -3,7 +3,7 @@
 _keentune()  
 {
     COMPREPLY=()
-    local commands="--help param profile sensitize rollbackall --version -v"
+    local commands="--help init param profile sensitize rollbackall --version -v"
     local cur=${COMP_WORDS[COMP_CWORD]};
     local cmd=${COMP_WORDS[COMP_CWORD-1]};
     case $cmd in
@@ -18,8 +18,8 @@ _keentune()
     'generate' | 'info')
           COMPREPLY=( $(compgen -W '--name' -- $cur) ) ;;	  
     'sensitize')
-          COMPREPLY=( $(compgen -W 'collect delete list stop train' -- $cur) ) ;; 
-    'collect' | 'train')
+          COMPREPLY=( $(compgen -W 'delete jobs stop train' -- $cur) ) ;;
+    'train')
           COMPREPLY=( $(compgen -W '--data' -- $cur) ) ;;		  
     'set')
           COMPREPLY=( $(compgen -W '--group1' -- $cur) ) ;; 
@@ -35,8 +35,8 @@ _keentune()
     fi
 
     #param/profile/sensitize delete command
-    if [[ "$cmd" == "delete" && ( "${COMP_WORDS[1]}" == "sensitize" || ${COMP_WORDS[1]}" == "param" )]]; then
-	    COMPREPLY=( $(compgen -W '--data' -- $cur) )
+    if [[ "$cmd" == "delete" && ( "${COMP_WORDS[1]}" == "sensitize" || "${COMP_WORDS[1]}" == "param" )]]; then
+	    COMPREPLY=( $(compgen -W '--job' -- $cur) )
     elif [[ "$cmd" == "delete" && "${COMP_WORDS[1]}" == "profile" ]]; then
 	    COMPREPLY=( $(compgen -W '--name' -- $cur) )
     fi

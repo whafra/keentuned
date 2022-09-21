@@ -1,8 +1,8 @@
 # KeenTune-daemon(Keentuned)
 ## INTRODUCTION
-KeenTune 是一款AI算法与专家知识库双轮驱动的操作系统全栈式智能优化产品，为主流的操作系统提供轻量化、跨平台的一键式性能调优，让应用在智能定制的运行环境发挥最优性能。
+KeenTune 是一款 AI 算法与专家知识库双轮驱动的操作系统全栈式智能优化产品，为主流的操作系统提供轻量化、跨平台的一键式性能调优，让应用在智能定制的运行环境发挥最优性能。
 
-KeenTuned 是KeenTune的调度管理组件，包含CLI和Daemon两个部分。CLI模块提供用户可用的命令行接口，命令分为基础命令、静态调优相关命令、动态调优相关命令三个部分。keentuned作为核心管控模块，负责监控其他组件、接收解析来自CLI的命令、按照业务处理顺序调度相关组件等。
+KeenTuned 是 KeenTune 的调度管理组件，包含 CLI 和 Daemon 两个部分。CLI 模块提供用户可用的命令行接口，命令分为基础命令、静态调优相关命令、动态调优相关命令三个部分。keentuned 作为核心管控模块，负责监控其他组件、接收解析来自 CLI 的命令、按照业务处理顺序调度相关组件等。
 
 ## Build & Install
 First, we can use keentuned either build 'keentuned' by source code or install by yum repo. Choose one of the following ways.
