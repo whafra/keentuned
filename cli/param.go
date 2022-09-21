@@ -122,14 +122,14 @@ func deleteParamJobCmd() *cobra.Command {
 			flag.Cmd = "param"
 
 			initWorkDirectory()
-			//Determine whether job already exists
+			// Determine whether job already exists
 			JobPath := config.GetTuningPath(flag.Name)
 			_, err := os.Stat(JobPath)
 			if err != nil {
 				fmt.Printf("%v Auto-tuning job '%v' does not exist.\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
-			//Determine whether job can be deleted
+			// Determine whether job can be deleted
 			if file.IsJobRunning(config.GetDumpPath(config.TuneCsv), flag.Name) {
 				fmt.Printf("%v Auto-tuning job %v is running, use 'keentune param stop' to shutdown.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
@@ -198,7 +198,7 @@ func checkDumpParam(dump *DumpFlag) error {
 	}
 
 	const bestSuffix = "_best.json"
-	bestFiles, err := file.WalkFilePath(job, bestSuffix, false)
+	_, bestFiles, err := file.WalkFilePath(job, bestSuffix)
 	if err != nil {
 		return fmt.Errorf("search the job '%v' file path err: %v ", dump.Name, err)
 	}

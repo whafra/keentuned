@@ -85,14 +85,10 @@ func Dump2File(path, fileName string, info interface{}) error {
 	return nil
 }
 
-//  WalkFilePath walk file path for file or path list by onlyDir
-// return file list  while onlyDir is false, else return path list.
-func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]string, error) {
-	var result []string
-	var separator string
-	if len(separators) != 0 {
-		separator = separators[0]
-	}
+//  WalkFilePath walk file path
+// return: 0) full paths; 1) file names; 2) err msg
+func WalkFilePath(folder, match string) ([]string, []string, error) {
+	var files, fullPaths []string
 
 	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -105,23 +101,16 @@ func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]s
 		}
 
 		var fileName string
-
-		if fi.IsDir() && onlyDir {
+		if !fi.IsDir() && strings.Contains(path, match) {
 			fileName = pathSections[len(pathSections)-1]
-			if fileName != "" && !strings.Contains(fileName, strings.Trim(separator, "/")) {
-				result = append(result, fileName)
-			}
-		}
-
-		if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {
-			fileName = pathSections[len(pathSections)-1]
-			result = append(result, fileName)
+			files = append(files, fileName)
+			fullPaths = append(fullPaths, path)
 		}
 
 		return nil
 	})
 
-	return result, nil
+	return fullPaths, files, nil
 }
 
 // Save2CSV save data to csv file
@@ -199,6 +188,10 @@ func GetPlainName(fileName string) string {
 	}
 
 	parts := strings.Split(fileName, "/")
+	if len(parts) < 1 {
+		return ""
+	}
+
 	return parts[len(parts)-1]
 }
 

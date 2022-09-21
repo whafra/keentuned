@@ -16,7 +16,7 @@ func (s *Service) List(flag string, reply *string) error {
 		log.ClearCliLog(log.ProfList)
 	}()
 
-	proFileList, err := walkProfileAllFiles()
+	repeatedNameInfo, proFileList, err := walkProfileAllFiles()
 	if err != nil {
 		log.Errorf(log.ProfList, "Walk file path failed: %v", err)
 		return fmt.Errorf("Walk file path failed: %v", err)
@@ -53,21 +53,43 @@ func (s *Service) List(flag string, reply *string) error {
 
 	log.Infof(log.ProfList, "%v", strings.TrimSuffix(fileListInfo, "\n"))
 
+	if len(repeatedNameInfo) != 0 {
+		log.Warnf(log.ProfList, "Found the same name files exist. Please handle it manually. See details:\n %v", repeatedNameInfo)
+	}
+
 	return nil
 }
 
-func walkProfileAllFiles() ([]string, error) {
-	proFileList, err := file.WalkFilePath(config.GetProfileWorkPath(""), "", false)
+func walkProfileAllFiles() (string, []string, error) {
+	_, proFileList, err := file.WalkFilePath(config.GetProfileWorkPath(""), "")
 	if err != nil {
-		return proFileList, fmt.Errorf("walk dump folder failed :%v", err)
+		return "", proFileList, fmt.Errorf("walk dump folder failed :%v", err)
 	}
 
-	homeFileList, err := file.WalkFilePath(config.GetProfileHomePath(""), ".conf", false)
+	fullPaths, homeFileList, err := file.WalkFilePath(config.GetProfileHomePath(""), ".conf")
 	if err != nil {
-		return proFileList, fmt.Errorf("walk home folder failed :%v", err)
+		return "", proFileList, fmt.Errorf("walk home folder failed :%v", err)
 	}
+
+	repeatedNameInfo := getRepeatedNameInfo(homeFileList, fullPaths)
 
 	proFileList = append(proFileList, homeFileList...)
-	return proFileList, nil
+	return repeatedNameInfo, proFileList, nil
+}
+
+func getRepeatedNameInfo(names, fullPaths []string) string {
+	fileNameDict := make(map[string][]string)
+	for curIdx, name := range names {
+		fileNameDict[name] = append(fileNameDict[name], fullPaths[curIdx])
+	}
+
+	var warningInfo string
+	for name, paths := range fileNameDict {
+		if len(paths) > 1 {
+			warningInfo += fmt.Sprintf("\t %v found in %v\n", name, strings.Join(paths, ", "))
+		}
+	}
+
+	return warningInfo
 }
 
