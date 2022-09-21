@@ -299,8 +299,26 @@ func (tuner *Tuner) original() error {
 	return tuner.concurrent("original", false)
 }
 
-// deleteUnAVLParams delete unavailable parameters for brain
+// deleteUnAVLParams delete unavailable parameters for brain init
 func (tuner *Tuner) deleteUnAVLParams() {
-	// 	todo
+	var newBrainParams []Parameter
+	for _, p := range tuner.BrainParam {
+		name, idx, err := parseBrainName(p.ParaName)
+		if err != nil {
+			continue
+		}
+
+		if len(tuner.Group[idx].UnAVLParams) == 0 {
+			continue
+		}
+
+		_, find := tuner.Group[idx].UnAVLParams[p.DomainName][name]
+		if !find {
+			newBrainParams = append(newBrainParams, p)
+		}
+	}
+
+	tuner.BrainParam = newBrainParams
+
 }
 
