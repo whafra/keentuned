@@ -107,13 +107,8 @@ class TestKeenTuneUiSmartAbnormal(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("@#@$")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys("TPE")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
-        error = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message"]//div[@class="ant-message-custom-content ant-message-error"]/span[2]'))).text.split('\n')[0]
-        self.assertEqual(error,"请求错误")
+        warn_info = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-form-item-explain-error"]'))).text
+        self.assertEqual(warn_info, "仅允许包含字母、数字、下划线!")
         self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
 
@@ -144,14 +139,7 @@ class TestKeenTuneUiSmartAbnormal(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("@#@$")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys("TPE")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
-        error = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message"]//div[@class="ant-message-custom-content ant-message-error"]/span[2]'))).text.split('\n')[0]
-        self.assertEqual(error,"请求错误")
+        warn_info = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-form-item-explain-error"]'))).text
+        self.assertEqual(warn_info, "仅允许包含字母、数字、下划线!")
         self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-
-

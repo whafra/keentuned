@@ -60,6 +60,7 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
                 break
             elif j == 8:
                 self.assertNotIn("-", Total_Time)
+        # 跳转到敏感参数页面
         self.driver.find_element(By.XPATH, '//div[@class="ant-pro-top-nav-header-logo"]//img').click()
         sleep(5)
         self.driver.find_element(By.XPATH,'//div[@class="list___y_nmN"]/div[3]//img').click()
@@ -84,9 +85,10 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.ID, "trial"))).send_keys(Keys.CONTROL, "a")
         self.wait.until(EC.visibility_of_element_located((By.ID, "trial"))).send_keys(Keys.BACKSPACE)
         self.wait.until(EC.visibility_of_element_located((By.ID, "trial"))).send_keys("1")
-
         self.wait.until(EC.element_to_be_clickable(
-            (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()#等待任务执行完成，任务完成重新创建下一个，超时则结束
+            (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
+
+        #等待任务执行完成，任务完成重新创建下一个，超时则结束
         for j in range(1,9):
             sleep(35)
             self.driver.refresh()
@@ -173,19 +175,11 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("@#@$")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys("auto_test_TPE")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys("lasso")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
-        error = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message"]//div[@class="ant-message-custom-content ant-message-error"]/span[2]'))).text.split('\n')[0]
-        self.assertEqual(error,"请求错误")
+        warn_info = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-form-item-explain-error"]'))).text
+        self.assertEqual(warn_info, "仅允许包含字母、数字、下划线!")
         self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
+
     def test_rerun_required_para_empty(self):
         self.wait.until(
             EC.element_to_be_clickable((By.XPATH, '//tbody[@class="ant-table-tbody"]/tr[1]/td[10]/div'))).click()
@@ -201,7 +195,6 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
         self.assertIn(error_info, error_dict)
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
-
 
     def test_rerun_name_exsit(self):
         name = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//tbody[@class="ant-table-tbody"]/tr[1]/td[2]'))).text
@@ -225,16 +218,7 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.BACKSPACE)
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys("@#@$")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys("auto_test_TPE")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "data"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.CONTROL, "a")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.BACKSPACE)
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys("lasso")
-        self.wait.until(EC.visibility_of_element_located((By.ID, "algorithm"))).send_keys(Keys.ENTER)
-        self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[2]'))).click()
-        error = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message"]//div[@class="ant-message-custom-content ant-message-error"]/span[2]'))).text.split('\n')[0]
-        self.assertEqual(error,"请求错误")
+        warn_info = self.wait.until(EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-form-item-explain-error"]'))).text
+        self.assertEqual(warn_info, "仅允许包含字母、数字、下划线!")
         self.wait.until(EC.element_to_be_clickable(
                 (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
