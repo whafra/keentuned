@@ -103,9 +103,9 @@ func checkTargetAVL(warningDetail *string) [][]ymlTarget {
 	var err error
 	targetGroup := make([][]ymlTarget, len(config.KeenTune.Group))
 	for groupIdx, target := range config.KeenTune.Group {
-		var tmpTarget ymlTarget
 		targetGroup[groupIdx] = make([]ymlTarget, len(target.IPs))
 		for ipIdx, ip := range target.IPs {
+			var tmpTarget ymlTarget
 			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
 			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
 			if err != nil {
@@ -125,10 +125,9 @@ func checkTargetAVL(warningDetail *string) [][]ymlTarget {
 func checkBenchAVL(ymlConf *keenTuneYML, warningDetail *string) {
 	ymlConf.Bench = make([]ymlBench, len(config.KeenTune.BenchIPMap))
 	for _, bench := range config.KeenTune.BenchGroup {
-		var tmpBench ymlBench
-		tmpBench.BenchConf = bench.BenchConf
-
 		for _, ip := range bench.SrcIPs {
+			var tmpBench ymlBench
+			tmpBench.BenchConf = bench.BenchConf
 			isBenchAVL, avlAgent, err := com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
 			if err != nil {
 				*warningDetail += fmt.Sprintf("%v", err)
