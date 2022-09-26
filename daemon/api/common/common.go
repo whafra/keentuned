@@ -319,7 +319,7 @@ func GetAVLAgentAddr(ip, port, agent string) (bool, string, error) {
 
 	resp, err := pingAndCallAVL(ip, port, request)
 	if err != nil {
-		return false, "", fmt.Errorf("\tbench src host %v unreachable\n", ip)
+		return false, "", fmt.Errorf("\tbench source %v offline\n", ip)
 	}
 
 	var ret map[string]bool
@@ -333,6 +333,6 @@ func GetAVLAgentAddr(ip, port, agent string) (bool, string, error) {
 		return true, agent, nil
 	}
 
-	return true, "", fmt.Errorf("\tbenchmark access agent %v failed\n", agent)
+	return true, "", fmt.Errorf("\tbench destination %v unreachable\n", agent)
 }
 

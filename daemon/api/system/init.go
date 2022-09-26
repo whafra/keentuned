@@ -12,9 +12,10 @@ import (
 )
 
 type ymlTarget struct {
-	IP     string   `yaml:"ip"`
-	Knobs  []string `yaml:"knobs"`
-	Domain []string `yaml:"domain"`
+	IP        string   `yaml:"ip"`
+	Available bool     `yaml:"available"`
+	Knobs     []string `yaml:"knobs"`
+	Domain    []string `yaml:"domain"`
 }
 
 type ymlBrain struct {
@@ -25,6 +26,7 @@ type ymlBrain struct {
 
 type ymlBench struct {
 	IP        string `yaml:"ip"`
+	Available bool   `yaml:"available"`
 	Dest      string `yaml:"destination"`
 	BenchConf string `yaml:"benchmark"`
 }
@@ -82,7 +84,7 @@ func checkBrainAVL(ymlConf *keenTuneYML, warningDetail *string) {
 	var err error
 	_, ymlConf.Brain.AlgoTune, ymlConf.Brain.AlgoSen, err = com.GetAVLDataAndAlgo()
 	if err != nil {
-		*warningDetail += fmt.Sprintf("\tbrain host %v unreachable\n", config.KeenTune.BrainIP)
+		*warningDetail += fmt.Sprintf("\tbrain %v offline\n", config.KeenTune.BrainIP)
 	}
 }
 
@@ -108,13 +110,15 @@ func checkTargetAVL(warningDetail *string) [][]ymlTarget {
 			var tmpTarget ymlTarget
 			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
 			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
+			tmpTarget.IP = ip
 			if err != nil {
-				*warningDetail += fmt.Sprintf("\ttarget host %v unreachable\n", ip)
+				groupInfo := fmt.Sprintf("target-group[%v]:", target.GroupNo)
+				*warningDetail += fmt.Sprintf("\t%v %v offline\n", groupInfo, ip)
 				targetGroup[groupIdx][ipIdx] = tmpTarget
 				continue
 			}
 
-			tmpTarget.IP = ip
+			tmpTarget.Available = true
 			targetGroup[groupIdx][ipIdx] = tmpTarget
 		}
 	}
@@ -127,21 +131,18 @@ func checkBenchAVL(ymlConf *keenTuneYML, warningDetail *string) {
 	for _, bench := range config.KeenTune.BenchGroup {
 		for _, ip := range bench.SrcIPs {
 			var tmpBench ymlBench
-			tmpBench.BenchConf = bench.BenchConf
-			isBenchAVL, avlAgent, err := com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
-			if err != nil {
-				*warningDetail += fmt.Sprintf("%v", err)
-				if isBenchAVL {
-					tmpBench.IP = ip
-				}
+			var err error
 
-				ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
-				continue
-			}
+			tmpBench.BenchConf = bench.BenchConf
+
+			tmpBench.Available, tmpBench.Dest, err = com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
 
 			tmpBench.IP = ip
-			tmpBench.Dest = avlAgent
+
 			ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
+			if err != nil {
+				*warningDetail += fmt.Sprintf("%v", err)
+			}
 		}
 	}
 }
