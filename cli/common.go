@@ -133,8 +133,8 @@ func migrateCmd() *cobra.Command {
 }
 
 func changeFileName(dir string) {
-	srcFilename := fmt.Sprintf("/etc/tuned/%v/tuned.conf", dir)
-	destFilename := fmt.Sprintf("/etc/keentune/profile/%v.conf", dir)
+	srcFilename := fmt.Sprintf("/usr/lib/tuned/%v/tuned.conf", dir)
+	destFilename := fmt.Sprintf("/var/keentune/profile/%v.conf", dir)
 
 	if !file.IsPathExist(srcFilename) {
                 fmt.Printf("find the profile [%v] does not exist.\n ", srcFilename)
