@@ -41,7 +41,7 @@ class TestKeenTuneUiSensitiveAbnormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
         #在智能参数调优页面创建任务
-        keentuneInit(self, self.web_ip)
+        keentuneInit(self)
         self.driver.get("http://{}:8082/list/tuning-task".format(self.web_ip))
         self.wait.until(EC.element_to_be_clickable((By.XPATH, '//button[@class="ant-btn ant-btn-default"]'))).click()
         self.wait.until(EC.visibility_of_element_located((By.ID, "name"))).send_keys(Keys.CONTROL, "a")

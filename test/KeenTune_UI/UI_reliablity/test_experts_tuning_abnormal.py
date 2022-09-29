@@ -41,7 +41,7 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
 
-        keentuneInit(self, self.web_ip)
+        keentuneInit(self)
         self.driver.get("http://{}:8082/list/profile".format(self.web_ip))
         value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
         if "Tuning Profiles" in value:
