@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from time import sleep
@@ -6,6 +7,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
+
+from common import keentuneInit
 
 
 class TestKeenTuneUiNormal(unittest.TestCase):
@@ -35,6 +40,7 @@ class TestKeenTuneUiNormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
 
+        keentuneInit(self)
         self.driver.get("http://{}:8082/list/profile".format(self.web_ip))
 
     @classmethod
