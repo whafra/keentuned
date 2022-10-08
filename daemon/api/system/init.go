@@ -108,7 +108,11 @@ func checkTargetAVL(warningDetail *string) [][]ymlTarget {
 		targetGroup[groupIdx] = make([]ymlTarget, len(target.IPs))
 		for ipIdx, ip := range target.IPs {
 			var tmpTarget ymlTarget
-			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
+			knobs := strings.Split(target.ParamConf, ",")
+			for _, knob := range knobs {
+				tmpTarget.Knobs = append(tmpTarget.Knobs, strings.TrimSpace(knob))
+			}
+			
 			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
 			tmpTarget.IP = ip
 			if err != nil {
