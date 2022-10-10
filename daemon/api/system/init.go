@@ -25,10 +25,15 @@ type ymlBrain struct {
 }
 
 type ymlBench struct {
+	IP        string  `yaml:"ip"`
+	Available bool    `yaml:"available"`
+	Dest      ymlDest `yaml:"destination"`
+	BenchConf string  `yaml:"benchmark"`
+}
+
+type ymlDest struct {
 	IP        string `yaml:"ip"`
-	Available bool   `yaml:"available"`
-	Dest      string `yaml:"destination"`
-	BenchConf string `yaml:"benchmark"`
+	Reachable bool   `yaml:"reachable"`
 }
 
 type keenTuneYML struct {
@@ -112,7 +117,7 @@ func checkTargetAVL(warningDetail *string) [][]ymlTarget {
 			for _, knob := range knobs {
 				tmpTarget.Knobs = append(tmpTarget.Knobs, strings.TrimSpace(knob))
 			}
-			
+
 			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
 			tmpTarget.IP = ip
 			if err != nil {
@@ -139,9 +144,10 @@ func checkBenchAVL(ymlConf *keenTuneYML, warningDetail *string) {
 
 			tmpBench.BenchConf = bench.BenchConf
 
-			tmpBench.Available, tmpBench.Dest, err = com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
+			tmpBench.Available, tmpBench.Dest.Reachable, err = com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
 
 			tmpBench.IP = ip
+			tmpBench.Dest.IP = bench.DestIP
 
 			ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
 			if err != nil {
