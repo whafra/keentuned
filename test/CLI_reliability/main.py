@@ -24,6 +24,7 @@ from CLI_reliability.test_sensitize_profile import TestSensitizeProfile
 from CLI_reliability.test_param_tune_stop import TestParamTuneStop
 from CLI_reliability.test_multi_scenes import TestMultiScenes
 from CLI_reliability.test_multi_target import TestMultiTarget
+from CLI_reliability.test_keentune_init import TestKeentuneInit
 
 
 def RunReliabilityCase():
@@ -58,7 +59,10 @@ def RunReliabilityCase():
     multi_target = unittest.TestSuite()
     multi_target.addTests(unittest.TestLoader().loadTestsFromTestCase(TestMultiTarget))
 
-    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, combination_suite, multi_scenes, multi_target])
+    multi_init = unittest.TestSuite()
+    multi_init.addTests(unittest.TestLoader().loadTestsFromTestCase(TestKeentuneInit))
+
+    suite = unittest.TestSuite([param_suite, profile_suite, sensitize_suite, combination_suite, multi_scenes, multi_target, multi_init])
     return suite
 
 
