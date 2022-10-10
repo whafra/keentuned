@@ -58,14 +58,15 @@ func (tuner *Tuner) configure() error {
 	wg.Wait()
 
 	for _, status := range targetFinishStatus {
-		applySummary += fmt.Sprintf("\t%v", status)
 		if strings.Contains(status, "apply failed") {
-			errDetail += fmt.Sprintf(" %v;", status)
+			errDetail += status
+			continue
 		}
+		applySummary += status
 	}
 
 	if errDetail != "" {
-		return fmt.Errorf(strings.TrimSuffix(errDetail, ";"))
+		return fmt.Errorf(strings.TrimSuffix(errDetail, "\n"))
 	}
 
 	tuner.applySummary = applySummary
@@ -84,7 +85,7 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 	var errMsg error
 	req.ipIndex = config.KeenTune.IPMap[req.ip]
 	config.IsInnerApplyRequests[req.ipIndex] = true
-	identity := fmt.Sprintf("group-%v.target-%v", tuner.Group[req.groupID].GroupNo, req.id)
+	identity := fmt.Sprintf("Group %v Node %v: %v", tuner.Group[req.groupID].GroupNo, req.id, req.ip)
 	defer func() {
 		wg.Done()
 		config.IsInnerApplyRequests[req.ipIndex] = false
@@ -104,11 +105,12 @@ func (tuner *Tuner) apply(wg *sync.WaitGroup, targetFinishStatus []string, req r
 		return errMsg
 	}
 
-	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("%v apply result: %v", identity, strings.TrimPrefix(applyResult, " "))
+	targetFinishStatus[req.ipIndex-1] = fmt.Sprintf("\t%v\n%v\n", identity, applyResult)
 	tuner.timeSpend.apply += utils.Runtime(start).Count
 	return nil
 }
 
+// Set set configure
 func (gp *Group) Set(req request) (string, error) {
 	var setResult string
 	for index := range gp.Params {
@@ -129,6 +131,7 @@ func (gp *Group) Set(req request) (string, error) {
 	return setResult, nil
 }
 
+// Configure handle configure request
 func (gp *Group) Configure(req request) (string, error) {
 	uri := fmt.Sprintf("%v:%v/configure", req.ip, gp.Port)
 	body, err := http.RemoteCall("POST", uri, req.body)
@@ -151,11 +154,10 @@ func (gp *Group) Configure(req request) (string, error) {
 		gp.updateDump(paramInfo)
 	}
 
-	retDetail := fmt.Sprintf(" %v", applyResult)
-
-	return retDetail, nil
+	return applyResult, nil
 }
 
+// Get get configure
 func (gp *Group) Get(req request) (string, error) {
 	gp.ReadOnly = true
 	req.body = gp.applyReq(req.ip, gp.MergedParam)

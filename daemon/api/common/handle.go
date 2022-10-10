@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	// LimitBytes
+	// LimitBytes ...
 	LimitBytes = 1024 * 1024 * 5
 )
 
@@ -45,12 +45,12 @@ func write(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		w.WriteHeader(http.StatusOK)
 		if err != nil {
-			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", err.Error())))
-			log.Errorf("", "write operation: %v", err)
+			w.Write([]byte(fmt.Sprintf("{\"suc\": false, \"msg\": \"%v\"}", getMsg(err.Error(), ""))))
+			log.Errorf("", "write operation: %v", getMsg(err.Error(), ""))
 			return
 		}
 
-		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", *result)))
+		w.Write([]byte(fmt.Sprintf("{\"suc\": true, \"msg\": \"%s\"}", getMsg(*result, ""))))
 		log.Infof("", "write operation: %v", *result)
 	}()
 
@@ -68,6 +68,11 @@ func write(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(bytes, &req)
 	if err != nil {
 		err = fmt.Errorf("parse request info failed: %v", err)
+		return
+	}
+
+	if req.Name == file.GetPlainName(config.GetKeenTunedConfPath("")) && strings.Contains(req.Info, "[brain]") {
+		*result, err = config.UpdateKeentunedConf(req.Info)
 		return
 	}
 
@@ -223,7 +228,7 @@ func execCmd(inputCmd string, result *string) error {
 	stderr, _ := cmd.StderrPipe()
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return fmt.Errorf("can not obtain stdout pipe for command:%s\n", err)
+		return fmt.Errorf("can not obtain stdout pipe for command: %s", err)
 	}
 
 	if err = cmd.Start(); err != nil {
@@ -268,12 +273,14 @@ func getMsg(origin, cmd string) string {
 		return origin
 	}
 
-	pureMSg := strings.ReplaceAll(
-		strings.ReplaceAll(
-			strings.ReplaceAll(
-				origin, "\x1b[1;40;32m", ""),
-			"\x1b[0m", ""),
-		"\x1b[1;40;31m", "")
+	// replace color control special chars
+	matchStr := "\u001B\\[1;40;3[1-3]m(.*?)\u001B\\[0m"
+	pureMSg := origin
+	matched, _ := regexp.MatchString(matchStr, pureMSg)
+	if matched {
+		re := regexp.MustCompile(matchStr)
+		pureMSg = re.ReplaceAllString(strings.TrimSpace(origin), "$1")
+	}
 
 	changeLinefeed := strings.ReplaceAll(pureMSg, "\n", "\\n")
 	changeTab := strings.ReplaceAll(changeLinefeed, "\t", " ")
@@ -295,115 +302,10 @@ func getCmd(body io.ReadCloser) (string, error) {
 		return "", err
 	}
 
-	if strings.Contains(reqInfo.Cmd, "delete") {
+	if strings.Contains(reqInfo.Cmd, "delete") || strings.Contains(reqInfo.Cmd, "dump") {
 		return "echo y|" + reqInfo.Cmd, nil
 	}
 
-	if strings.Contains(reqInfo.Cmd, "param tune") {
-		return handleTuneCmd(reqInfo.Cmd, "tuning")
-	} else if strings.Contains(reqInfo.Cmd, "sensitize train") {
-		return handleTuneCmd(reqInfo.Cmd, "training")
-	}
-
 	return reqInfo.Cmd, nil
-}
-
-func handleTuneCmd(originCmd string, cmd string) (string, error) {
-	if !strings.Contains(originCmd, "--config") {
-		return originCmd, nil
-	}
-
-	matched, err := parseConfigFlag(originCmd)
-	if err != nil {
-		return matched, err
-	}
-
-	var retCmd string
-	if cmd == "tuning" {
-		retCmd = strings.ReplaceAll(originCmd, matched, config.TuneTempConf)
-		err = ioutil.WriteFile(config.TuneTempConf, []byte(strings.Trim(matched, "\"")), 0666)
-		config.SetCacheConfig(matched)
-	} else if cmd == "training" {
-		retCmd = strings.ReplaceAll(originCmd, matched, config.SensitizeTempConf)
-		err = ioutil.WriteFile(config.SensitizeTempConf, []byte(strings.Trim(matched, "\"")), 0666)
-	}
-
-	return retCmd, err
-}
-
-func parseConfigFlag(originCmd string) (string, error) {
-	configPart := strings.Split(originCmd, "--config")
-	if len(configPart) < 2 {
-		return "", fmt.Errorf("split --config length less than 2")
-	}
-
-	re, err := regexp.Compile(compiler)
-	if err != nil {
-		return "", err
-	}
-
-	matched := ""
-	parts := re.FindAllString(configPart[1], -1)
-	switch len(parts) {
-	case 0:
-		return "", fmt.Errorf("find all is empty in '%v'", originCmd)
-	case 1:
-		if len(strings.Trim(parts[0], " ")) == 0 {
-			return "", fmt.Errorf("parse config part0 is empty")
-		}
-
-		matched = parts[0]
-	default:
-		if len(parts[0]) > 0 {
-			matched = parts[0]
-			break
-		}
-		matched = parts[1]
-	}
-
-	if matched == "" {
-		return "", fmt.Errorf("config info not found in '%v'", originCmd)
-	}
-
-	return matched, nil
-}
-
-func parseFlag(originCmd, flagName string, short ...string) (string, error) {
-	var flagParts []string
-	if strings.Contains(originCmd, flagName) {
-		flagParts = strings.Split(originCmd, flagName)
-	}
-
-	if len(flagParts) == 0 && len(short) > 0 {
-		if strings.Contains(originCmd, short[0]) {
-			flagParts = strings.Split(originCmd, short[0])
-		}
-	}
-
-	if len(flagParts) < 2 {
-		return "", fmt.Errorf("%v is null", flagName)
-	}
-
-	values := strings.Split(flagParts[1], " ")
-	if len(values) == 0 {
-		return "", fmt.Errorf("%v is null", flagName)
-	}
-
-	var flagValue string
-	flagValue = strings.Trim(values[0], " ")
-	if flagValue != "" {
-		return flagValue, nil
-	}
-
-	if len(values) < 2 {
-		return "", fmt.Errorf("%v value is null", flagName)
-	}
-
-	flagValue = strings.Trim(values[1], " ")
-	if flagValue == "" {
-		return "", fmt.Errorf("%v value is empty", flagName)
-	}
-
-	return flagValue, nil
 }
 

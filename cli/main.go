@@ -7,20 +7,7 @@ package main
 
 import (
 	"os"
-
-	"github.com/spf13/cobra"
 )
-
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:     "keentune [command]",
-	Short:   "KeenTune is an AI tuning tool for Linux system and cloud applications",
-	Long:    "KeenTune is an AI tuning tool for Linux system and cloud applications",
-	Example: "\tkeentune param -h\n\tkeentune profile -h\n\tkeentune sensitize -h\n\tkeentune version -h\n\tkeentune migrate -h",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return cmd.Help()
-	},
-}
 
 const template = `{{with (or .Long .Short)}}{{. | trimTrailingWhitespaces}}{{end}}
 
@@ -49,6 +36,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 
 func main() {
+	rootCmd := newRootCmd()
 	decorateCmd(rootCmd)
 	rootCmd.SetHelpTemplate(template)
 	rootCmd.AddCommand(subCommands()...)
@@ -57,3 +45,4 @@ func main() {
 		os.Exit(1)
 	}
 }
+

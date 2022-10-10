@@ -23,8 +23,8 @@ class TestMultiTarget(unittest.TestCase):
         self.target, self.bench, self.brain = self.get_server_ip()
         self.port = "TARGET_PORT = 9873"
         self.scene_1 = "PARAMETER = sysctl_target.json"
-        self.scene_2 = "PARAMETER = nginx.json, sysctl_target.json, nginx.json"
-        self.scene_3 = "PARAMETER = sysctl_target.json, nginx.json, sysctl_target.json"
+        self.scene_2 = "PARAMETER = nginx_conf.json, sysctl_target.json, nginx_conf.json"
+        self.scene_3 = "PARAMETER = sysctl_target.json, nginx_conf.json, sysctl_target.json"
         self.code_path = "/etc/keentune"
 
         server_list = ["keentuned", "keentune-brain",
@@ -161,10 +161,7 @@ class TestMultiTarget(unittest.TestCase):
             cmd = "keentune profile set --group1 param1_group1.conf --group2 param1_group2.conf --group3 param1_group3.conf --group4 param1_group4.conf"
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
-            self.assertIn("Set param1_group1.conf successfully", self.out)
-            self.assertIn("Set param1_group2.conf successfully", self.out)
-            self.assertIn("Set param1_group3.conf successfully", self.out)
-            self.assertIn("Set param1_group4.conf successfully", self.out)
+            self.assertIn("Succeeded", self.out)
 
     def test_multi_bench_FUN_01(self):
         scene_cmd = r"\n[target-group-1]\nTARGET_IP = {}\n{}\n{}".format(self.target, self.port, self.scene_3)

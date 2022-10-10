@@ -18,19 +18,21 @@ type implyDetail struct {
 	applyDetail     string
 	benchSummary    string
 	backupFailure   string
+	backupWarning   string
 	rollbackDetail  string
 	rollbackFailure string
 }
 
 // Tuner define a tuning job include Algorithm, Benchmark, Group
 type Tuner struct {
+	// Name job name
 	Name          string
 	Algorithm     string // 使用的算法
 	MAXIteration  int    // 最大执行轮次
 	Iteration     int    // 当前轮次
 	StartTime     time.Time
 	Benchmark     Benchmark
-	timeSpend     TimeSpend
+	timeSpend     timeSpend
 	ParamConf     config.DBLMap
 	Verbose       bool
 	Step          int    // tuning process steps
@@ -49,7 +51,7 @@ type Tuner struct {
 	Trainer
 }
 
-type TimeSpend struct {
+type timeSpend struct {
 	init       time.Duration
 	acquire    time.Duration
 	apply      time.Duration
@@ -291,5 +293,32 @@ func (tuner *Tuner) IncreaseStep(initVal ...int) int {
 
 	tuner.Step = initVal[0] + 1
 	return tuner.Step
+}
+
+func (tuner *Tuner) original() error {
+	return tuner.concurrent("original", false)
+}
+
+// deleteUnAVLParams delete unavailable parameters for brain init
+func (tuner *Tuner) deleteUnAVLParams() {
+	var newBrainParams []Parameter
+	for _, p := range tuner.BrainParam {
+		name, idx, err := parseBrainName(p.ParaName)
+		if err != nil {
+			continue
+		}
+
+		if len(tuner.Group[idx].UnAVLParams) == 0 {
+			continue
+		}
+
+		_, find := tuner.Group[idx].UnAVLParams[p.DomainName][name]
+		if !find {
+			newBrainParams = append(newBrainParams, p)
+		}
+	}
+
+	tuner.BrainParam = newBrainParams
+
 }
 

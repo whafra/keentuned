@@ -24,21 +24,18 @@ e.g.
 """
 
 #const
-FileName = "/dev/vda"
-BlockSize = 512
-SIZE = 102400
-NumJobs = 8
-COMMAND = "-ioengine=psync -time_based=1 -rw=read -direct=1 -buffered=0 -thread -iodepth=1 -runtime=300 -lockmem=1G -group_reporting -name=read"
+FileName = "/dev/sda"
+TestType = "read"
+COMMAND = "-ioengine=psync -time_based=1 -rw={0} -direct=1 -buffered=0 -thread -size=110g -runtime=300 -lockmem=1G -group_reporting -name={0}".format(TestType)
+DEFAULT = "-bs=512B -numjobs=8 -iodepth=1"
 
 class Benchmark():
-    def __init__(self, filename=FileName, bs=BlockSize, size=SIZE, numjobs=NumJobs, command=COMMAND):
+    def __init__(self, filename=FileName, default=DEFAULT, command=COMMAND):
         """Init benchmark
         """
         self.filename = filename
-        self.bs = str(bs) + 'B'
-        self.size = str(size) + 'M'
-        self.numjobs = numjobs
         self.command = command
+        self.default = DEFAULT
 
     def __transfMeasurement(self,value,measurement):
         if measurement == '':
@@ -58,7 +55,7 @@ class Benchmark():
 
         Return True and score list if running benchmark successfully, otherwise return False and empty list.
         """
-        cmd = 'fio -filename={} {} -numjobs={} -size={} -bs={}'.format(self.filename, self.command, self.numjobs, self.size, self.bs)
+        cmd = 'fio -filename={} {} {}'.format(self.filename, self.default, self.command)
         logger.info(cmd)
         result = subprocess.run(
                     cmd,
@@ -70,8 +67,8 @@ class Benchmark():
         self.out = result.stdout.decode('UTF-8','strict')
         self.error = result.stderr.decode('UTF-8','strict')
         if result.returncode == 0:
-            pattern_iops = re.compile(r'IOPS=([\d\.]+)(\w*)')
-            pattern_bw = re.compile(r'BW=([\d\.]+)')
+            pattern_iops = re.compile(r'[iI][oO][pP][sS]=([\d\.]+)(\w*)')
+            pattern_bw = re.compile(r'[bB][wW]=([\d\.]+)')
 
             if not re.search(pattern_iops,self.out) \
                 or not re.search(pattern_bw,self.out):

@@ -33,7 +33,7 @@ const (
 	Err    = "error"
 )
 
-// List run sensitize list service
+// Jobs run sensitize jobs service
 func (s *Service) Jobs(flag string, reply *string) error {
 	defer func() {
 		*reply = log.ClientLogMap[log.SensitizeJobs]

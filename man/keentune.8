@@ -82,15 +82,11 @@ Apply a profile to the target machine\.
 Sensitive parameter identification and explanation with AI algorithms\.
 .
 .TP
-\fBsensitize collect\fR
-Collect random parameter values and benchmark scores as the input data for sensitivity identification\.
-.
-.TP
-\fBsensitize delete\fR
+\fBsensitize delete --job\fR
 Delete the data collected for sensitivity identification\.
 .
 .TP
-\fBsensitize list\fR
+\fBsensitize jobs\fR
 List the available data for sensitivity identification\.
 .
 .TP
@@ -98,7 +94,7 @@ List the available data for sensitivity identification\.
 Terminate a sensitivity identification job\.
 .
 .TP
-\fBsensitize train\fR
+\fBsensitize train --data\fR
 Deploy and start a sensitivity identification job\.
 .
 .SS "Info command"
@@ -107,7 +103,7 @@ Deploy and start a sensitivity identification job\.
 help message\.
 .
 .TP
-\fBversion\fR
+\fB-v/--version\fR
 Print the version number of keentune\.
 .SH "FILES"
 .nf
