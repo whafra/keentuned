@@ -25,7 +25,7 @@ func subCommands() []*cobra.Command {
 	return subCmds
 }
 
-var egMigrate = "\tkeentune migrate virtual-host"
+var egMigrate = "\tkeentune migrate --dir virtual-host"
 func initCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "init",
@@ -184,7 +184,9 @@ func changeFileName(dir string) {
 	destFilename := fmt.Sprintf("/var/keentune/profile/%v.conf", dir)
 
 	if !file.IsPathExist(srcFilename) {
-                fmt.Printf("find the profile [%v] does not exist.\n ", srcFilename)
+                fmt.Printf("find the profile [%v] does not exist.\n", srcFilename)
+		os.Exit(1)
+
         }
 
 	fpSrc, _ := os.Open(srcFilename)
