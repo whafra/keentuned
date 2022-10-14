@@ -183,8 +183,13 @@ func changeFileName(dir string) {
 	srcFilename := fmt.Sprintf("/usr/lib/tuned/%v/tuned.conf", dir)
 	destFilename := fmt.Sprintf("/var/keentune/profile/%v.conf", dir)
 
+	if file.IsPathExist(destFilename) {
+		fmt.Printf("%v Profile [%v] already exists.\n",ColorString("red", "[ERROR]"), destFilename)
+		os.Exit(1)
+	}
+
 	if !file.IsPathExist(srcFilename) {
-                fmt.Printf("find the profile [%v] does not exist.\n", srcFilename)
+                fmt.Printf("%v Find the profile [%v] does not exist.\n",ColorString("red", "[ERROR]"), srcFilename)
 		os.Exit(1)
 
         }
