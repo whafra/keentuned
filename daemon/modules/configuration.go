@@ -98,7 +98,7 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 		}
 
 		failedDetail := utils.FormatInTable(failedInfoSlice)
-		setResult = fmt.Sprintf("%v; the failed details:%s\n", successInfo, failedDetail)
+		setResult += fmt.Sprintf("%v; the failed details:%s\n", successInfo, failedDetail)
 	}
 
 	if totalFailed == len(paramCollection) {
