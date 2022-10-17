@@ -13,6 +13,7 @@ local_keentuned_conf=$test_conf_dir/keentuned.conf
 clear_keentune_env()
 {
     ps -ef|grep -w 'keentuned'|grep -v grep|awk '{print $2}'| xargs -I {} kill -9 {}
+    sleep 5
 }
 
 restart_keentuned()
