@@ -28,7 +28,4 @@ class TestRollbackAll(unittest.TestCase):
         cmd = 'keentune rollbackall'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Rollback all successfully'))
-        self.status, self.out, _ = sysCommand(cmd)
-        self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('All Targets No Need to Rollback'))
+        self.assertTrue(self.out.__contains__('Rollback all successfully') or self.out.__contains__('All Targets No Need to Rollback'))
