@@ -134,7 +134,6 @@ func CheckIPValidity(origin []string) ([]string, []string, []string) {
 			valid = append(valid, pureValue)
 			continue
 		}
-		
 		invalid = append(invalid, pureValue)
 	}
 
@@ -227,11 +226,15 @@ func Ping(ip string, port string) error {
 		}
 	}
 
+	if !isPingExist() {
+		return dail(ip, port)
+	}
+
 	if pingTong(ip) {
 		return nil
 	}
 
-	return dail(ip, port)
+	return fmt.Errorf("ip %v offline", ip)
 }
 
 func dail(ip, port string) error {
@@ -248,14 +251,16 @@ func dail(ip, port string) error {
 
 func pingTong(ip string) bool {
 	var success = "true"
+	pingCmd := fmt.Sprintf("ping -c 1 -w 1 %s > /dev/null && echo true || echo false", ip)
+	output, _ := exec.Command("/bin/bash", "-c", pingCmd).Output()
+
+	return success == strings.TrimSpace(string(output))
+}
+
+func isPingExist() bool {
+	var success = "true"
 	whichPing := "which ping > /dev/null && echo true || echo false"
 	output, _ := exec.Command("/bin/bash", "-c", whichPing).Output()
-	if strings.TrimSpace(string(output)) != success {
-		return false
-	}
-
-	pingCmd := fmt.Sprintf("ping -c 1 -w 2 %s > /dev/null && echo true || echo false", ip)
-	output, _ = exec.Command("/bin/bash", "-c", pingCmd).Output()
 
 	return success == strings.TrimSpace(string(output))
 }

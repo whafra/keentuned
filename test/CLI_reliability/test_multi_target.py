@@ -19,6 +19,20 @@ logger = logging.getLogger(__name__)
 
 
 class TestMultiTarget(unittest.TestCase):
+    @classmethod
+    def setUpClass(self) -> None:
+        cmd = "echo y | cp /etc/keentune/conf/keentuned.conf /etc/keentune/conf/keentuned_bak.conf"
+        status, _, _ = sysCommand(cmd)
+        assert status == 0
+        logger.info("TestMultiTarget begin...")
+
+    @classmethod
+    def tearDownClass(self) -> None:
+        cmd = "echo y | mv /etc/keentune/conf/keentuned_bak.conf /etc/keentune/conf/keentuned.conf"
+        status, _, _ = sysCommand(cmd)
+        assert status == 0
+        logger.info("TestMultiTarget end...")
+
     def setUp(self) -> None:
         self.target, self.bench, self.brain = self.get_server_ip()
         self.port = "TARGET_PORT = 9873"

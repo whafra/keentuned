@@ -309,30 +309,30 @@ func pingAndCallAVL(ip, port string, request ...interface{}) ([]byte, error) {
 
 // GetAVLAgentAddr ...
 // return:
-//       0: ping benchmark host result;
-//       1: reachable agent ip;
+//       0: benchmark host available? true:false;
+//       1: agent ip reachable? true:false;
 //       2: err msg
-func GetAVLAgentAddr(ip, port, agent string) (bool, string, error) {
+func GetAVLAgentAddr(ip, port, agent string) (bool, bool, error) {
 	request := map[string]interface{}{
 		"agent_address": agent,
 	}
 
 	resp, err := pingAndCallAVL(ip, port, request)
 	if err != nil {
-		return false, "", fmt.Errorf("\tbench src host %v unreachable\n", ip)
+		return false, false, fmt.Errorf("\tbench source %v offline\n", ip)
 	}
 
 	var ret map[string]bool
 
 	err = json.Unmarshal(resp, &ret)
 	if err != nil {
-		return false, "", err
+		return false, false, err
 	}
 
 	if ret[agent] {
-		return true, agent, nil
+		return true, true, nil
 	}
 
-	return true, "", fmt.Errorf("\tbenchmark access agent %v failed\n", agent)
+	return true, false, fmt.Errorf("\tbench destination %v unreachable\n", agent)
 }
 

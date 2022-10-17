@@ -12,13 +12,12 @@ from common import runParamTune
 from common import getTaskLogPath
 from common import checkServerStatus
 from common import getTrainTaskResult
-from common import deleteDependentData
-from common import runSensitizeCollect
 
 logger = logging.getLogger(__name__)
 
 
 class TestLongStability(unittest.TestCase):
+    job_name = "param_tune"
     def setUp(self) -> None:
         server_list = ["keentuned", "keentune-brain", "keentune-target", "keentune-bench"]
         status = checkServerStatus(server_list)
@@ -31,59 +30,80 @@ class TestLongStability(unittest.TestCase):
         self.assertEqual(status, 0)
         logger.info('the test_long_stability testcase finished')
 
-    def profile_list(self, state):
+    def profile_list(self, state, profile_name):
         cmd = 'keentune profile list'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.result = re.search(r'\[(.*?)\].+param1_group1.conf', self.out).group(1)
+        self.result = re.search(r'\[(.*?)\].+{}'.format(profile_name), self.out).group(1)
         self.assertIn(state, self.result)
 
-    def profile_set(self):
-        cmd = 'echo y | keentune param dump -j param1'
+    def profile_dump(self, job_name):
+        cmd = 'echo y | keentune param dump -j {}'.format(job_name)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('dump successfully'))
 
-        cmd = 'keentune profile set --group1 param1_group1.conf'
+    def profile_set(self,profile_name):
+        cmd = 'keentune profile set {}'.format(profile_name)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Succeeded'))
-
-        self.profile_list("active")
+        self.profile_list("active", profile_name)
 
     def profile_rollback(self):
-        self.profile_list("active")
         cmd = 'keentune profile rollback'
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('profile rollback successfully'))
-        self.profile_list("available")
 
     def test_long_stability_RBT(self):
         start_time = time.time()
         time_diff = 0
         while time_diff < self.time_limit:
-            result = runParamTune("param1", iteration=500)
+            init_cmd = "keentune init"
+            self.status, self.out, _ = sysCommand(init_cmd)
+            self.assertEqual(self.status, 0)
+            self.assertTrue(self.out.__contains__('KeenTune Init success'))
+
+            all_cmd = "keentune rollbackall"
+            self.status, self.out, _ = sysCommand(all_cmd)
+            self.assertEqual(self.status, 0)
+            self.assertTrue(self.out.__contains__('Rollback all successfully') or self.out.__contains__('All Targets No Need to Rollback'))
+
+            result = runParamTune(self.job_name, iteration=500)
             self.assertEqual(result, 0)
             time.sleep(5)
+            
+            for algorithm in ('lasso', 'univariate', 'shap', 'explain', 'gp'):
+                sed_cmd = 'sed -i "s/SENSITIZE_ALGORITHM\(.*\)=.*/SENSITIZE_ALGORITHM\1= {}/" /etc/keentune/conf/keentuned.conf'.format(algorithm)
+                sysCommand(sed_cmd)
 
-            cmd = "echo y | keentune sensitize train --data param1 --job param1 -t 10"
-            path = getTaskLogPath(cmd)
-            result = getTrainTaskResult(path)
-            self.assertTrue(result)
-            time.sleep(2)
-
-            for i in range(100):
-                self.profile_set()
+                cmd = "echo y | keentune sensitize train --data {0} --job {0} -t 10".format(self.job_name)
+                path = getTaskLogPath(cmd)
+                result = getTrainTaskResult(path)
+                self.assertTrue(result)
+                cmd = "echo y | keentune sensitize delete --job {}".format(self.job_name)
+                sysCommand(cmd)
                 time.sleep(2)
-                self.profile_rollback()
-                time.sleep(2)
 
-            deleteDependentData("param1")
-            cmd = 'echo y | keentune profile delete --name param1_group1.conf'
+            self.profile_dump(self.job_name)
+
+            cmd = "keentune profile list | awk '{print$2}'"
+            self.status, self.out, _ = sysCommand(cmd)
+            for profile_name in self.out.strip().split("\n"):
+                for i in range(100):
+                    self.profile_set(profile_name)
+                    time.sleep(2)
+                    self.profile_rollback()
+                    time.sleep(2)
+
+            cmd = "echo y | keentune param delete --job {}".format(self.job_name)
+            sysCommand(cmd)
+            cmd = 'echo y | keentune profile delete --name {}_group1.conf'.format(self.job_name)
             self.status, self.out, _ = sysCommand(cmd)
             self.assertEqual(self.status, 0)
             self.assertTrue(self.out.__contains__('delete successfully'))
 
             logger.info("current round testcase finished")
             time_diff = (time.time() - start_time) / 3600
+
+

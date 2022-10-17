@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"fmt"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/log"
@@ -108,13 +107,12 @@ func IsTargetOffline(clientName *string) bool {
 
 	for _, group := range config.KeenTune.Group {
 		for index, ip := range group.IPs {
-			targetURI := fmt.Sprintf("%v:%v/status", ip, group.Port)
-			if checkOffline(targetURI) {
-				*clientName += fmt.Sprintf("target%v-%v, ", group.GroupNo, index+1)
+			_, err := GetAVLDomain(ip, group.Port)
+			if err != nil {
+				*clientName += fmt.Sprintf("target-group[%v] %v, ", group.GroupNo, index+1)
 				offline = true
 			}
 		}
-
 	}
 
 	return offline
@@ -123,32 +121,17 @@ func IsTargetOffline(clientName *string) bool {
 func IsBenchOffline(clientName *string) bool {
 	var offline bool
 
-	for groupID, benchgroup := range config.KeenTune.BenchGroup {
-		for ipIndex, benchip := range benchgroup.SrcIPs {
-			benchURI := fmt.Sprintf("%v:%v/status", benchip, benchgroup.SrcPort)
-			if checkOffline(benchURI) {
-				*clientName += fmt.Sprintf("bench_src%v-%v, ", groupID+1, ipIndex+1)
+	for groupID, benchGroup := range config.KeenTune.BenchGroup {
+		for _, benchIp := range benchGroup.SrcIPs {
+			benchAvl, _, _ := GetAVLAgentAddr(benchIp, benchGroup.SrcPort, benchGroup.DestIP)
+			if !benchAvl {
+				*clientName += fmt.Sprintf("bench-group[%v] %v, ", groupID+1, benchIp)
 				offline = true
 			}
 		}
 	}
 
 	return offline
-}
-
-func checkOffline(uri string) bool {
-	bytes, err := http.RemoteCall("GET", uri, nil)
-	if err != nil {
-		return true
-	}
-
-	var clientState ClientState
-	if err = json.Unmarshal(bytes, &clientState); err != nil {
-		log.Errorf("", "unmashal client state [%+v] failed", string(bytes))
-		return true
-	}
-
-	return clientState.Status != "alive"
 }
 
 func StartCheck() (string, []string, error) {
@@ -236,10 +219,9 @@ func checkTarget(domains, warningInfo *[]string, okInfo *string) {
 }
 
 func IsBrainOffline(clientName *string) bool {
-	url := fmt.Sprintf("%v:%v/avaliable", config.KeenTune.BrainIP, config.KeenTune.BrainPort)
-	_, err := http.RemoteCall("GET", url, nil)
+	_, _, _, err := GetAVLDataAndAlgo()
 	if err != nil {
-		*clientName += fmt.Sprintf("brain client")
+		*clientName += fmt.Sprintf("brain offline: %v", config.KeenTune.BrainIP)
 		return true
 	}
 
@@ -269,10 +251,10 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 			continue
 		}
 
-		for index, ip := range config.KeenTune.Group[i].IPs {
-			targetURI := fmt.Sprintf("%v:%v/status", ip, config.KeenTune.Group[i].Port)
-			if checkOffline(targetURI) {
-				*clientName += fmt.Sprintf("target%v-%v, ", config.KeenTune.Group[i].GroupNo, index+1)
+		for _, ip := range config.KeenTune.Group[i].IPs {
+			_, err := GetAVLDomain(ip, config.KeenTune.Group[i].Port)
+			if err != nil {
+				*clientName += fmt.Sprintf("target-group[%v] %v, ", config.KeenTune.Group[i].GroupNo, ip)
 				offline = true
 			}
 		}
@@ -285,7 +267,7 @@ func IsSetTargetOffline(group []bool, clientName *string) bool {
 func CheckBrainClient() error {
 	clientName := new(string)
 	if IsBrainOffline(clientName) {
-		return fmt.Errorf("brain client is offline, please get it ready")
+		return fmt.Errorf("brain %v offline, please get it ready", config.KeenTune.BrainIP)
 	}
 
 	go monitorClientStatus(IsBrainOffline, clientName, nil)

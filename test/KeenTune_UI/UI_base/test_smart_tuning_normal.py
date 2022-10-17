@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from time import sleep
@@ -6,6 +7,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
+
+from common import keentuneInit
 
 
 class TestKeenTuneUiSmartNormal(unittest.TestCase):
@@ -35,6 +40,7 @@ class TestKeenTuneUiSmartNormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
 
+        keentuneInit(self)
         self.driver.get("http://{}:8082/list/tuning-task/".format(self.web_ip))
 
     @classmethod
@@ -223,3 +229,16 @@ class TestKeenTuneUiSmartNormal(unittest.TestCase):
             web_time_list.append(time.text)
         sort_time = sorted(web_time_list)
         self.assertEqual(web_time_list,sort_time)
+
+    def test_language_switch(self):
+        lan_dict = {"en": "Auto-Tuning Job List", "cn": "智能参数调优任务记录"}
+        start_value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,
+                                                '//div[@class="ant-space ant-space-horizontal ant-space-align-center right___3L8KG"]/div/div/img'))).click()
+        end_value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
+        sleep(1)
+        language = "en" if "Auto-Tuning" in end_value else "cn"
+        self.assertNotEqual(end_value, start_value)
+        self.assertIn(end_value, lan_dict[language])
+        self.driver.find_element(By.XPATH,
+                                 '//div[@class="ant-space ant-space-horizontal ant-space-align-center right___3L8KG"]/div/div/img').click()

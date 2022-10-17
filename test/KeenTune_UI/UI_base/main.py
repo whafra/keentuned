@@ -32,6 +32,7 @@ def RunBasicCase():
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_refresh"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_setting"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_sorting"))
+    param_suite.addTest(TestKeenTuneUiSmartNormal("test_language_switch"))
 
     sensi_suite = unittest.TestSuite()
     sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_create_job"))
@@ -42,6 +43,7 @@ def RunBasicCase():
     sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_refresh"))
     sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_setting"))
     # sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_sorting"))
+    sensi_suite.addTest(TestKeenTuneUiSensitiveNormal("test_language_switch"))
 
     suite = unittest.TestSuite([profile_suite, param_suite, sensi_suite])
     return suite

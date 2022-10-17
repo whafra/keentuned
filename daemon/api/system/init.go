@@ -9,12 +9,14 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"strings"
+	"sync"
 )
 
 type ymlTarget struct {
-	IP     string   `yaml:"ip"`
-	Knobs  []string `yaml:"knobs"`
-	Domain []string `yaml:"domain"`
+	IP        string   `yaml:"ip"`
+	Available bool     `yaml:"available"`
+	Knobs     []string `yaml:"knobs"`
+	Domain    []string `yaml:"domain"`
 }
 
 type ymlBrain struct {
@@ -24,9 +26,15 @@ type ymlBrain struct {
 }
 
 type ymlBench struct {
+	IP        string  `yaml:"ip"`
+	Available bool    `yaml:"available"`
+	Dest      ymlDest `yaml:"destination"`
+	BenchConf string  `yaml:"benchmark"`
+}
+
+type ymlDest struct {
 	IP        string `yaml:"ip"`
-	Dest      string `yaml:"destination"`
-	BenchConf string `yaml:"benchmark"`
+	Reachable bool   `yaml:"reachable"`
 }
 
 type keenTuneYML struct {
@@ -61,12 +69,31 @@ func initialize() (string, error) {
 	}
 
 	var ymlConf = &keenTuneYML{}
-	var warningDetail = new(string)
-	checkBenchAVL(ymlConf, warningDetail)
+	var (
+		warningDetail = new(string)
+		targetDetail  = new(string)
+		benchDetail   = new(string)
+		brainDetail   = new(string)
+	)
 
-	checkBrainAVL(ymlConf, warningDetail)
+	targetGroup := make([][]ymlTarget, len(config.KeenTune.Group))
 
-	targetGroup := checkTargetAVL(warningDetail)
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go checkBenchAVL(&wg, ymlConf, benchDetail)
+
+	wg.Add(1)
+	go checkBrainAVL(&wg, ymlConf, brainDetail)
+
+	wg.Add(1)
+	go checkTargetAVL(&wg, targetDetail, &targetGroup)
+
+	wg.Wait()
+
+	*warningDetail = *brainDetail
+	*warningDetail += *benchDetail
+	*warningDetail += *targetDetail
 
 	bytes, err := yaml.Marshal(getYMLConf(ymlConf, targetGroup))
 	if err != nil {
@@ -77,12 +104,14 @@ func initialize() (string, error) {
 	return strings.TrimSuffix(*warningDetail, "\n"), err
 }
 
-func checkBrainAVL(ymlConf *keenTuneYML, warningDetail *string) {
-	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
+func checkBrainAVL(scWg *sync.WaitGroup, ymlConf *keenTuneYML, warningDetail *string) {
+	defer scWg.Done()
 	var err error
+
+	ymlConf.Brain.BrainIP = config.KeenTune.BrainIP
 	_, ymlConf.Brain.AlgoTune, ymlConf.Brain.AlgoSen, err = com.GetAVLDataAndAlgo()
 	if err != nil {
-		*warningDetail += fmt.Sprintf("\tbrain host %v unreachable\n", config.KeenTune.BrainIP)
+		*warningDetail += fmt.Sprintf("\tbrain %v offline\n", config.KeenTune.BrainIP)
 	}
 }
 
@@ -99,51 +128,87 @@ func getYMLConf(conf *keenTuneYML, group [][]ymlTarget) interface{} {
 	return ret
 }
 
-func checkTargetAVL(warningDetail *string) [][]ymlTarget {
-	var err error
-	targetGroup := make([][]ymlTarget, len(config.KeenTune.Group))
+func checkTargetAVL(scWg *sync.WaitGroup, warningDetail *string, targetGroup *[][]ymlTarget) {
+	defer scWg.Done()
+	accessResult := make([]string, len(config.KeenTune.IPMap))
+	wg := sync.WaitGroup{}
 	for groupIdx, target := range config.KeenTune.Group {
-		var tmpTarget ymlTarget
-		targetGroup[groupIdx] = make([]ymlTarget, len(target.IPs))
+		(*targetGroup)[groupIdx] = make([]ymlTarget, len(target.IPs))
 		for ipIdx, ip := range target.IPs {
-			tmpTarget.Knobs = strings.Split(target.ParamConf, ",")
-			tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
-			if err != nil {
-				*warningDetail += fmt.Sprintf("\ttarget host %v unreachable\n", ip)
-				targetGroup[groupIdx][ipIdx] = tmpTarget
-				continue
-			}
-
-			tmpTarget.IP = ip
-			targetGroup[groupIdx][ipIdx] = tmpTarget
+			wg.Add(1)
+			go accessTarget(&wg, accessResult, target, targetGroup, groupIdx, ip, ipIdx)
 		}
 	}
 
-	return targetGroup
+	wg.Wait()
+
+	for _, detail := range accessResult {
+		if len(detail) != 0 {
+			*warningDetail += detail
+		}
+	}
 }
 
-func checkBenchAVL(ymlConf *keenTuneYML, warningDetail *string) {
+func accessTarget(wg *sync.WaitGroup, warningDetail []string, target config.Group, targetGroup *[][]ymlTarget, groupIdx int, ip string, ipIdx int) {
+	var tmpTarget ymlTarget
+	var err error
+	defer wg.Done()
+	knobs := strings.Split(target.ParamConf, ",")
+	for _, knob := range knobs {
+		tmpTarget.Knobs = append(tmpTarget.Knobs, strings.TrimSpace(knob))
+	}
+
+	tmpTarget.Domain, err = com.GetAVLDomain(ip, target.Port)
+	tmpTarget.IP = ip
+	if err != nil {
+		groupInfo := fmt.Sprintf("target-group[%v]:", target.GroupNo)
+		idx := config.KeenTune.IPMap[ip] - 1
+		warningDetail[idx] = fmt.Sprintf("\t%v %v offline\n", groupInfo, ip)
+		(*targetGroup)[groupIdx][ipIdx] = tmpTarget
+		return
+	}
+
+	tmpTarget.Available = true
+	(*targetGroup)[groupIdx][ipIdx] = tmpTarget
+}
+
+func checkBenchAVL(scWg *sync.WaitGroup, ymlConf *keenTuneYML, warningDetail *string) {
+	defer scWg.Done()
 	ymlConf.Bench = make([]ymlBench, len(config.KeenTune.BenchIPMap))
+	accessResult := make([]string, len(config.KeenTune.BenchIPMap))
+	wg := sync.WaitGroup{}
 	for _, bench := range config.KeenTune.BenchGroup {
-		var tmpBench ymlBench
-		tmpBench.BenchConf = bench.BenchConf
-
 		for _, ip := range bench.SrcIPs {
-			isBenchAVL, avlAgent, err := com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
-			if err != nil {
-				*warningDetail += fmt.Sprintf("%v", err)
-				if isBenchAVL {
-					tmpBench.IP = ip
-				}
-
-				ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
-				continue
-			}
-
-			tmpBench.IP = ip
-			tmpBench.Dest = avlAgent
-			ymlConf.Bench[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
+			wg.Add(1)
+			go accessBench(ymlConf.Bench, &wg, bench, ip, accessResult)
 		}
+	}
+
+	wg.Wait()
+
+	for _, detail := range accessResult {
+		if len(detail) != 0 {
+			*warningDetail += detail
+		}
+	}
+}
+
+func accessBench(ymlBch []ymlBench, wg *sync.WaitGroup, bench config.BenchGroup, ip string, accessResult []string) {
+	var tmpBench ymlBench
+	var err error
+	defer wg.Done()
+
+	tmpBench.BenchConf = bench.BenchConf
+
+	tmpBench.Available, tmpBench.Dest.Reachable, err = com.GetAVLAgentAddr(ip, bench.SrcPort, bench.DestIP)
+
+	tmpBench.IP = ip
+	tmpBench.Dest.IP = bench.DestIP
+
+	ymlBch[config.KeenTune.BenchIPMap[ip]-1] = tmpBench
+	if err != nil {
+		idx := config.KeenTune.BenchIPMap[ip] - 1
+		accessResult[idx] = fmt.Sprintf("%v", err)
 	}
 }
 
