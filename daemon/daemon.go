@@ -41,7 +41,7 @@ func main() {
 
 	go mkWorkDir()
 
-	showStart()
+	go showStart()
 
 	for {
 		conn, err := listener.Accept()
@@ -106,6 +106,38 @@ func showStart() {
 		fmt.Printf("%v %v", utils.ColorString("yellow", "[Warning]"), detail)
 	}
 
+	notifySystemd()
 	fmt.Println("KeenTune daemon running...")
+
+}
+
+func notifySystemd() {
+	var err error
+	defer func() {
+		if err != nil {
+			fmt.Printf("%v notify systemd failed: %v", utils.ColorString("red", "[ERROR]"), err)
+			os.Exit(1)
+		}
+	}()
+
+	socketAddr := &net.UnixAddr{
+		Name: os.Getenv("NOTIFY_SOCKET"),
+		Net:  "unixgram",
+	}
+
+	if socketAddr.Name == "" {
+		err = fmt.Errorf("NOTIFY_SOCKET is empty")
+		return
+	}
+
+	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
+	if err != nil {
+		return
+	}
+
+	_, err = conn.Write([]byte("READY=1"))
+	if err != nil {
+		return
+	}
 }
 
