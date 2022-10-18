@@ -1,0 +1,28 @@
+{
+    "sysctl":{
+        "kernel.sched_migration_cost_ns":{
+            "dtype":"int",
+            "range":[
+                10000,
+                5000000
+            ],
+            "step":10000
+        },
+        "kernel.sched_min_granularity_ns":{
+            "dtype":"int",
+            "range":[
+                100000,
+                50000000
+            ],
+            "step":100000
+        },
+        "kernel.sched_wakeup_granularity_ns":{
+            "dtype":"int",
+            "range":[
+                100000,
+                50000000
+            ],
+            "step":100000
+        }
+    }
+}
