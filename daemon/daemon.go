@@ -112,21 +112,12 @@ func showStart() {
 }
 
 func notifySystemd() {
-	var err error
-	defer func() {
-		if err != nil {
-			fmt.Printf("%v notify systemd failed: %v", utils.ColorString("red", "[ERROR]"), err)
-			os.Exit(1)
-		}
-	}()
-
 	socketAddr := &net.UnixAddr{
 		Name: os.Getenv("NOTIFY_SOCKET"),
 		Net:  "unixgram",
 	}
 
 	if socketAddr.Name == "" {
-		err = fmt.Errorf("NOTIFY_SOCKET is empty")
 		return
 	}
 
