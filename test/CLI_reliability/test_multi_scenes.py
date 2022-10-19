@@ -98,7 +98,7 @@ class TestMultiScenes(unittest.TestCase):
         self.assertIn("restart keentuned server successfully!", self.out)
 
     def test_param_tune_FUN_nginx(self):
-        self.reset_keentuned("param", "nginx.json")
+        self.reset_keentuned("param", "nginx_conf.json")
         cmd = 'keentune param tune -i 10 --job param1'
         path = getTaskLogPath(cmd)
         result = getTuneTaskResult(path)
