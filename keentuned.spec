@@ -10,6 +10,7 @@ Vendor:         Alibaba
 License:        MulanPSLv2
 Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{version}.tar.gz
 
+Autoreq:        0
 BuildRequires:  go >= 1.13
 BuildRequires:	systemd
 

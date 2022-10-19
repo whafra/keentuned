@@ -147,10 +147,12 @@ func isIP(ip string) bool {
 }
 
 // FormatInTable format content to a table string
-func FormatInTable(data [][]string) string {
+func FormatInTable(data [][]string, shift ...string) string {
 	if len(data) == 0 || len(data[0]) == 0 {
 		return ""
 	}
+
+	shiftStr := strings.Join(shift, "")
 
 	var maxes = make([]int, len(data[0]))
 	for _, row := range data {
@@ -164,14 +166,14 @@ func FormatInTable(data [][]string) string {
 	var fmtInfo string
 	for index, row := range data {
 		if index == 0 {
-			fmtInfo += decorateString(maxes)
+			fmtInfo += decorateString(maxes, shiftStr)
 		}
 
 		if len(row) != len(maxes) {
 			continue
 		}
 
-		fmtInfo += "|"
+		fmtInfo += shiftStr + "|"
 		for j, len := range maxes {
 			fmtInfo += fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s|", strings.Trim(row[j], " \t"))
 		}
@@ -179,15 +181,15 @@ func FormatInTable(data [][]string) string {
 		fmtInfo += fmt.Sprintln()
 
 		if index == 0 || index == len(data)-1 {
-			fmtInfo += decorateString(maxes)
+			fmtInfo += decorateString(maxes, shiftStr)
 		}
 	}
 
 	return fmt.Sprintln() + strings.TrimSuffix(fmtInfo, "\n")
 }
 
-func decorateString(maxes []int) string {
-	var decorateStr = "+"
+func decorateString(maxes []int, shiftStr string) string {
+	var decorateStr = shiftStr + "+"
 	for _, len := range maxes {
 		decorateStr += strings.ReplaceAll(fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s+", ""), " ", "-")
 	}

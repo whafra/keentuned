@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const conditionReg = "[|&<>=!]"
+const conditionReg = "[|&<>=!∈]"
 
 var (
 	detectENVNotMetFmt = "Settings in [%v] domain only suites for %v Env, please set your parameters refer to %v\n"

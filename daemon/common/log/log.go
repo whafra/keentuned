@@ -11,6 +11,7 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/utils"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -125,7 +126,16 @@ func (s *logFormater) Format(entry *logrus.Entry) ([]byte, error) {
 	level := strings.ToUpper(entry.Level.String())
 	msg := fmt.Sprintf(s.LogFormat, level, s.TimestampFormat, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
 
-	return []byte(strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(msg, "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", "")), nil
+	// replace color control special chars
+	matchStr := "\u001B\\[1;40;3[1-3]m(.*?)\u001B\\[0m"
+	pureMSg := msg
+	matched, _ := regexp.MatchString(matchStr, pureMSg)
+	if matched {
+		re := regexp.MustCompile(matchStr)
+		pureMSg = re.ReplaceAllString(strings.TrimSpace(msg), "$1")
+	}
+
+	return []byte(pureMSg), nil
 }
 
 //  Format define the console log detail

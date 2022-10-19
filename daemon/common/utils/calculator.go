@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -12,6 +13,9 @@ type Stack struct {
 	data [1024]string
 	top  int
 }
+
+// e.g. 5 ∈ [ 3 , 8 ]
+var scopeExp = "([1-9]\\d*)\\s*∈\\s*\\[\\s*([1-9]\\d*)\\s*,\\s*([1-9]\\d*)\\s*\\]"
 
 //	Calculate Four simple operations：Support +, -, *, / and ^ (power)
 //	input : "9+(3-1)*3+10/2"  output: 20.
@@ -243,7 +247,7 @@ func CalculateCondExp(expression string) bool {
 
 func getANDResult(expression string) bool {
 	andResult := true
-	andExps := strings.Split(expression, "&")
+	andExps := strings.Split(strings.TrimSpace(expression), "&")
 	for _, exp := range andExps {
 		andResult = andResult && getSingleCondResult(exp)
 		if !andResult {
@@ -255,57 +259,92 @@ func getANDResult(expression string) bool {
 }
 
 func getSingleCondResult(condition string) bool {
+	trimSpaceCond := strings.TrimSpace(condition)
 	switch {
-	case strings.Contains(condition, ">="):
-		compares := strings.Split(condition, ">=")
+	case strings.Contains(trimSpaceCond, ">="):
+		compares := strings.Split(trimSpaceCond, ">=")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) >= int(rt)
 		}
-	case strings.Contains(condition, ">"):
-		compares := strings.Split(condition, ">")
+	case strings.Contains(trimSpaceCond, ">"):
+		compares := strings.Split(trimSpaceCond, ">")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) > int(rt)
 		}
-	case strings.Contains(condition, "<="):
-		compares := strings.Split(condition, "<=")
+	case strings.Contains(trimSpaceCond, "<="):
+		compares := strings.Split(trimSpaceCond, "<=")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) <= int(rt)
 		}
 
-	case strings.Contains(condition, "<"):
-		compares := strings.Split(condition, "<")
+	case strings.Contains(trimSpaceCond, "<"):
+		compares := strings.Split(trimSpaceCond, "<")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) < int(rt)
 		}
 
-	case strings.Contains(condition, "!="):
-		compares := strings.Split(condition, "!=")
+	case strings.Contains(trimSpaceCond, "!="):
+		compares := strings.Split(trimSpaceCond, "!=")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) != int(rt)
 		}
-	case strings.Contains(condition, "="):
-		compares := strings.Split(condition, "=")
+	case strings.Contains(trimSpaceCond, "="):
+		compares := strings.Split(trimSpaceCond, "=")
 		if len(compares) == 2 {
-			lf, _ := strconv.ParseFloat(compares[0], 64)
-			rt, _ := strconv.ParseFloat(compares[1], 64)
+			lf, _ := strconv.ParseFloat(strings.TrimSpace(compares[0]), 64)
+			rt, _ := strconv.ParseFloat(strings.TrimSpace(compares[1]), 64)
 
 			return int(lf) == int(rt)
 		}
+
+	case strings.Contains(trimSpaceCond, "∈"):
+		return scopeCondResult(trimSpaceCond)
+	}
+
+	return false
+}
+
+func scopeCondResult(matchStr string) bool {
+	reg := regexp.MustCompile(scopeExp)
+	if reg == nil {
+		return false
+	}
+
+	if reg.MatchString(matchStr) {
+		parts := strings.Split(matchStr, "∈")
+		if len(parts) != 2 {
+			return false
+		}
+
+		compared, _ := strconv.ParseInt(strings.TrimSpace(parts[0]), 10, 64)
+
+		trimStr := strings.Trim(strings.Trim(strings.TrimSpace(parts[1]), "["), "]")
+		rangeNos := strings.Split(trimStr, ",")
+
+		lf, _ := strconv.ParseInt(strings.TrimSpace(rangeNos[0]), 10, 64)
+
+		rt, _ := strconv.ParseInt(strings.TrimSpace(rangeNos[1]), 10, 64)
+
+		if lf > rt {
+			lf, rt = rt, lf
+		}
+
+		return compared >= lf && compared <= rt
 	}
 
 	return false
