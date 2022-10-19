@@ -23,8 +23,8 @@ class TestMultiTarget(unittest.TestCase):
         self.target, self.bench, self.brain = self.get_server_ip()
         self.port = "TARGET_PORT = 9873"
         self.scene_1 = "PARAMETER = sysctl_target.json"
-        self.scene_2 = "PARAMETER = nginx.json, sysctl_target.json, nginx.json"
-        self.scene_3 = "PARAMETER = sysctl_target.json, nginx.json, sysctl_target.json"
+        self.scene_2 = "PARAMETER = nginx_conf.json, sysctl_target.json, nginx_conf.json"
+        self.scene_3 = "PARAMETER = sysctl_target.json, nginx_conf.json, sysctl_target.json"
         self.code_path = "/etc/keentune"
 
         server_list = ["keentuned", "keentune-brain",

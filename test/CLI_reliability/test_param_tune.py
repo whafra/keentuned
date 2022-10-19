@@ -211,7 +211,7 @@ class TestParamTune(unittest.TestCase):
         deleteDependentData("param3")
 
     def test_param_tune_RBT_multi_config(self):
-        cmd = "sh conf/reset_keentuned.sh {} '{}'".format("param", "sysctl.json, nginx.json")
+        cmd = "sh conf/reset_keentuned.sh {} '{}'".format("param", "sysctl.json, nginx_conf.json")
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertIn("restart keentuned server successfully!", self.out)
