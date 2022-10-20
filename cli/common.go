@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"io"
+	"bufio"
 )
 
 var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
@@ -200,16 +201,21 @@ func changeFileName(dir string) {
 	defer fpSrc.Close()
 	defer fpDest.Close()
 
-	buf := make([]byte,4*1024)
-	for{
-		n, err := fpSrc.Read(buf)
+	r := bufio.NewReader(fpSrc)
+	for {
+		buf, err := r.ReadString('\n')
+		if strings.Contains(string(buf), "[") {
+			buf = strings.Replace(string(buf), ".", "_", 1)
+		}
+
 		if err != nil{
 			if err == io.EOF{
 				break
 			}
 		}
-		fpDest.Write(buf[:n])
+		fpDest.WriteString(string(buf))
 	}
+
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
