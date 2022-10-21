@@ -27,6 +27,8 @@ def RunBasicCase():
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_createjob02"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_detail"))
     #param_suite.addTest(TestKeenTuneUiSmartNormal("test_log"))
+    param_suite.addTest(TestKeenTuneUiSmartNormal("test_rollback"))
+    param_suite.addTest(TestKeenTuneUiSmartNormal("test_dump"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_rerun"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_delete"))
     param_suite.addTest(TestKeenTuneUiSmartNormal("test_refresh"))
@@ -58,3 +60,4 @@ if __name__ == '__main__':
     TestKeenTuneUiSensitiveNormal.web_ip = sys.argv[1]
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(RunBasicCase())
+

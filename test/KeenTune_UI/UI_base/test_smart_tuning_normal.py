@@ -176,6 +176,38 @@ class TestKeenTuneUiSmartNormal(unittest.TestCase):
         self.assertIn("[[BEST] Tuning improvement:", log_checkfile.text)
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//div[@class="ant-modal-footer"]/button[@class="ant-btn ant-btn-primary"]'))).click()
 
+    def test_rollback(self):
+        self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, '//tbody[@class="ant-table-tbody"]/tr[1]/td[12]/div'))).click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,
+                                                    '//ul[@class="ant-dropdown-menu ant-dropdown-menu-root ant-dropdown-menu-vertical ant-dropdown-menu-light"]/li[3]/span[1]'))).click()
+        alert_text = self.wait.until(EC.visibility_of_element_located((By.XPATH,'//div[@style="text-align: left;"]/pre'))).text
+        self.assertIn('ok',alert_text)
+
+    def test_dump(self):
+        self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, '//tbody[@class="ant-table-tbody"]/tr[1]/td[12]/div'))).click()
+        self.wait.until(EC.element_to_be_clickable((By.XPATH,
+                                                    '//ul[@class="ant-dropdown-menu ant-dropdown-menu-root ant-dropdown-menu-vertical ant-dropdown-menu-light"]/li[4]/span[1]'))).click()
+        alert_text1 = self.wait.until(
+            EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message-custom-content ant-message-success"]/span[2]/div/div[1]/pre'))).text
+        alert_text2 = self.wait.until(
+            EC.visibility_of_element_located((By.XPATH, '//div[@class="ant-message-custom-content ant-message-success"]/span[2]/div/div[2]/pre'))).text
+        name = alert_text2.split('/')[-1]
+        self.assertIn('ok', alert_text1)
+
+        self.driver.find_element(By.XPATH, '//div[@class="ant-pro-top-nav-header-logo"]//img').click()
+        sleep(5)
+        self.driver.find_element(By.XPATH, '//div[@class="list___y_nmN"]/div[1]//img').click()
+        names = self.wait.until(EC.visibility_of_all_elements_located((By.XPATH,'//tbody[@class="ant-table-tbody"]/tr')))
+        name_list = []
+        for i in range(1,len(names)+1):
+            name_list.append(self.wait.until(EC.visibility_of_element_located((By.XPATH,f'//tbody[@class="ant-table-tbody"]/tr[{i}]/td/div/span'))).text)
+        self.assertIn(name,name_list)
+        self.driver.find_element(By.XPATH, '//div[@class="ant-pro-top-nav-header-logo"]//img').click()
+        sleep(5)
+        self.driver.find_element(By.XPATH, '//div[@class="list___y_nmN"]/div[2]//img').click()
+
     def test_rerun(self):
         #点击重跑按钮
         self.wait.until(EC.element_to_be_clickable((By.XPATH,'//tbody[@class="ant-table-tbody"]/tr[1]/td[12]/div'))).click()
