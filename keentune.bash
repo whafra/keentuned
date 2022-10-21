@@ -3,7 +3,7 @@
 _keentune()  
 {
     COMPREPLY=()
-    local commands="--help param profile sensitize --version -v"
+    local commands="--help init param profile sensitize rollbackall --version -v"
     local cur=${COMP_WORDS[COMP_CWORD]};
     local cmd=${COMP_WORDS[COMP_CWORD-1]};
     case $cmd in

@@ -79,7 +79,7 @@ class TestSensitizeProfile(unittest.TestCase):
 
         cmd = 'echo y | keentune sensitize train --data param1 --job param1 -t 10'
         path = getTaskLogPath(cmd)
-        self.profile_set_data("profile1", 0, 'Set profile1.conf successfully')
+        self.profile_set_data("profile1", 0, 'Succeeded')
         self.profile_list("profile1")
         self.profile_rollback(0, 'profile rollback successfully')
         self.profile_list()

@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 )
 
@@ -86,14 +85,10 @@ func Dump2File(path, fileName string, info interface{}) error {
 	return nil
 }
 
-//  WalkFilePath walk file path for file or path list by onlyDir
-// return file list  while onlyDir is false, else return path list.
-func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]string, error) {
-	var result []string
-	var separator string
-	if len(separators) != 0 {
-		separator = separators[0]
-	}
+//  WalkFilePath walk file path
+// return: 0) full paths; 1) file names; 2) err msg
+func WalkFilePath(folder, match string) ([]string, []string, error) {
+	var files, fullPaths []string
 
 	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -106,113 +101,19 @@ func WalkFilePath(folder, match string, onlyDir bool, separators ...string) ([]s
 		}
 
 		var fileName string
-
-		if fi.IsDir() && onlyDir {
+		if !fi.IsDir() && strings.Contains(path, match) {
 			fileName = pathSections[len(pathSections)-1]
-			if fileName != "" && !strings.Contains(fileName, strings.Trim(separator, "/")) {
-				result = append(result, fileName)
-			}
-		}
-
-		if !fi.IsDir() && strings.Contains(path, match) && !onlyDir {
-			fileName = pathSections[len(pathSections)-1]
-			result = append(result, fileName)
+			files = append(files, fileName)
+			fullPaths = append(fullPaths, path)
 		}
 
 		return nil
 	})
 
-	return result, nil
+	return fullPaths, files, nil
 }
 
-// ConvertConfFileToJson convert conf file to json
-func ConvertConfFileToJson(fileName string) (map[string]map[string]interface{}, error) {
-	paramBytes, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("read file err: %v", err)
-	}
-
-	if len(paramBytes) == 0 {
-		return nil, fmt.Errorf("read file is empty")
-	}
-
-	var resultMap = make(map[string]map[string]interface{})
-	var domainMap = make(map[string][]map[string]interface{})
-
-	commonDomain := ""
-	for _, line := range strings.Split(string(paramBytes), "\n") {
-		if len(line) == 0 {
-			continue
-		}
-
-		if strings.Contains(line, "[") {
-			commonDomain = strings.Trim(strings.Trim(line, "]"), "[")
-			continue
-		}
-
-		param, err := readLine(line)
-		if err != nil {
-			fmt.Printf("read line [%v] err:%v\n", line, err)
-			continue
-		}
-
-		domainMap[commonDomain] = append(domainMap[commonDomain], param)
-	}
-
-	if len(domainMap) ==0 {		
-		return nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-	}
-
-	for domain, paramSlice := range domainMap {
-		if len(paramSlice) == 0 {
-			return nil, fmt.Errorf("domain '%v' content is empty", commonDomain)
-		}
-
-		var paramMap = make(map[string]interface{})
-		for _, paramInfo := range paramSlice {
-			name, ok := paramInfo["name"].(string)
-			if !ok {
-				fmt.Printf("parse name from [%v] failed\n", paramInfo)
-				continue
-			}
-			delete(paramInfo, "name")
-			paramMap[name] = paramInfo
-		}
-		resultMap[domain] = paramMap
-	}
-
-	return resultMap, nil
-}
-
-func readLine(line string) (map[string]interface{}, error) {
-	var param map[string]interface{}
-	paramSlice := strings.Split(line, ":")
-	if len(paramSlice) != 2 {
-		return nil, fmt.Errorf("param slice %v length is less than 2", paramSlice)
-	}
-
-	paramName := strings.Trim(paramSlice[0], " ")
-	valueStr := strings.ReplaceAll(strings.Trim(paramSlice[1], " "), "\"", "")
-
-	value, err := strconv.ParseInt(valueStr, 10, 64)
-	if err != nil {
-		param = map[string]interface{}{
-			"value": valueStr,
-			"dtype": "string",
-			"name":  paramName,
-		}
-		return param, nil
-	}
-
-	param = map[string]interface{}{
-		"value": value,
-		"dtype": "int",
-		"name":  paramName,
-	}
-
-	return param, nil
-}
-
+// Save2CSV save data to csv file
 func Save2CSV(path, fileName string, data map[string][]float32) error {
 	if !IsPathExist(path) {
 		err := os.MkdirAll(path, os.ModePerm)
@@ -262,6 +163,7 @@ func Save2CSV(path, fileName string, data map[string][]float32) error {
 	return nil
 }
 
+// GetWalkPath get match file path
 func GetWalkPath(folder, match string) (string, error) {
 	var result string
 	filepath.Walk(folder, func(path string, fi os.FileInfo, err error) error {
@@ -279,12 +181,28 @@ func GetWalkPath(folder, match string) (string, error) {
 	return result, nil
 }
 
+// GetPlainName get plain file name without any path
 func GetPlainName(fileName string) string {
 	if !strings.Contains(fileName, "/") || fileName == "" {
 		return fileName
 	}
 
 	parts := strings.Split(fileName, "/")
+	if len(parts) < 1 {
+		return ""
+	}
+
 	return parts[len(parts)-1]
+}
+
+// Copy copy file from src to dst
+func Copy(src, dst string) error {
+	input, err := ioutil.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(dst, input, 0666)
+	return err
 }
 

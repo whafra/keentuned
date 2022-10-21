@@ -8,33 +8,27 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	m "keentune/daemon/modules"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
+// TuneCmdResp ...
 type TuneCmdResp struct {
 	Iteration    int    `json:"iteration"`
 	BaseRound    int    `json:"baseline_bench_round"`
 	TuningRound  int    `json:"tuning_bench_round"`
 	RecheckRound int    `json:"recheck_bench_round"`
 	Algo         string `json:"algorithm"`
-	BenchGroup   string `json:"bench_group"`
-	TargetGroup  string `json:"target_group"`
 }
 
+// TrainCmdResp ...
 type TrainCmdResp struct {
 	Trial int    `json:"trial"`
 	Algo  string `json:"algorithm"`
 	Data  string `json:"data"`
 }
-
-const (
-	trainJobHeaderLen = 10
-	trainTrialsIdx    = 4
-	trainAlgoIdx      = 8
-	trainDataIdx      = 9
-)
 
 func read(w http.ResponseWriter, r *http.Request) {
 	var result = new(string)
@@ -82,7 +76,10 @@ func read(w http.ResponseWriter, r *http.Request) {
 		err = readTrainInfo(req.Name, result)
 		return
 	case "param-bench":
-		err = readConfigParam(req.Name, result)
+		err = readParamAndBenchConf(req.Name, result)
+		return
+	case "target-group":
+		err = readTargetGroup(req.Name, result)
 		return
 	default:
 		err = fmt.Errorf("type '%v' is not supported", req.Type)
@@ -90,7 +87,8 @@ func read(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func readConfigParam(job string, result *string) error {
+// readParamAndBenchConf read parameter and benchmark config path from job backup conf
+func readParamAndBenchConf(job string, result *string) error {
 	params, bench, err := config.GetJobParamConfig(job)
 	if err != nil {
 		return err
@@ -108,20 +106,21 @@ func readConfigParam(job string, result *string) error {
 	return err
 }
 
+// readTrainInfo read training rerun info from job records
 func readTrainInfo(job string, result *string) error {
 	record, err := file.GetOneRecord(config.GetDumpPath(config.SensitizeCsv), job, "name")
 	if err != nil {
 		return fmt.Errorf("search '%v' err: %v", job, err)
 	}
 
-	if len(record) != trainJobHeaderLen {
+	if len(record) != m.TrainCols {
 		return fmt.Errorf("search '%v' record '%v' Incomplete", job, strings.Join(record, ","))
 	}
 
 	var resp TrainCmdResp
-	resp.Trial, _ = strconv.Atoi(record[trainTrialsIdx])
-	resp.Algo = record[trainAlgoIdx]
-	resp.Data = record[trainDataIdx]
+	resp.Trial, _ = strconv.Atoi(record[m.TrainTrialsIdx])
+	resp.Algo = record[m.TrainAlgoIdx]
+	resp.Data = record[m.TrainDataIdx]
 	bytes, err := json.Marshal(resp)
 	if err != nil {
 		return err
@@ -131,106 +130,85 @@ func readTrainInfo(job string, result *string) error {
 	return nil
 }
 
-func parseBenchRound(info string, resp *TuneCmdResp) error {
-	if strings.Contains(strings.ToLower(info), "baseline_bench_round") {
-		num, err := parseRound(info, "baseline_bench_round")
-		if err != nil {
-			return err
-		}
-
-		resp.BaseRound = num
-	}
-
-	if strings.Contains(strings.ToLower(info), "tuning_bench_round") {
-		num, err := parseRound(info, "tuning_bench_round")
-		if err != nil {
-			return err
-		}
-		resp.TuningRound = num
-	}
-
-	if strings.Contains(strings.ToLower(info), "recheck_bench_round") {
-		num, err := parseRound(info, "recheck_bench_round")
-		if err != nil {
-			return err
-		}
-
-		resp.RecheckRound = num
-	}
-
-	return nil
-}
-
-func parseRound(info, key string) (int, error) {
-	if !strings.Contains(strings.ToLower(info), key) {
-		return 0, nil
-	}
-
-	flagParts := strings.Split(info, "=")
-	if len(flagParts) != 2 {
-		return 0, fmt.Errorf("algorithm not found")
-	}
-
-	num, err := strconv.Atoi(strings.TrimSpace(flagParts[1]))
-	if err != nil {
-		return 0, fmt.Errorf("get %v number err %v", key, err)
-	}
-
-	return num, nil
-}
-
+// readTuneInfo read tuning rerun info from job records and backup conf
 func readTuneInfo(job string, result *string) error {
-	cmd := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "cmd")
-	if cmd == "" {
+	records, err := file.GetOneRecord(config.GetDumpPath(config.TuneCsv), job, "name")
+	if err != nil {
 		return fmt.Errorf("'%v' not exists", job)
 	}
 
+	if len(records) != m.TuneCols {
+		return fmt.Errorf("invalid record '%v': column size %v, expected %v", job, len(records), m.TuneCols)
+	}
+
 	var resp = TuneCmdResp{}
-	iterationStr := file.GetRecord(config.GetDumpPath(config.TuneCsv), "name", job, "iteration")
-	iteration, err := strconv.Atoi(strings.Trim(iterationStr, " "))
+	iteration, err := strconv.Atoi(strings.Trim(records[m.TuneRoundIdx], " "))
 	if err != nil || iteration <= 0 {
 		return fmt.Errorf("'%v' not exists", "iteration")
 	}
 
+	resp.Algo = records[m.TuneAlgoIdx]
 	resp.Iteration = iteration
 
-	replacedCmd := strings.ReplaceAll(cmd, "'", "\"")
-	matchedConfig, err := parseConfigFlag(replacedCmd)
-	if err != nil {
-		return err
-	}
-	for _, info := range strings.Split(matchedConfig, "\\n") {
-		if strings.TrimSpace(info) == "" {
-			continue
-		}
-
-		if strings.Contains(strings.ToLower(info), "algorithm") {
-			algoPart := strings.Split(info, "=")
-			if len(algoPart) != 2 {
-				return fmt.Errorf("algorithm not found")
-			}
-			resp.Algo = strings.Trim(algoPart[1], " ")
-		}
-
-		err = parseBenchRound(info, &resp)
-		if err != nil {
-			return err
-		}
-	}
-
-	benchGroup, targetGroup, err := config.GetJobGroup(job)
+	m, err := config.GetRerunConf(records[m.TuneWSPIdx] + "/keentuned.conf")
 	if err != nil {
 		return err
 	}
 
-	resp.BenchGroup = benchGroup
-	resp.TargetGroup = targetGroup
+	resp.BaseRound = m["BaseRound"].(int)
+	resp.TuningRound = m["TuningRound"].(int)
+	resp.RecheckRound = m["RecheckRound"].(int)
 
 	bytes, err := json.Marshal(resp)
 	if err != nil {
 		return err
 	}
+
 	*result = string(bytes)
+	return nil
+}
+
+// readTargetGroup  read target group info by grep condition
+// 1) grep is empty, represents getting the total group;
+// 2) grep is non-empty, e.g.: "cpu_high_load.conf", an active status profile name,
+//        represents grep the profile set target group(s).
+func readTargetGroup(grep string, result *string) error {
+	defer func() {
+		if len(*result) > 0 {
+			*result = fmt.Sprintf("\"%v\"", *result)
+		}
+	}()
+
+	if grep == "" {
+		for _, group := range config.KeenTune.Target.Group {
+			*result += fmt.Sprintf("[target-group-%v]\\n", group.GroupNo)
+			*result += fmt.Sprintf("TARGET_IP = %v\\n", strings.Join(group.IPs, ","))
+		}
+
+		return nil
+	}
+
+	filePath := config.GetProfileWorkPath("active.conf")
+	activeGroup := file.GetRecord(filePath, "name", grep, "group_info")
+	if len(activeGroup) == 0 {
+		return fmt.Errorf("No records found")
+	}
+
+	actives := strings.Split(activeGroup, " ")
+	for _, group := range config.KeenTune.Target.Group {
+		for _, info := range actives {
+			if strings.Contains(group.GroupName, strings.Trim(info, "group")) {
+				*result += fmt.Sprintf("[target-group-%v]\\n", group.GroupNo)
+				*result += fmt.Sprintf("TARGET_IP = %v\\n", strings.Join(group.IPs, ","))
+				break
+			}
+		}
+	}
+
+	if *result == "" {
+		return fmt.Errorf("No matched group found")
+	}
+
 	return nil
 }
 

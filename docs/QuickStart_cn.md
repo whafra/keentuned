@@ -1,5 +1,5 @@
 # QuickStart
-###### Version: 1.3.0
+###### Version: 1.4.0
 
 ## Dependencies
 安装python3运行环境  

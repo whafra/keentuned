@@ -16,20 +16,20 @@ import (
 	"time"
 )
 
+// TrainFlag ...
 type TrainFlag struct {
 	Job    string
 	Data   string
 	Trials int
 	Force  bool
 	Log    string
-	Config string
 }
 
 // Train run sensitize train service
 func (s *Service) Train(flags TrainFlag, reply *string) error {
-	err := config.Backup(flags.Config, flags.Job, "training")
+	err := config.CheckAndReloadConf()
 	if err != nil {
-		return fmt.Errorf("backup '%v' failed: %v", flags.Config, err)
+		return err
 	}
 
 	if err := com.CheckBrainClient(); err != nil {
@@ -45,7 +45,7 @@ func (s *Service) Train(flags TrainFlag, reply *string) error {
 }
 
 func runTrain(flags TrainFlag) {
-	m.SetRunningTask(com.JobTraining, flags.Job)
+	m.SetRunningTask(m.JobTraining, flags.Job)
 	log.SensitizeTrain = "sensitize train" + ":" + flags.Log
 	ioutil.WriteFile(flags.Log, []byte{}, os.ModePerm)
 	defer func() {
@@ -63,6 +63,7 @@ func runTrain(flags TrainFlag) {
 	return
 }
 
+// TrainImpl ...
 func TrainImpl(flag TrainFlag, cmd string) error {
 
 	tuner := &m.Tuner{

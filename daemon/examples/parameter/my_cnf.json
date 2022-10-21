@@ -1,5 +1,5 @@
 {
-    "mycnf":{
+    "my_cnf":{
         "max_connections":{
             "desc":"默认值：151",
             "dtype":"int",
@@ -189,11 +189,11 @@
             ]
         },
         "skip_ssl":{
-            "desc":"默认值：OFF",
+            "desc":"默认值：SET_FALSE",
             "dtype":"string",
             "options":[
-                "ON",
-                "OFF"
+                "SET_TRUE",
+                "SET_FALSE"
             ]
         },
         "performance_schema":{

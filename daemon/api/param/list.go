@@ -17,20 +17,20 @@ func (s *Service) List(flag string, reply *string) error {
 	paramHeader := "Parameter List"
 	benchHeader := "Benchmark List"
 
-	paramInfo, err1 := walkAndShow(config.GetParamHomePath(), ".json", false, paramHeader)
-	benchInfo, err2 := walkAndShow(config.GetBenchHomePath(), ".json", false, benchHeader)
+	paramInfo, err1 := walkAndShow(config.GetParamHomePath(), ".json", paramHeader)
+	benchInfo, err2 := walkAndShow(config.GetBenchHomePath(), ".json", benchHeader)
 	if err1 != nil || err2 != nil {
-		log.Errorf(log.ParamList, "Walk path failed, err1: %v and err2: %v", err1, err2)
+		log.Errorf(log.ParamList, "Walk path failed, param: %v and bench: %v", err1, err2)
 		return nil
 	}
 
-	log.Infof(log.ParamList,"%v\n\n%v", paramInfo, benchInfo)
+	log.Infof(log.ParamList, "%v\n\n%v", paramInfo, benchInfo)
 
 	return nil
 }
 
-func walkAndShow(filePath string, match string, isDir bool, header string, separator ...string) (string, error) {
-	list, err := file.WalkFilePath(filePath, match, isDir, separator...)
+func walkAndShow(filePath string, match string, header string) (string, error) {
+	_, list, err := file.WalkFilePath(filePath, match)
 	if err != nil {
 		return "", fmt.Errorf("walk path: %v, err: %v", filePath, err)
 	}
@@ -50,3 +50,4 @@ func showList(data []string, header string) string {
 
 	return ""
 }
+

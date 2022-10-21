@@ -129,3 +129,9 @@ class TestMultiScenes(unittest.TestCase):
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
+
+    def test_sensitize_train_FUN_explain(self):
+        self.restart_brain_server("explain")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
+        self.run_sensitize_train("param1")

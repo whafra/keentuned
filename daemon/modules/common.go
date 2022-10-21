@@ -10,18 +10,26 @@ import (
 	"sync"
 )
 
+// StopSig ...
 var StopSig chan os.Signal
 
+// Status code
 const (
+	// SUCCESS status code
 	SUCCESS = iota + 1
 	WARNING
 	FAILED
 )
 
+const multiRecordSeparator = "*#++#*"
+
+// backup doesn't exist
 const (
+	// BackupNotFound error information
 	BackupNotFound = "Can not find backup file"
 	FileNotExist   = "do not exists"
 	NoNeedRollback = "don't need rollback"
+	NoBackupFile   = "No backup file was found"
 )
 
 func (tuner *Tuner) isInterrupted() bool {
@@ -34,11 +42,18 @@ func (tuner *Tuner) isInterrupted() bool {
 	}
 }
 
-func Rollback(logName string, tune_type string) (string, error) {
+// Rollback ...
+func Rollback(logName string, callType string) (string, error) {
 	tune := new(Tuner)
 	tune.logName = logName
 	tune.initParams()
-	err := tune.rollback()
+	var err error
+	if callType == "original" {
+		err = tune.original()
+	} else {
+		err = tune.rollback()
+	}
+
 	if err != nil {
 		return tune.rollbackFailure, err
 	}
@@ -46,18 +61,12 @@ func Rollback(logName string, tune_type string) (string, error) {
 	return tune.rollbackDetail, nil
 }
 
-func Backup(logName string, tune_type string) error {
-	tune := new(Tuner)
-	tune.logName = logName
-	tune.initParams()
-	return tune.backup()
-}
-
 func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, bool) {
 	wg := sync.WaitGroup{}
 	var sucCount = new(int)
 	var detailInfo = new(string)
 	var failedInfo = new(string)
+	unAVLParams := make([]map[string]map[string]string, len(gp.IPs))
 
 	for index, ip := range gp.IPs {
 		wg.Add(1)
@@ -66,16 +75,22 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 		go func(index, groupID int, ip string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			url := fmt.Sprintf("%v:%v/%v", ip, gp.Port, uri)
-			msg, status := remoteCall("POST", url, request)
+			var msg string
+			var status int
+			if uri != "backup" {
+				msg, status = remoteCall("POST", url, request)
+			} else {
+				unAVLParams[index-1], msg, status = callBackup("POST", url, request)
+			}
 
 			switch status {
 			case SUCCESS:
 				*sucCount++
 			case WARNING:
 				*sucCount++
-				*detailInfo += fmt.Sprintf("target%v-%v, ", groupID, index)
+				*detailInfo += fmt.Sprintf("Group %v Node %v: %v ", groupID, index, ip)
 			case FAILED:
-				*failedInfo += fmt.Sprintf("target%v-%v %v; ", groupID, index, msg)
+				*failedInfo += fmt.Sprintf("\tGroup %v Node %v: %v\n%v\n", groupID, index, ip, msg)
 			}
 
 			return
@@ -83,6 +98,29 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	}
 
 	wg.Wait()
+
+	if uri == "backup" {
+		warningInfo, status := gp.deleteUnAVLConf(unAVLParams)
+		for _, warn := range strings.Split(warningInfo, ";") {
+			parts := strings.Split(warn, "\t")
+			if len(parts) != 2 {
+				continue
+			}
+			notMetInfo := fmt.Sprintf(backupENVNotMetFmt, parts[0], parts[1])
+			*detailInfo += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
+		}
+
+		if status == FAILED {
+			return *detailInfo, false
+		}
+
+		if status == WARNING {
+			return *detailInfo, true
+		}
+
+		return warningInfo, true
+	}
+
 	if *sucCount == len(gp.IPs) {
 		return *detailInfo, true
 	}
@@ -110,19 +148,20 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 	}
 
 	if !response.Suc {
-		return fmt.Sprintf("%v", response.Msg), FAILED
+		return parseMsg(response.Msg), FAILED
 	}
 
-	return "", parseMsg(response.Msg)
+	return "", parseStatusCode(response.Msg)
 }
 
-func parseMsg(msg interface{}) int {
+func parseStatusCode(msg interface{}) int {
 	switch info := msg.(type) {
 	case map[string]interface{}:
 		var count int
 		for _, value := range info {
 			message := fmt.Sprint(value)
-			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) || strings.Contains(message, NoNeedRollback) {
+			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) ||
+				strings.Contains(message, NoNeedRollback) || strings.Contains(message, NoBackupFile) {
 				count++
 			}
 		}
@@ -132,12 +171,44 @@ func parseMsg(msg interface{}) int {
 		}
 		return SUCCESS
 	case string:
-		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) || strings.Contains(info, NoNeedRollback) {
+		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) ||
+			strings.Contains(info, NoNeedRollback) || strings.Contains(info, NoBackupFile) {
 			return WARNING
 		}
 		return SUCCESS
 	}
 
 	return SUCCESS
+}
+
+func parseMsg(originMsg interface{}) string {
+	var resp map[string]struct {
+		Suc bool   `json:"suc"`
+		Msg string `json:"msg"`
+	}
+
+	msg, _ := json.Marshal(originMsg)
+	err := json.Unmarshal(msg, &resp)
+	if err != nil {
+		return string(msg)
+	}
+
+	var retMsg string
+
+	for domain, info := range resp {
+		if info.Suc {
+			continue
+		}
+
+		replaced := strings.ReplaceAll(info.Msg, "\n", "\n\t\t\t")
+
+		retMsg += fmt.Sprintf("\t\t[%s]\t%v\n", domain, replaced)
+	}
+
+	if len(retMsg) != 0 {
+		return retMsg
+	}
+
+	return string(msg)
 }
 

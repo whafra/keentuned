@@ -5,7 +5,9 @@ import unittest
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
 
 from CLI_basic.test_help import TestHelp
+from CLI_basic.test_init import TestInit
 from CLI_basic.test_version import TestVersion
+from CLI_basic.test_rollback_all import TestRollbackAll
 from CLI_basic.test_param_tune import TestParamTune
 from CLI_basic.test_param_list import TestParamList
 from CLI_basic.test_param_dump import TestParamDump
@@ -24,7 +26,9 @@ from CLI_basic.test_sensitize_delete import TestSensitizeDelete
 
 def RunBasicCase():
     param_suite = unittest.TestSuite()
+    param_suite.addTest(TestRollbackAll('test_rollback_all_FUN'))
     param_suite.addTest(TestHelp('test_help_FUN'))
+    param_suite.addTest(TestInit('test_init_FUN'))
     param_suite.addTest(TestVersion('test_version_FUN'))
     param_suite.addTest(TestParamTune('test_param_tune_FUN'))
     param_suite.addTest(TestParamList('test_param_list_FUN'))

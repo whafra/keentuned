@@ -2,7 +2,6 @@ package param
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -36,7 +35,7 @@ func stop() {
 		return
 	}
 
-	if strings.Split(job, " ")[0] == com.JobTuning || strings.Split(job, " ")[0] == com.JobBenchmark {
+	if strings.Split(job, " ")[0] == m.JobTuning || strings.Split(job, " ")[0] == m.JobBenchmark {
 		m.ClearTask()
 		m.StopSig <- os.Interrupt
 	}
