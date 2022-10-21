@@ -215,6 +215,7 @@ func DeleteRow(fileName string, primaryKeys []string) error {
 		return err
 	}
 
+	defer f.Close()
 	w := csv.NewWriter(f)
 	err = w.WriteAll(contents)
 	if err != nil {

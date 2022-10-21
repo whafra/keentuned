@@ -36,6 +36,7 @@ func newRequester(method string, uri string, data interface{}) (*requester, erro
 			DialContext: (&net.Dialer{
 				Timeout: 900 * time.Millisecond, // conn timeout
 			}).DialContext,
+			DisableKeepAlives: true,
 		},
 	}
 
