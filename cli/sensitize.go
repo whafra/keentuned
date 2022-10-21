@@ -67,7 +67,7 @@ func trainCmd() *cobra.Command {
 			}
 
 			trainflags.Log = fmt.Sprintf("%v/%v-%v.log", "/var/log/keentune", "keentuned-sensitize-train", trainflags.Job)
-			RunTrainRemote(cmd.Context(), trainflags)
+			RunTrainRemote(trainflags)
 		},
 	}
 
@@ -75,7 +75,6 @@ func trainCmd() *cobra.Command {
 	flags.StringVarP(&trainflags.Data, "data", "d", "", "available sensitivity identification data, query by \"keentune sensitize jobs\"")
 	flags.IntVarP(&trainflags.Trials, "trials", "t", 1, "sensitize trials, range [1,10]")
 	flags.StringVarP(&trainflags.Job, "job", "j", "", "job file of sensitive parameter identification and explanation")
-	flags.StringVar(&trainflags.Config, "config", "", "configuration specified for train")
 
 	return cmd
 }
@@ -87,7 +86,7 @@ func jobSensitivityCmd() *cobra.Command {
 		Long:    "List available sensitivity identification jobs",
 		Example: egSensitiveJobs,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunJobsRemote(cmd.Context(), "sensitize")
+			RunJobsRemote("sensitize")
 			return
 		},
 	}
@@ -112,21 +111,21 @@ func deleteSensitivityCmd() *cobra.Command {
 			flag.Cmd = "sensitize"
 
 			initWorkDirectory()
-			//Determine whether job already exists
+			// Determine whether job already exists
 			JobPath := config.GetSensitizePath(flag.Name)
 			_, err := os.Stat(JobPath)
 			if err != nil {
 				fmt.Printf("%v Auto-training job '%v' does not exist.\n", ColorString("red", "[ERROR]"), flag.Name)
 				os.Exit(1)
 			}
-			
-			//Determine whether job can be deleted
+
+			// Determine whether job can be deleted
 			if file.IsJobRunning(config.GetDumpPath(config.SensitizeCsv), flag.Name) {
 				fmt.Printf("%v Auto-training job %v is running, use 'keentune sensitize stop' to shutdown.\n", ColorString("yellow", "[Warning]"), flag.Name)
 				return
 			}
 
-			RunDeleteRemote(cmd.Context(), flag)
+			RunDeleteRemote(flag)
 			return
 		},
 	}

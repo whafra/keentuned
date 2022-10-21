@@ -5,7 +5,7 @@ Conflicts=tuned.service
 
 [Service]
 ExecStart=/usr/bin/keentuned
-Type=idle
+Type=notify
 
 [Install]
 WantedBy=multi-user.target

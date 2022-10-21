@@ -41,7 +41,7 @@ func main() {
 
 	go mkWorkDir()
 
-	showStart()
+	go showStart()
 
 	for {
 		conn, err := listener.Accept()
@@ -96,24 +96,39 @@ func mkWorkDir() {
 func showStart() {
 	fmt.Printf("Keentune Home: %v\nKeentune Workspace: %v\n", config.KeenTune.Home, config.KeenTune.DumpHome)
 
-	fmt.Println("In order to ensure the security of sensitive information, IP is mapped to ID")
+	suc, warn, _ := com.StartCheck()
 
-	for _, group := range config.KeenTune.Group {
-		for index, ip := range group.IPs {
-			fmt.Printf("\ttarget [%v]\t<--> id: %v-%v\n", ip, group.GroupNo, index+1)
-		}
+	if len(suc) > 0 {
+		fmt.Printf("%v  Loading succeeded:\n%v\n", utils.ColorString("green", "[ok]"), suc)
 	}
 
-	for groupNo, group := range config.KeenTune.BenchGroup {
-		for index, ip := range group.SrcIPs {
-			fmt.Printf("\tbench_src [%v]\t<--> id: %v-%v\n", ip, groupNo+1, index+1)
-		}
+	for _, detail := range warn {
+		fmt.Printf("%v %v", utils.ColorString("yellow", "[Warning]"), detail)
 	}
 
-	if err := com.StartCheck(); err != nil {
-		fmt.Printf("[%v] %v\n", utils.ColorString("YELLOW", "Warning"), err)
-	}
-
+	notifySystemd()
 	fmt.Println("KeenTune daemon running...")
+
+}
+
+func notifySystemd() {
+	socketAddr := &net.UnixAddr{
+		Name: os.Getenv("NOTIFY_SOCKET"),
+		Net:  "unixgram",
+	}
+
+	if socketAddr.Name == "" {
+		return
+	}
+
+	conn, err := net.DialUnix(socketAddr.Net, nil, socketAddr)
+	if err != nil {
+		return
+	}
+
+	_, err = conn.Write([]byte("READY=1"))
+	if err != nil {
+		return
+	}
 }
 

@@ -68,4 +68,4 @@ class TestProfileSet(unittest.TestCase):
         cmd = "keentune profile set --group1 {}".format(path)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Set /var/keentune/profile/param1_group1.conf successfully'))
+        self.assertTrue(self.out.__contains__('Succeeded'))

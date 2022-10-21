@@ -56,7 +56,7 @@ class TestProfileSetRollback(unittest.TestCase):
         cmd = "keentune profile set --group1 {}.conf".format(name)
         self.status, self.out, _ = sysCommand(cmd)
         self.assertEqual(self.status, 0)
-        self.assertTrue(self.out.__contains__('Set {}.conf successfully'.format(name)))
+        self.assertTrue(self.out.__contains__('Succeeded'))
 
         self.status = checkProfileData(name)
         self.assertEqual(self.status, 0)

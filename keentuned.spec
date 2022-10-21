@@ -1,8 +1,8 @@
 %define debug_package %{nil}
-%define anolis_release 1
+%define anolis_release 0
 
 Name:           keentuned
-Version:        1.3.0
+Version:        1.4.0
 Release:        %{?anolis_release}%{?dist}
 Url:            https://gitee.com/anolis/keentuned
 Summary:        KeenTune tuning tools
@@ -10,6 +10,7 @@ Vendor:         Alibaba
 License:        MulanPSLv2
 Source:         https://gitee.com/anolis/keentuned/repository/archive/%{name}-%{version}.tar.gz
 
+Autoreq:        0
 BuildRequires:  go >= 1.13
 BuildRequires:	systemd
 
@@ -37,7 +38,6 @@ rm -rf $RPM_BUILD_DIR/%{name}-%{version}
 %systemd_post keentuned.service
 if [ -f "%{_prefix}/lib/systemd/system/keentuned.service" ]; then
     systemctl enable keentuned.service || :
-    systemctl start keentuned.service || :
 fi
 
 %preun
@@ -64,6 +64,17 @@ fi
 %{_mandir}/man7/keentune-detect.7*
 
 %changelog
+* Thu Sep 22 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.4.0-0
+- feat: Support UI Intelligent tuning and Sensitive parameter identification
+- feat: Support show recommendation log for expert one click tuning
+- feat: Support KeenTune Init configuration
+- feat: Support KeenTune Recovery of all environments
+- feat: Remove field '--config' from Intelligent tuning and Sensitive parameter identification
+- fix: Remove daemon self start
+- fix: Unify response code for cli
+- fix: Modify daemon start show log
+- other bugs fix
+
 * Thu Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
 - fix: missing of man dir
 
