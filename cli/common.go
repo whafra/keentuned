@@ -182,7 +182,7 @@ func migrateCmd() *cobra.Command {
 
 func changeFileName(dir string) {
 	srcFilename := fmt.Sprintf("/usr/lib/tuned/%v/tuned.conf", dir)
-	destFilename := fmt.Sprintf("/var/keentune/profile/%v.conf", dir)
+	destFilename := fmt.Sprintf("/etc/keentune/profile/%v.conf", dir)
 
 	if file.IsPathExist(destFilename) {
 		fmt.Printf("%v Profile [%v] already exists.\n",ColorString("red", "[ERROR]"), destFilename)
@@ -204,8 +204,20 @@ func changeFileName(dir string) {
 	r := bufio.NewReader(fpSrc)
 	for {
 		buf, err := r.ReadString('\n')
-		if strings.Contains(string(buf), "[") {
+		if strings.Contains(buf, "[") {
 			buf = strings.Replace(string(buf), ".", "_", 1)
+		}
+
+		if strings.Contains(buf, "include") && !strings.HasSuffix(strings.TrimSpace(buf), ".conf") {
+			pairs := strings.Split(buf, "=")
+			if len(pairs) != 2 {
+				continue
+			}
+			includeFileName := fmt.Sprintf("/etc/keentune/profile/%v.conf", strings.TrimSpace(pairs[1]))
+
+			if !file.IsPathExist(includeFileName) {
+				changeFileName(strings.TrimSpace(pairs[1]))
+			}
 		}
 
 		if err != nil{
