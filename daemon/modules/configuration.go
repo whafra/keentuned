@@ -51,7 +51,7 @@ func (conf Configuration) Save(fileName, suffix string) error {
 }
 
 // collectParam collect param change map to struct map and state param success information
-func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error) {
+func collectParam(applyResp map[string]interface{}) (string, map[string]Parameter, error) {
 	if len(applyResp) == 0 {
 		return "", nil, fmt.Errorf("apply response is null")
 	}
@@ -62,8 +62,18 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 	for domain, paramMap := range applyResp {
 		var sucCount, failedCount, skippedCount int
 		var failedInfoSlice [][]string
+		var parameter map[string]interface{}
 		setResult += fmt.Sprintf("\t\t[%v]\t", domain)
-		for name, orgValue := range paramMap {
+
+		switch value := paramMap.(type) {
+		case map[string]interface{}:
+			parameter = value
+		case string:
+			setResult += fmt.Sprintf("%v %v\n", utils.ColorString("yellow", "[Warning]"), value)
+			continue
+		}
+
+		for name, orgValue := range parameter {
 			var appliedInfo Parameter
 			err := utils.Map2Struct(orgValue, &appliedInfo)
 			if err != nil {
@@ -108,7 +118,7 @@ func collectParam(applyResp config.DBLMap) (string, map[string]Parameter, error)
 	return setResult, paramCollection, nil
 }
 
-func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
+func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	var applyShortRet struct {
 		Success bool        `json:"suc"`
 		Msg     interface{} `json:"msg"`
@@ -128,9 +138,9 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 	}
 
 	var applyResp struct {
-		Success bool          `json:"suc"`
-		Data    config.DBLMap `json:"data"`
-		Msg     interface{}   `json:"msg"`
+		Success bool                   `json:"suc"`
+		Data    map[string]interface{} `json:"data"`
+		Msg     interface{}            `json:"msg"`
 	}
 
 	select {
@@ -145,7 +155,7 @@ func getApplyResult(sucBytes []byte, id int) (config.DBLMap, error) {
 
 	if !applyResp.Success {
 		msg, _ := json.Marshal(applyResp.Msg)
-		var paramInfo config.DBLMap
+		var paramInfo map[string]interface{}
 		err = json.Unmarshal(msg, &paramInfo)
 		if err != nil {
 			return nil, fmt.Errorf("%s", msg)
