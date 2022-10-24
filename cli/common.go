@@ -208,6 +208,7 @@ func changeFileName(dir string) {
 			buf = strings.Replace(string(buf), ".", "_", 1)
 		}
 
+		//migrate include profile
 		if strings.Contains(buf, "include") && !strings.HasSuffix(strings.TrimSpace(buf), ".conf") {
 			pairs := strings.Split(buf, "=")
 			if len(pairs) != 2 {
@@ -218,6 +219,13 @@ func changeFileName(dir string) {
 			if !file.IsPathExist(includeFileName) {
 				changeFileName(strings.TrimSpace(pairs[1]))
 			}
+		}
+
+		//modify script file name
+		replaceStr := "${i:PROFILE_DIR}/script.sh"
+		destStr := fmt.Sprintf("/etc/keentune/script/%v.sh", dir)
+		if strings.Contains(buf, replaceStr) {
+			buf = strings.Replace(buf, replaceStr, destStr, -1)
 		}
 
 		if err != nil{
