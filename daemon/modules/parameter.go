@@ -317,7 +317,7 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
-		if strings.Contains(pureLine, "[") {
+		if strings.HasPrefix(pureLine, "[") && strings.HasSuffix(pureLine, "]") {
 			commonDomain = strings.TrimSpace(strings.Trim(strings.Trim(pureLine, "["), "]"))
 			continue
 		}
