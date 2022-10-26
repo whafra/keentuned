@@ -62,6 +62,7 @@ fi
 %{_mandir}/man7/keentune-benchmark.7*
 %{_mandir}/man7/keentune-profile.7*
 %{_mandir}/man7/keentune-detect.7*
+%{_prefix}/share/bash-completion/completions/keentune.bash
 
 %changelog
 * Thu Jul 21 2022 Runzhe Wang <runzhe.wrz@alibaba-inc.com> - 1.3.0-1
