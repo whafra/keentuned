@@ -57,6 +57,7 @@ install:
 	install -D -m 0644 man/keentune-benchmark.7 ${MANDIR}/man7/keentune-benchmark.7
 	install -D -m 0644 man/keentune-profile.7 ${MANDIR}/man7/keentune-profile.7
 	install -D -m 0644 man/keentune-detect.7 ${MANDIR}/man7/keentune-detect.7
+	install -D -m 0644 keentune.bash $(DESTDIR)$(PREFIX)/share/bash-completion/completions/
 	@echo "END INSTALL keentuned"
 
 startup:

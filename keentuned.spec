@@ -62,14 +62,17 @@ fi
 %{_mandir}/man7/keentune-benchmark.7*
 %{_mandir}/man7/keentune-profile.7*
 %{_mandir}/man7/keentune-detect.7*
+%attr(0755, root, root) %{_prefix}/share/bash-completion/completions/keentune.bash
 
 %changelog
 * Thu Sep 22 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.4.0-0
-- feat: Support UI Intelligent tuning and Sensitive parameter identification
-- feat: Support show recommendation log for expert one click tuning
-- feat: Support KeenTune Init configuration
-- feat: Support KeenTune Recovery of all environments
-- feat: Remove field '--config' from Intelligent tuning and Sensitive parameter identification
+- add: Support UI Intelligent tuning and Sensitive parameter identification
+- add: Support show recommendation log for expert one click tuning
+- add: Support UI configure KeenTune groups' network environment
+- add: Support UI perform param rollback
+- add: Support UI perform param dump
+- add: Support KeenTune Recovery of all environments
+- add: Remove field '--config' from Intelligent tuning and Sensitive parameter identification
 - fix: Remove daemon self start
 - fix: Unify response code for cli
 - fix: Modify daemon start show log
