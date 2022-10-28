@@ -16,7 +16,7 @@ import (
 // Group ...
 type Group struct {
 	IPs            []string
-	Params         []config.DBLMap
+	Params         []config.DBLMap // priority params for set configure
 	Port           string
 	ReadOnly       bool
 	Dump           Configuration
@@ -390,8 +390,7 @@ func (gp *Group) getConfigParam(fileName string) (ABNLResult, error) {
 }
 
 func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (string, int) {
-	var totalWarningInfo string
-	var paramsWarnInfo = make(map[string]string)
+	var totalWarningInfo = new(string)
 	var isAllUnAVL bool
 	var retWarnInfo []string
 	var domains []string
@@ -400,50 +399,51 @@ func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (st
 
 	for _, params := range unAVLParams {
 		var unAVLCount int
-
 		for domain, kv := range params {
-			var oneDomainWarning string
 			domains = append(domains, domain)
-			unAVLCount += len(kv)
 			_, exist := gp.UnAVLParams[domain]
 			if !exist {
 				gp.UnAVLParams[domain] = make(map[string]string)
 			}
 
+			if len(kv) == 0 {
+				if params[domain] == nil {
+					// domain is all available, skip
+					continue
+				}
+
+				// domain is all unavailable
+				unAVLCount += len(gp.MergedParam[domain].(map[string]interface{}))
+				for priorityIdx := range gp.Params {
+					delete(gp.Params[priorityIdx], domain)
+				}
+
+				var notMetInfo string
+				if domain == myConfDomain {
+					notMetInfo = fmt.Sprintf(backupENVNotMetFmt, myConfBackupFile, myConfApp)
+				} else {
+					notMetInfo = fmt.Sprintf(backupENVNotMetFmt, "["+domain+"]", "the APP")
+				}
+
+				decoratedWarnInfo := fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
+
+				retWarnInfo = append(retWarnInfo, decoratedWarnInfo)
+				isAllUnAVL = isAllUnAVL || unAVLCount == gp.ParamTotal
+				continue
+			}
+
+			var oneDomainWarning string
+			unAVLCount += len(kv)
+
 			oneDomainWarning = gp.tidyUnavailableParams(kv, domain, totalWarningInfo)
 
 			if len(oneDomainWarning) > 0 {
-				totalWarningInfo += oneDomainWarning
-				paramsWarnInfo[domain] = oneDomainWarning
+				*totalWarningInfo += oneDomainWarning
+				retWarnInfo = append(retWarnInfo, oneDomainWarning)
 			}
 
 			isAllUnAVL = isAllUnAVL || unAVLCount == gp.ParamTotal
 		}
-	}
-
-	for _, domain := range domains {
-		_, typeOK := gp.MergedParam[domain].(map[string]interface{})
-		if !typeOK {
-			continue
-		}
-
-		if len(gp.UnAVLParams[domain]) == len(gp.MergedParam[domain].(map[string]interface{})) {
-			// remove parameters' warning when the domain is unavailable
-			delete(paramsWarnInfo, domain)
-
-			var notMetInfo string
-			if domain == myConfDomain {
-				notMetInfo = fmt.Sprintf(backupENVNotMetFmt, myConfBackupFile, myConfApp)
-			} else {
-				notMetInfo = fmt.Sprintf(backupENVNotMetFmt, "["+domain+"]", "the APP")
-			}
-
-			decoratedWarnInfo := fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
-			retWarnInfo = append(retWarnInfo, decoratedWarnInfo)
-			continue
-		}
-
-		retWarnInfo = append(retWarnInfo, paramsWarnInfo[domain])
 	}
 
 	if isAllUnAVL {
@@ -458,11 +458,12 @@ func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (st
 }
 
 // tidyUnavailableParams delete unavailable parameter domain from group.Params and cache them to UnAVLParams
-func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warningInfo string) string {
+func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warningInfo *string) string {
 	var oneDomainWarning string
 	for name, msg := range kv {
 		// cache unavailable params to group
 		gp.UnAVLParams[domain][name] = msg
+
 		for priorityIdx := range gp.Params {
 			_, exists := gp.Params[priorityIdx][domain][name]
 			if exists {
@@ -471,7 +472,7 @@ func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warn
 
 				tmpWarn := fmt.Sprintf("[%v] %v: %v%v", domain, name, msg, multiRecordSeparator)
 				// discard repeated warning
-				if !strings.Contains(warningInfo, tmpWarn) {
+				if !strings.Contains(*warningInfo, tmpWarn) {
 					oneDomainWarning += tmpWarn
 				}
 

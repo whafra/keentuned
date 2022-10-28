@@ -79,7 +79,7 @@ func (tuner *Tuner) Tune() {
 		return
 	}
 
-	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n", tuner.IncreaseStep(), tuner.MAXIteration)
+	log.Infof(log.ParamTune, "\nStep%v. Start tuning, total iteration is %v.\n\n", tuner.IncreaseStep(), tuner.MAXIteration)
 
 	if err = tuner.loop(); err != nil {
 		err = fmt.Errorf("loop tuning: %v", err)
@@ -308,11 +308,13 @@ func (tuner *Tuner) deleteUnAVLParams() {
 			continue
 		}
 
-		if len(tuner.Group[idx].UnAVLParams) == 0 {
+		// the domain is unavailable
+		unavailableParam, exist := tuner.Group[idx].UnAVLParams[p.DomainName]
+		if len(tuner.Group[idx].UnAVLParams[p.DomainName]) == 0 && exist {
 			continue
 		}
 
-		_, find := tuner.Group[idx].UnAVLParams[p.DomainName][name]
+		_, find := unavailableParam[name]
 		if !find {
 			newBrainParams = append(newBrainParams, p)
 		}
@@ -320,5 +322,13 @@ func (tuner *Tuner) deleteUnAVLParams() {
 
 	tuner.BrainParam = newBrainParams
 
+	if tuner.backupWarning != "" {
+		for _, backupWarning := range strings.Split(tuner.backupWarning, multiRecordSeparator) {
+			pureInfo := strings.TrimSpace(backupWarning)
+			if len(pureInfo) > 0 {
+				log.Warn(tuner.logName, backupWarning)
+			}
+		}
+	}
 }
 

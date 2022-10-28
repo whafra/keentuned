@@ -126,16 +126,20 @@ func (s *logFormater) Format(entry *logrus.Entry) ([]byte, error) {
 	level := strings.ToUpper(entry.Level.String())
 	msg := fmt.Sprintf(s.LogFormat, level, s.TimestampFormat, entry.Message, strings.Trim(s.file+s.funcName, "."), s.line)
 
+	return []byte(removeColor(msg)), nil
+}
+
+func removeColor(msg string) string {
 	// replace color control special chars
 	matchStr := "\u001B\\[1;40;3[1-3]m(.*?)\u001B\\[0m"
 	pureMSg := msg
 	matched, _ := regexp.MatchString(matchStr, pureMSg)
 	if matched {
 		re := regexp.MustCompile(matchStr)
-		pureMSg = re.ReplaceAllString(strings.TrimSpace(msg), "$1")
+		pureMSg = re.ReplaceAllString(msg, "$1")
 	}
 
-	return []byte(pureMSg), nil
+	return pureMSg
 }
 
 //  Format define the console log detail
@@ -160,7 +164,7 @@ func updateClientLog(cmd, msg string) {
 			return
 		}
 
-		appendMsg := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(msg, "\x1b[1;40;32m", ""), "\x1b[0m", ""), "\x1b[1;40;31m", "")
+		appendMsg := removeColor(msg)
 		fullPath := cmdParts[1]
 		f, err := os.OpenFile(fullPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {

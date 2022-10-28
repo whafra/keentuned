@@ -63,15 +63,21 @@ func callBackup(method, url string, request interface{}) (map[string]map[string]
 	var unAVLParam = make(map[string]map[string]string)
 
 	for domain, param := range req {
-		_, notExist := unAVLParam[domain]
-		if !notExist {
-			unAVLParam[domain] = make(map[string]string)
+		domainParam, find := response[domain]
+		if !find {
+			unAVLParam[domain] = map[string]string{}
+			continue
 		}
+
 		parameter := param.(map[string]interface{})
 		for name, _ := range parameter {
-			_, exists := response[domain][name]
-			if !exists || !response[domain][name].Available {
-				msgBytes, _ := json.Marshal(response[domain][name].Msg)
+			_, exists := domainParam[name]
+			if !exists || !domainParam[name].Available {
+				_, notExist := unAVLParam[domain]
+				if !notExist {
+					unAVLParam[domain] = make(map[string]string)
+				}
+				msgBytes, _ := json.Marshal(domainParam[name].Msg)
 				msg := string(msgBytes)
 				if msg == "" || msg == "null" {
 					msg = "domain can not backup"
