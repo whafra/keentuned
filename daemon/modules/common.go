@@ -101,21 +101,12 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 
 	if uri == "backup" {
 		warningInfo, status := gp.deleteUnAVLConf(unAVLParams)
-		for _, warn := range strings.Split(warningInfo, ";") {
-			parts := strings.Split(warn, "\t")
-			if len(parts) != 2 {
-				continue
-			}
-			notMetInfo := fmt.Sprintf(backupENVNotMetFmt, parts[0], parts[1])
-			*detailInfo += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
-		}
-
 		if status == FAILED {
-			return *detailInfo, false
+			return warningInfo, false
 		}
 
 		if status == WARNING {
-			return *detailInfo, true
+			return warningInfo, true
 		}
 
 		return warningInfo, true

@@ -390,9 +390,10 @@ func (gp *Group) getConfigParam(fileName string) (ABNLResult, error) {
 }
 
 func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (string, int) {
-	var warningInfo string
-	var AllUnAVL bool
-	var allUnAVLAPPInfo []string
+	var totalWarningInfo string
+	var paramsWarnInfo = make(map[string]string)
+	var isAllUnAVL bool
+	var retWarnInfo []string
 	var domains []string
 
 	gp.UnAVLParams = make(map[string]map[string]string)
@@ -409,13 +410,14 @@ func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (st
 				gp.UnAVLParams[domain] = make(map[string]string)
 			}
 
-			oneDomainWarning = gp.deleteAndCacheParam(kv, domain, warningInfo)
+			oneDomainWarning = gp.tidyUnavailableParams(kv, domain, totalWarningInfo)
 
 			if len(oneDomainWarning) > 0 {
-				warningInfo += fmt.Sprintf("[%v] %v\n", domain, strings.TrimPrefix(oneDomainWarning, "\t"))
+				totalWarningInfo += oneDomainWarning
+				paramsWarnInfo[domain] = oneDomainWarning
 			}
 
-			AllUnAVL = AllUnAVL || unAVLCount == gp.ParamTotal
+			isAllUnAVL = isAllUnAVL || unAVLCount == gp.ParamTotal
 		}
 	}
 
@@ -426,27 +428,37 @@ func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (st
 		}
 
 		if len(gp.UnAVLParams[domain]) == len(gp.MergedParam[domain].(map[string]interface{})) {
+			// remove parameters' warning when the domain is unavailable
+			delete(paramsWarnInfo, domain)
+
+			var notMetInfo string
 			if domain == myConfDomain {
-				allUnAVLAPPInfo = append(allUnAVLAPPInfo, fmt.Sprintf("%v\t%v", myConfBackupFile, myConfApp))
-				continue
+				notMetInfo = fmt.Sprintf(backupENVNotMetFmt, myConfBackupFile, myConfApp)
+			} else {
+				notMetInfo = fmt.Sprintf(backupENVNotMetFmt, "["+domain+"]", "the APP")
 			}
-			allUnAVLAPPInfo = append(allUnAVLAPPInfo, fmt.Sprintf("[%v] backup file\t%v", domain, "the APP"))
+
+			decoratedWarnInfo := fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
+			retWarnInfo = append(retWarnInfo, decoratedWarnInfo)
+			continue
 		}
+
+		retWarnInfo = append(retWarnInfo, paramsWarnInfo[domain])
 	}
 
-	if AllUnAVL {
-		return strings.Join(allUnAVLAPPInfo, ";"), FAILED
+	if isAllUnAVL {
+		return strings.Join(retWarnInfo, ""), FAILED
 	}
 
-	if len(allUnAVLAPPInfo) > 0 {
-		return strings.Join(allUnAVLAPPInfo, ";"), WARNING
+	if len(retWarnInfo) > 0 {
+		return strings.Join(retWarnInfo, ""), WARNING
 	}
 
-	return warningInfo, SUCCESS
+	return "", SUCCESS
 }
 
-// delete unavailable configure params and cache them to group
-func (gp *Group) deleteAndCacheParam(kv map[string]string, domain string, warningInfo string) string {
+// tidyUnavailableParams delete unavailable parameter domain from group.Params and cache them to UnAVLParams
+func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warningInfo string) string {
 	var oneDomainWarning string
 	for name, msg := range kv {
 		// cache unavailable params to group
@@ -457,7 +469,8 @@ func (gp *Group) deleteAndCacheParam(kv map[string]string, domain string, warnin
 				// delete unavailable configure params
 				delete(gp.Params[priorityIdx][domain], name)
 
-				tmpWarn := fmt.Sprintf("\t%v:\t%v\n", name, msg)
+				tmpWarn := fmt.Sprintf("[%v] %v: %v%v", domain, name, msg, multiRecordSeparator)
+				// discard repeated warning
 				if !strings.Contains(warningInfo, tmpWarn) {
 					oneDomainWarning += tmpWarn
 				}
