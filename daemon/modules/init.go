@@ -91,7 +91,7 @@ func (tuner *Tuner) dump(option string) {
 
 func (tuner *Tuner) baseline() error {
 	if !tuner.isSensitize {
-		log.Infof(tuner.logName, "Step%v. Run benchmark as baseline:", tuner.IncreaseStep())
+		log.Infof(tuner.logName, "\nStep%v. Run benchmark as baseline:", tuner.IncreaseStep())
 	}
 
 	for _, benchgroup := range config.KeenTune.BenchGroup {
