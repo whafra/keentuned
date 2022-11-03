@@ -446,7 +446,15 @@ func getParam(paramSlice []string) (string, string, map[string]interface{}, erro
 	}
 
 	var param map[string]interface{}
-	value, err := strconv.ParseInt(valueStr, 10, 64)
+	// remove inline comments
+	var rmCommentVal string
+	if strings.Index(valueStr, "#") > 0 {
+		rmCommentVal = strings.TrimSpace(strings.Split(valueStr, "#")[0])
+	} else {
+		rmCommentVal = valueStr
+	}
+
+	value, err := strconv.ParseInt(rmCommentVal, 10, 64)
 	if err != nil {
 		param = map[string]interface{}{
 			"value": valueStr,
