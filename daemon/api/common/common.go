@@ -11,6 +11,7 @@ import (
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
+	"keentune/daemon/common/utils"
 	utilhttp "keentune/daemon/common/utils/http"
 	m "keentune/daemon/modules"
 	"net/http"
@@ -24,12 +25,14 @@ type deleter struct {
 	fileName string
 }
 
+// DeleteFlag ...
 type DeleteFlag struct {
 	Name  string
 	Cmd   string
 	Force bool
 }
 
+// RollbackFlag ...
 type RollbackFlag struct {
 	Cmd string
 }
@@ -45,15 +48,9 @@ var (
 	logHome = "/var/log/keentune"
 )
 
-var (
-	JobTuning    = "tuning"
-	JobProfile   = "profile"
-	JobTraining  = "train"
-	JobBenchmark = "benchmark"
-)
-
+// IsDataReady ...
 func IsDataReady(name string) bool {
-	dataList, _, _, err := GetDataList()
+	dataList, _, _, err := GetAVLDataAndAlgo()
 	if err != nil {
 		return false
 	}
@@ -67,27 +64,32 @@ func IsDataReady(name string) bool {
 	return false
 }
 
-func GetDataList() ([]string, string, string, error) {
-	resp, err := utilhttp.RemoteCall("GET", config.KeenTune.BrainIP+":"+config.KeenTune.BrainPort+"/avaliable", nil)
+// GetAVLDataAndAlgo get available data, algo from brain
+func GetAVLDataAndAlgo() ([]string, []string, []string, error) {
+	resp, err := pingAndCallAVL(config.KeenTune.BrainIP, config.KeenTune.BrainPort)
 	if err != nil {
-		return nil, "", "", err
+		return nil, nil, nil, err
 	}
 
-	var sensiList struct {
-		Success bool     `json:"suc"`
-		Data    []string `json:"data"`
+	var brainRet struct {
+		Success   bool     `json:"suc"`
+		Data      []string `json:"data"`
+		Explainer []string `json:"explainer"`
+		Tune      []string `json:"tune"`
 	}
 
-	if err = json.Unmarshal(resp, &sensiList); err != nil {
-		return nil, "", "", err
+	if err = json.Unmarshal(resp, &brainRet); err != nil {
+		return nil, nil, nil, err
 	}
 
-	if !sensiList.Success {
-		return nil, "", "", fmt.Errorf("remotecall avaliable return suc is false")
+	if !brainRet.Success {
+		return nil, nil, nil, fmt.Errorf("remotecall available return suc is false")
 	}
-	return sensiList.Data, "", "", nil
+
+	return brainRet.Data, brainRet.Tune, brainRet.Explainer, nil
 }
 
+// KeenTunedService ...
 func KeenTunedService(quit chan os.Signal) {
 	// register router
 	registerRouter()
@@ -157,7 +159,7 @@ func RunDelete(flag DeleteFlag, reply *string) error {
 	return nil
 }
 
-// RunDelete run delete file service
+// RunTrainDelete run training delete file service
 func RunTrainDelete(flag DeleteFlag, reply *string) error {
 	fullName := GetSensitizePath(flag.Name)
 
@@ -207,6 +209,7 @@ func (d *deleter) delete() error {
 	return os.RemoveAll(d.fileName)
 }
 
+// GetParameterPath ...
 func GetParameterPath(fileName string) string {
 	workPath := config.GetTuningPath(fileName)
 	if file.IsPathExist(workPath) {
@@ -226,6 +229,7 @@ func GetParameterPath(fileName string) string {
 	return ""
 }
 
+// GetSensitizePath ...
 func GetSensitizePath(fileName string) string {
 	workPath := config.GetSensitizePath(fileName)
 	if file.IsPathExist(workPath) {
@@ -245,15 +249,17 @@ func GetSensitizePath(fileName string) string {
 	return ""
 }
 
+// IsApplying ...
 func IsApplying() bool {
 	job := m.GetRunningTask()
 	if job == "" || len(strings.Split(job, " ")) < 2 {
 		return false
 	}
 
-	return (strings.Split(job, " ")[0] == JobProfile) || (strings.Split(job, " ")[0] == JobTuning)
+	return (strings.Split(job, " ")[0] == m.JobProfile) || (strings.Split(job, " ")[0] == m.JobTuning)
 }
 
+// ResetJob ...
 func ResetJob() {
 	m.ClearTask()
 
@@ -268,11 +274,11 @@ func ResetJob() {
 	}
 }
 
-func SetAvailableDomain() {
-	url := fmt.Sprintf("%s:%s/avaliable", config.KeenTune.Target.Group[0].IPs[0], config.KeenTune.Target.Group[0].Port)
-	resp, err := utilhttp.RemoteCall("GET", url, nil)
+// GetAVLDomain get available domain
+func GetAVLDomain(ip, port string) ([]string, error) {
+	resp, err := pingAndCallAVL(ip, port)
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	var ret struct {
@@ -281,15 +287,52 @@ func SetAvailableDomain() {
 
 	err = json.Unmarshal(resp, &ret)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	for _, domain := range ret.Domains {
-		if domain == config.NginxDomain {
-			config.PriorityList[domain] = 0
-			continue
-		}
-		config.PriorityList[domain] = 1
+	return ret.Domains, nil
+}
+
+func pingAndCallAVL(ip, port string, request ...interface{}) ([]byte, error) {
+	err := utils.Ping(ip, port)
+	if err != nil {
+		return nil, err
 	}
+
+	url := fmt.Sprintf("%v:%v/avaliable", ip, port)
+	if request == nil {
+		return utilhttp.RemoteCall("GET", url, nil)
+	}
+
+	return utilhttp.RemoteCall("POST", url, request[0])
+}
+
+// GetAVLAgentAddr ...
+// return:
+//       0: benchmark host available? true:false;
+//       1: agent ip reachable? true:false;
+//       2: err msg
+func GetAVLAgentAddr(ip, port, agent string) (bool, bool, error) {
+	request := map[string]interface{}{
+		"agent_address": agent,
+	}
+
+	resp, err := pingAndCallAVL(ip, port, request)
+	if err != nil {
+		return false, false, fmt.Errorf("\tbench source %v offline\n", ip)
+	}
+
+	var ret map[string]bool
+
+	err = json.Unmarshal(resp, &ret)
+	if err != nil {
+		return false, false, err
+	}
+
+	if ret[agent] {
+		return true, true, nil
+	}
+
+	return true, false, fmt.Errorf("\tbench destination %v unreachable\n", agent)
 }
 

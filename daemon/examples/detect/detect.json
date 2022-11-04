@@ -1,4 +1,5 @@
 {
     "cpu_core":"cat /proc/cpuinfo | grep process | wc -l",
-    "mem_size":"free -m | awk 'NR==2' | awk '{print $2}'"
+    "mem_total": "free -g| grep 'Mem' | awk '{print $2}'",
+    "mem_free" : "free -g| grep 'Mem' | awk '{print $4}'"
 }

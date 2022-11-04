@@ -7,8 +7,8 @@ import (
 	"keentune/daemon/common/log"
 	"keentune/daemon/common/utils"
 	"keentune/daemon/common/utils/http"
-	"time"
 	"strings"
+	"time"
 )
 
 func (tuner *Tuner) getBest() error {
@@ -46,7 +46,7 @@ func (tuner *Tuner) verifyBest() error {
 
 	log.Debugf(log.ParamTune, "Step%v. apply best configuration details: %v", tuner.Step, tuner.applySummary)
 
-	log.Infof(log.ParamTune, "Step%v. Tuning is finished, checking benchmark score of best configuration.\n", tuner.IncreaseStep())
+	log.Infof(log.ParamTune, "\nStep%v. Tuning is finished, checking benchmark score of best configuration.\n\n", tuner.IncreaseStep())
 
 	if tuner.feedbackScore, _, tuner.benchSummary, err = tuner.RunBenchmark(config.KeenTune.AfterRound); err != nil {
 		if strings.Contains(err.Error(), "get benchmark is interrupted") {
@@ -101,7 +101,7 @@ func (tuner *Tuner) dumpBest() error {
 		fileList += fmt.Sprintf("\n\t%v/%v_group%v%v", jobPath, tuner.Name, index+1, suffix)
 	}
 
-	log.Infof(tuner.logName, "Step%v. Best configuration dump successfully. File list: %v\n", tuner.IncreaseStep(), fileList)
+	log.Infof(tuner.logName, "\nStep%v. Best configuration dump successfully. File list: %v\n\n", tuner.IncreaseStep(), fileList)
 	return nil
 }
 

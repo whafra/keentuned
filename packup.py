@@ -72,7 +72,8 @@ if __name__ == "__main__":
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"LICENSE"), version_in_spec))
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"Makefile"), version_in_spec))
     os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"README.md"), version_in_spec))
-
+    os.system("cp {} keentuned-{}".format(os.path.join(source_dir,"keentune.bash"), version_in_spec))
+    
     if os.path.exists(os.path.join("keentuned-{}".format(version_in_spec),"vendor")):
         os.system("tar -cvzf keentuned-{}.tar.gz keentuned-{}".format(version_in_spec, version_in_spec))
     else:

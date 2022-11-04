@@ -21,7 +21,6 @@ import (
 
 // TuneFlag tune options
 type TuneFlag struct {
-	Config  string
 	Name    string
 	Round   int
 	Verbose bool
@@ -29,15 +28,14 @@ type TuneFlag struct {
 }
 
 // Tune run param tune service
-func (s *Service) Tune(flag TuneFlag, reply *string) error {	
-	err := config.Backup(flag.Config, flag.Name, "tuning")
+func (s *Service) Tune(flag TuneFlag, reply *string) error {
+	err := config.CheckAndReloadConf()
 	if err != nil {
-		return fmt.Errorf("backup '%v' failed: %v", flag.Config, err)
+		return err
 	}
 
-	com.SetAvailableDomain()
-	if err := com.HeartbeatCheck(); err != nil {
-		return fmt.Errorf("check %v", err)
+	if err = com.HeartbeatCheck(); err != nil {
+		return fmt.Errorf("Failed to access service:\n\t%v", err)
 	}
 
 	go runTuning(flag)
@@ -45,7 +43,7 @@ func (s *Service) Tune(flag TuneFlag, reply *string) error {
 }
 
 func runTuning(flag TuneFlag) {
-	m.SetRunningTask(com.JobTuning, flag.Name)
+	m.SetRunningTask(m.JobTuning, flag.Name)
 	log.ParamTune = "param tune" + ":" + flag.Log
 	// create log file
 	ioutil.WriteFile(flag.Log, []byte{}, 0755)
@@ -62,6 +60,7 @@ func runTuning(flag TuneFlag) {
 	}
 }
 
+// TuningImpl ...
 func TuningImpl(flag TuneFlag, cmd string) error {
 	benchInfo, err := GetBenchmarkInst(config.KeenTune.BenchGroup[0].BenchConf)
 	if err != nil {
@@ -83,6 +82,7 @@ func TuningImpl(flag TuneFlag, cmd string) error {
 	return nil
 }
 
+// GetBenchmarkInst get benchmark instance from bench.json
 func GetBenchmarkInst(benchFile string) (*m.Benchmark, error) {
 	benchConf := config.GetBenchJsonPath(benchFile)
 	if !file.IsPathExist(benchConf) {

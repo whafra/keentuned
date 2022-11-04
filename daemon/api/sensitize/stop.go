@@ -2,7 +2,6 @@ package sensitize
 
 import (
 	"fmt"
-	com "keentune/daemon/api/common"
 	"keentune/daemon/common/config"
 	"keentune/daemon/common/file"
 	"keentune/daemon/common/log"
@@ -37,7 +36,7 @@ func stop() {
 		return
 	}
 
-	if strings.Split(job, " ")[0] == com.JobTraining {
+	if strings.Split(job, " ")[0] == m.JobTraining {
 		m.ClearTask()
 		m.StopSig <- os.Interrupt
 	}

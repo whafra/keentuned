@@ -4,8 +4,12 @@ import unittest
 
 from UI_base.main import RunBasicCase
 from UI_base.main import TestKeenTuneUiNormal
+from UI_base.main import TestKeenTuneUiSmartNormal
+from UI_base.main import TestKeenTuneUiSensitiveNormal
 from UI_reliablity.main import RunReliabilityCase
 from UI_reliablity.main import TestKeenTuneUiAbnormal
+from UI_reliablity.main import TestKeenTuneUiSmartAbnormal
+from UI_reliablity.main import TestKeenTuneUiSensitiveAbnormal
 
 
 def RunAllCase():
@@ -21,6 +25,10 @@ if __name__ == '__main__':
         exit(1)
     TestKeenTuneUiNormal.web_ip = sys.argv[1]
     TestKeenTuneUiAbnormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSmartNormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSmartAbnormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSensitiveNormal.web_ip = sys.argv[1]
+    TestKeenTuneUiSensitiveAbnormal.web_ip = sys.argv[1]
     print("--------------- start to run test cases ---------------")
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(RunAllCase())

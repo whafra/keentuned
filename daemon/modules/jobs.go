@@ -9,8 +9,18 @@ import (
 	"os"
 )
 
-//  table header const
+// job type ...
 const (
+	// JobTuning job type is tuning
+	JobTuning    = "tuning"
+	JobProfile   = "profile"
+	JobTraining  = "training"
+	JobBenchmark = "benchmark"
+)
+
+// tuning job table header const
+const (
+	// TabName tuning table column: name
 	TabName     = "name"
 	TabAlgo     = "algorithm"
 	TabStatus   = "status"
@@ -24,6 +34,7 @@ const (
 	TabLog      = "log"
 )
 
+// TuneJobHeader ...
 var TuneJobHeader = []string{
 	TabName, TabAlgo, TabStatus, TabRound, TabCurRound,
 	TabStart, TabEnd, TabCost, TabWSP, TabCmd, TabLog,
@@ -31,8 +42,9 @@ var TuneJobHeader = []string{
 
 const activeJobCsv = "/var/keentune/runningJob.csv"
 
-//  table header const
+// train job table header const
 const (
+	// TabTrainName train table column: name
 	TabTrainName   = "name"
 	TabTrainStart  = "start_time"
 	TabTrainEnd    = "end_time"
@@ -45,6 +57,7 @@ const (
 	TabTrainPath   = "data_path"
 )
 
+// SensitizeJobHeader ...
 var SensitizeJobHeader = []string{
 	TabTrainName, TabTrainStart, TabTrainEnd, TabTrainCost, TabTrainRound,
 	TabTrainStatus, TabTrainLog, TabTrainWSP, TabTrainAlgo,
@@ -59,6 +72,7 @@ func getSensitizeJobFile() string {
 	return fmt.Sprint(config.GetDumpPath(config.SensitizeCsv))
 }
 
+// format and job status ...
 const (
 	NA     = "-"
 	Format = "2006-01-02 15:04:05"
@@ -71,12 +85,15 @@ const (
 	Kill   = "kill"
 )
 
+// table column count
 const (
-	TuneCols = 11
+	TuneCols  = 11
+	TrainCols = 10
 )
 
 // tune job column index
 const (
+	// TuneNameIdx tuning index for name column
 	TuneNameIdx = iota
 	TuneAlgoIdx
 	TuneStatusIdx
@@ -85,13 +102,14 @@ const (
 	TuneStartIdx
 	TuneEndIdx
 	tuneCostIdx
-	tuneWSPIdx
+	TuneWSPIdx
 	tuneCmdIdx
 	tuneLogIdx
 )
 
-// tune job column index
+// train job column index
 const (
+	// TrainNameIdx training index of name column
 	TrainNameIdx = iota
 	TrainStartIdx
 	TrainEndIdx
@@ -101,11 +119,12 @@ const (
 	trainLogIdx
 	trainWSPIdx
 	TrainAlgoIdx
-	trainDataPath
+	TrainDataIdx
 )
 
+// CreateTuneJob ...
 func (tuner *Tuner) CreateTuneJob() error {
-	cmd := fmt.Sprintf("keentune param tune --job %v -i %v --config %v", tuner.Name, tuner.MAXIteration, config.GetCacheConfig())
+	cmd := fmt.Sprintf("keentune param tune --job %v -i %v", tuner.Name, tuner.MAXIteration)
 
 	log := fmt.Sprintf("%v/%v.log", "/var/log/keentune", tuner.Name)
 
@@ -115,7 +134,24 @@ func (tuner *Tuner) CreateTuneJob() error {
 		config.GetTuningPath(tuner.Name), cmd, log,
 	}
 
+	tuner.backupConfFile()
 	return file.Insert(getTuneJobFile(), jobInfo)
+}
+
+func (tuner *Tuner) backupConfFile() {
+	var workPath, filePath string
+	if tuner.Flag == JobTuning {
+		workPath = config.GetTuningPath(tuner.Name)
+	}
+
+	if tuner.Flag == JobTraining {
+		workPath = config.GetSensitizePath(tuner.Job)
+	}
+
+	os.Mkdir(workPath, 0755)
+
+	filePath = fmt.Sprintf("%v/keentuned.conf", workPath)
+	file.Copy(config.GetKeenTunedConfPath(""), filePath)
 }
 
 func (tuner *Tuner) updateJob(info map[int]interface{}) {
@@ -140,16 +176,19 @@ func (tuner *Tuner) updateStatus(info string) {
 	}
 }
 
+// GetRunningTask ...
 func GetRunningTask() string {
 	file, _ := ioutil.ReadFile(activeJobCsv)
 	return string(file)
 }
 
+// SetRunningTask ...
 func SetRunningTask(class, name string) {
 	content := fmt.Sprintf("%s %s", class, name)
 	ioutil.WriteFile(activeJobCsv, []byte(content), 0666)
 }
 
+// ClearTask ...
 func ClearTask() {
 	os.Remove(activeJobCsv)
 }

@@ -20,7 +20,7 @@ const (
 	exampleProfRollback = "\tkeentune profile rollback"
 )
 
-// keentune profile
+// createProfileCmds ...
 func createProfileCmds() *cobra.Command {
 	var profCmd = &cobra.Command{
 		Use:   "profile [command]",
@@ -68,7 +68,7 @@ func infoCmd() *cobra.Command {
 				os.Exit(1)
 			} else {
 				name = strings.TrimSuffix(name, ".conf") + ".conf"
-				RunInfoRemote(cmd.Context(), name)
+				RunInfoRemote(name)
 			}
 		},
 	}
@@ -84,7 +84,7 @@ func listProfileCmd() *cobra.Command {
 		Long:    "List all profiles",
 		Example: exampleProfList,
 		Run: func(cmd *cobra.Command, args []string) {
-			RunListRemote(cmd.Context(), "profile")
+			RunListRemote("profile")
 		},
 	}
 	return cmd
@@ -109,7 +109,7 @@ func setCmd() *cobra.Command {
 			// bind configuration file to group
 			bindFileToGroup(args, setFlag)
 
-			RunSetRemote(cmd.Context(), setFlag)
+			RunSetRemote(setFlag)
 			return
 		},
 	}
@@ -202,7 +202,7 @@ func deleteProfileCmd() *cobra.Command {
 					fmt.Println("[-] Give Up Delete")
 					return
 				}
-				RunDeleteRemote(cmd.Context(), flag)
+				RunDeleteRemote(flag)
 			} else {
 				HomePath := config.GetProfileHomePath(flag.Name)
 				_, err = os.Stat(HomePath)
@@ -256,7 +256,7 @@ func generateCmd() *cobra.Command {
 				}
 			}
 
-			//Determine whether json file already exists
+			// Determine whether json file already exists
 			ParamPath := config.GetGenerateWorkPath(genFlag.Output)
 			_, err = os.Stat(ParamPath)
 			if err == nil {
@@ -266,9 +266,9 @@ func generateCmd() *cobra.Command {
 					fmt.Printf("outputFile exist and you have given up to overwrite it\n")
 					os.Exit(1)
 				}
-				RunGenerateRemote(cmd.Context(), genFlag)
+				RunGenerateRemote(genFlag)
 			} else {
-				RunGenerateRemote(cmd.Context(), genFlag)
+				RunGenerateRemote(genFlag)
 			}
 
 			return

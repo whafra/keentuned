@@ -1,3 +1,4 @@
+import os
 import sys
 import unittest
 from time import sleep
@@ -7,6 +8,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..")))
+
+from common import keentuneInit
 
 
 class TestKeenTuneUiAbnormal(unittest.TestCase):
@@ -36,6 +41,7 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
                 self.driver.maximize_window()
                 self.wait = WebDriverWait(self.driver, 30, 0.5)
 
+        keentuneInit(self)
         self.driver.get("http://{}:8082/list/profile".format(self.web_ip))
         value = self.driver.find_element(By.XPATH, '//div[@class="ant-pro-table-list-toolbar-title"]').text
         if "Tuning Profiles" in value:
@@ -151,7 +157,7 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
         sleep(1)
         ele_copy_context_error = self.driver.find_element(By.XPATH,
                                                           '//div[@class="ant-form-item-explain ant-form-item-explain-connected"]')
-        self.assertIn("第 1 行数据格式不对!", ele_copy_context_error.text)
+        self.assertIn("第1行 数据格式不对!", ele_copy_context_error.text)
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
 
@@ -185,7 +191,7 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
         sleep(1)
         ele_contenterror = self.driver.find_element(By.XPATH,
                                                     '//div[@class="ant-form-item-explain-error"]')
-        self.assertIn("第 1 行数据格式不对!", ele_contenterror.text)
+        self.assertIn("第1行 数据格式不对!", ele_contenterror.text)
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()
 
@@ -219,6 +225,6 @@ class TestKeenTuneUiAbnormal(unittest.TestCase):
         sleep(1)
         ele_errorcontent = self.driver.find_element(By.XPATH, '//div[@class="ant-form-item-explain-error"]')
         sleep(1)
-        self.assertIn("第 1 行数据格式不对!", ele_errorcontent.text)
+        self.assertIn("第1行 数据格式不对!", ele_errorcontent.text)
         self.wait.until(EC.element_to_be_clickable(
             (By.XPATH, '//div[@class="ant-modal-mask"]/../div[2]/div[1]/div[2]/div[3]/div[1]/div[1]'))).click()

@@ -16,16 +16,17 @@ import (
 // Group ...
 type Group struct {
 	IPs            []string
-	Params         []config.DBLMap
+	Params         []config.DBLMap // priority params for set configure
 	Port           string
 	ReadOnly       bool
 	Dump           Configuration
 	MergedParam    map[string]interface{}
 	AllowUpdate    map[string]bool // prevent map concurrency security problems
-	GroupName      string          //target-group-x
-	GroupNo        int             //No. x of target-group-x
-	Idx            int
+	GroupName      string          // target-group-x
+	GroupNo        int             // No. x of target-group-x
+	ParamTotal     int
 	ProfileSetFlag bool
+	UnAVLParams    map[string]map[string]string // un available params
 }
 
 const brainNameParts = 2
@@ -299,7 +300,8 @@ func (gp *Group) mergeParam() {
 	gp.MergedParam = make(map[string]interface{})
 	for _, paramMaps := range gp.Params {
 		for domain, paramMap := range paramMaps {
-			gp.MergedParam[domain] = paramMap
+			gp.MergedParam[domain] = deepCopy(paramMap)
+			gp.ParamTotal += len(paramMap)
 		}
 	}
 }
@@ -325,27 +327,26 @@ func (gp *Group) updateDump(param map[string]Parameter) {
 	}
 }
 
-func (tuner *Tuner) getProfileSetFlag(groupNo int, target *Group, targetIdx *int) bool {
-	for index, groupSetFlag := range tuner.Setter.Group {
-		if groupSetFlag && (groupNo == index+1) {
-			target.ProfileSetFlag = true
-			*targetIdx ++
-			tuner.Setter.IdMap[index] = *targetIdx
-			return true
-		}
-	}
-
-	return false
-}
-
 func (tuner *Tuner) initProfiles() error {
-	var targetIdx = new(int)
-	for _, group := range config.KeenTune.Group {
-		var target = new(Group)
-
-		target.ProfileSetFlag = tuner.getProfileSetFlag(group.GroupNo, target, targetIdx)
-		if !target.ProfileSetFlag {
+	for groupIdx, group := range config.KeenTune.Group {
+		isSetting := tuner.Setter.Group[groupIdx]
+		if !isSetting {
 			continue
+		}
+
+		var target = new(Group)
+		confFile := tuner.Setter.ConfFile[groupIdx]
+		abnormal, err := target.getConfigParam(confFile)
+		if !strings.Contains(tuner.recommend, abnormal.Recommend) {
+			tuner.recommend += abnormal.Recommend
+		}
+
+		if abnormal.Warning != "" {
+			tuner.initWarning += abnormal.Warning
+		}
+
+		if err != nil {
+			return err
 		}
 
 		target.IPs = group.IPs
@@ -360,5 +361,129 @@ func (tuner *Tuner) initProfiles() error {
 	}
 
 	return nil
+}
+
+func (gp *Group) getConfigParam(fileName string) (ABNLResult, error) {
+	filePath := config.GetProfilePath(fileName)
+	if filePath == "" {
+		return ABNLResult{}, fmt.Errorf("file '%v' does not exist, expect in '%v' nor in '%v'", fileName,
+			fmt.Sprintf("%s/profile", config.KeenTune.Home),
+			fmt.Sprintf("%s/profile", config.KeenTune.DumpHome))
+	}
+
+	abnormal, resultMap, err := ConvertConfFileToJson(filePath)
+	if err != nil {
+		return abnormal, fmt.Errorf("convert file '%v' %v", filePath, err)
+	}
+
+	if len(resultMap) == 0 {
+		return abnormal, fmt.Errorf("No valid domain can be used. Please check and set valid configurations in %v", fileName)
+	}
+
+	gp.Params, err = config.GetPriorityParams(resultMap)
+	if err != nil {
+		return abnormal, err
+	}
+
+	gp.mergeParam()
+	return abnormal, nil
+}
+
+func (gp *Group) deleteUnAVLConf(unAVLParams []map[string]map[string]string) (string, int) {
+	var totalWarningInfo = new(string)
+	var isAllUnAVL bool
+	var retWarnInfo []string
+	var domains []string
+
+	gp.UnAVLParams = make(map[string]map[string]string)
+
+	for _, params := range unAVLParams {
+		var unAVLCount int
+		for domain, kv := range params {
+			domains = append(domains, domain)
+			_, exist := gp.UnAVLParams[domain]
+			if !exist {
+				gp.UnAVLParams[domain] = make(map[string]string)
+			}
+
+			if len(kv) == 0 {
+				if params[domain] == nil {
+					// domain is all available, skip
+					continue
+				}
+
+				// domain is all unavailable
+				unAVLCount += len(gp.MergedParam[domain].(map[string]interface{}))
+				for priorityIdx := range gp.Params {
+					delete(gp.Params[priorityIdx], domain)
+				}
+
+				var notMetInfo string
+				if domain == myConfDomain {
+					notMetInfo = fmt.Sprintf(backupENVNotMetFmt, myConfBackupFile, myConfApp)
+				} else {
+					notMetInfo = fmt.Sprintf(backupENVNotMetFmt, "["+domain+"]", "the APP")
+				}
+
+				decoratedWarnInfo := fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
+
+				retWarnInfo = append(retWarnInfo, decoratedWarnInfo)
+				isAllUnAVL = isAllUnAVL || unAVLCount == gp.ParamTotal
+				continue
+			}
+
+			var oneDomainWarning string
+			unAVLCount += len(kv)
+
+			oneDomainWarning = gp.tidyUnavailableParams(kv, domain, totalWarningInfo)
+
+			if len(oneDomainWarning) > 0 {
+				*totalWarningInfo += oneDomainWarning
+				retWarnInfo = append(retWarnInfo, oneDomainWarning)
+			}
+
+			isAllUnAVL = isAllUnAVL || unAVLCount == gp.ParamTotal
+		}
+	}
+
+	if isAllUnAVL {
+		return strings.Join(retWarnInfo, ""), FAILED
+	}
+
+	if len(retWarnInfo) > 0 {
+		return strings.Join(retWarnInfo, ""), WARNING
+	}
+
+	return "", SUCCESS
+}
+
+// tidyUnavailableParams delete unavailable parameter domain from group.Params and cache them to UnAVLParams
+func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warningInfo *string) string {
+	var oneDomainWarning string
+	for name, msg := range kv {
+		// cache unavailable params to group
+		gp.UnAVLParams[domain][name] = msg
+
+		for priorityIdx := range gp.Params {
+			_, exists := gp.Params[priorityIdx][domain][name]
+			if exists {
+				// delete unavailable configure params
+				delete(gp.Params[priorityIdx][domain], name)
+
+				tmpWarn := fmt.Sprintf("[%v] %v: %v%v", domain, name, msg, multiRecordSeparator)
+				// discard repeated warning
+				if !strings.Contains(*warningInfo, tmpWarn) {
+					oneDomainWarning += tmpWarn
+				}
+
+				if len(gp.Params[priorityIdx][domain]) == 0 {
+					delete(gp.Params[priorityIdx], domain)
+				}
+				continue
+			}
+		}
+	}
+
+	return oneDomainWarning
 }
 

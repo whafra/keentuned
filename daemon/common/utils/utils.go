@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os/exec"
 	"strings"
 	"time"
 )
@@ -111,20 +112,20 @@ func GetExternalIP() (string, error) {
 	return "", fmt.Errorf("ip not found")
 }
 
-// CheckIPValidity argv 0: origin slice; return 0: valid slice; 1: invalid slice
-func CheckIPValidity(origin []string) ([]string, []string) {
-	var valid, invalid []string
+// CheckIPValidity argv 0: origin slice; return 0: valid IPs; 1: invalid IPs; 2: repeated IPs
+func CheckIPValidity(origin []string) ([]string, []string, []string) {
+	var valid, invalid, repeated []string
 	var orgMap = make(map[string]bool, len(origin))
 	for _, v := range origin {
 		pureValue := strings.Trim(v, " ")
 		if pureValue == "localhost" || pureValue == "127.0.0.1" || pureValue == "::1" {
 			localIP := "localhost"
 			if !orgMap[localIP] {
-				valid = append(valid, localIP)
+				valid = append(valid, pureValue)
 				orgMap[localIP] = true
 				continue
 			}
-			invalid = append(invalid, pureValue)
+			repeated = append(repeated, pureValue)
 			continue
 		}
 
@@ -133,10 +134,11 @@ func CheckIPValidity(origin []string) ([]string, []string) {
 			valid = append(valid, pureValue)
 			continue
 		}
-		invalid = append(invalid, v)
+
+		invalid = append(invalid, pureValue)
 	}
 
-	return valid, invalid
+	return valid, invalid, repeated
 }
 
 func isIP(ip string) bool {
@@ -144,27 +146,13 @@ func isIP(ip string) bool {
 	return address != nil
 }
 
-func ConcurrentSecurityMap(origin map[string]interface{}, keys []string, values []interface{}) map[string]interface{} {
-	var newMap = make(map[string]interface{})
-	for key, value := range origin {
-		newMap[key] = value
-	}
-
-	if len(keys) != len(values) {
-		return newMap
-	}
-
-	for i, value := range values {
-		newMap[keys[i]] = value
-	}
-
-	return newMap
-}
-
-func FormatInTable(data [][]string) string {
+// FormatInTable format content to a table string
+func FormatInTable(data [][]string, shift ...string) string {
 	if len(data) == 0 || len(data[0]) == 0 {
 		return ""
 	}
+
+	shiftStr := strings.Join(shift, "")
 
 	var maxes = make([]int, len(data[0]))
 	for _, row := range data {
@@ -178,14 +166,14 @@ func FormatInTable(data [][]string) string {
 	var fmtInfo string
 	for index, row := range data {
 		if index == 0 {
-			fmtInfo += decorateString(maxes)
+			fmtInfo += decorateString(maxes, shiftStr)
 		}
 
 		if len(row) != len(maxes) {
 			continue
 		}
 
-		fmtInfo += "|"
+		fmtInfo += shiftStr + "|"
 		for j, len := range maxes {
 			fmtInfo += fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s|", strings.Trim(row[j], " \t"))
 		}
@@ -193,15 +181,15 @@ func FormatInTable(data [][]string) string {
 		fmtInfo += fmt.Sprintln()
 
 		if index == 0 || index == len(data)-1 {
-			fmtInfo += decorateString(maxes)
+			fmtInfo += decorateString(maxes, shiftStr)
 		}
 	}
 
 	return fmt.Sprintln() + strings.TrimSuffix(fmtInfo, "\n")
 }
 
-func decorateString(maxes []int) string {
-	var decorateStr = "+"
+func decorateString(maxes []int, shiftStr string) string {
+	var decorateStr = shiftStr + "+"
 	for _, len := range maxes {
 		decorateStr += strings.ReplaceAll(fmt.Sprintf("%-"+fmt.Sprintf("%v", len)+"s+", ""), " ", "-")
 	}
@@ -222,6 +210,7 @@ func RemoveRepeated(s []string) []string {
 	return result
 }
 
+// DeepCopy deep copy from src to dst
 func DeepCopy(dst, src interface{}) error {
 	bytes, err := json.Marshal(src)
 	if err != nil {
@@ -229,5 +218,53 @@ func DeepCopy(dst, src interface{}) error {
 	}
 
 	return json.Unmarshal(bytes, dst)
+}
+
+// Ping detect ip whether is reachable
+func Ping(ip string, port string) error {
+	if ip != "localhost" {
+		ipMatch := net.ParseIP(ip)
+		if ipMatch == nil {
+			return fmt.Errorf("ip %v is invalid", ip)
+		}
+	}
+
+	if !isPingExist() {
+		return dail(ip, port)
+	}
+
+	if pingTong(ip) {
+		return nil
+	}
+
+	return fmt.Errorf("ip %v offline", ip)
+}
+
+func dail(ip, port string) error {
+	addr := net.JoinHostPort(ip, port)
+	connect, err := net.DialTimeout("tcp", addr, 3*time.Second)
+	if err != nil || connect == nil {
+		return fmt.Errorf("'%v:%v' is unreachable", ip, port)
+	}
+
+	connect.Close()
+
+	return nil
+}
+
+func pingTong(ip string) bool {
+	var success = "true"
+	pingCmd := fmt.Sprintf("ping -c 1 -w 1 %s > /dev/null && echo true || echo false", ip)
+	output, _ := exec.Command("/bin/bash", "-c", pingCmd).Output()
+
+	return success == strings.TrimSpace(string(output))
+}
+
+func isPingExist() bool {
+	var success = "true"
+	whichPing := "which ping > /dev/null && echo true || echo false"
+	output, _ := exec.Command("/bin/bash", "-c", whichPing).Output()
+
+	return success == strings.TrimSpace(string(output))
 }
 

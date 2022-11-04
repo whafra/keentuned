@@ -11,7 +11,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"keentune/daemon/common/log"
+	"net"
 	"net/http"
+	"time"
 )
 
 // Protocol  ...
@@ -29,15 +31,24 @@ type requester struct {
 
 func newRequester(method string, uri string, data interface{}) (*requester, error) {
 	url := Protocol + "://" + uri
+	var client = &http.Client{
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout: 900 * time.Millisecond, // conn timeout
+			}).DialContext,
+			DisableKeepAlives: true,
+		},
+	}
+
 	if data == nil && method == "GET" {
 		return &requester{
+			client: client,
 			url:    url,
 			body:   nil,
 			method: method,
 		}, nil
 	}
 
-	var client = &http.Client{}
 	bytesData, err := json.Marshal(data)
 	if err != nil {
 		fmt.Printf("[newRequester] error in Unexpected type %T\n", data)
@@ -54,21 +65,16 @@ func newRequester(method string, uri string, data interface{}) (*requester, erro
 }
 
 func (r *requester) execute() (*http.Response, error) {
-	if r.method == "GET" && r.body == nil {
-		response, err := http.Get(r.url)
-		if err != nil {
-			return nil, err
-		}
-
-		return response, nil
-	}
-
 	request, err := http.NewRequest(r.method, r.url, bytes.NewReader(r.body))
+
 	if err != nil {
 		return nil, err
 	}
 
-	request.Header.Set("Content-Type", "application/json")
+	if r.body != nil {
+		request.Header.Set("Content-Type", "application/json")
+	}
+
 	response, err := r.client.Do(request)
 	if err != nil {
 		return nil, err

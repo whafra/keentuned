@@ -9,18 +9,61 @@ import (
 	"strings"
 )
 
+var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
+
 func subCommands() []*cobra.Command {
 	var subCmds []*cobra.Command
 	subCmds = append(subCmds, decorateCmd(createSensitizeCmds()))
 	subCmds = append(subCmds, decorateCmd(createParamCmds()))
 	subCmds = append(subCmds, decorateCmd(createProfileCmds()))
 	subCmds = append(subCmds, decorateCmd(benchCmd()))
-	subCmds = append(subCmds, decorateCmd(createConfigCmd()))
+	subCmds = append(subCmds, decorateCmd(createRollbackAllCmd()))
+	subCmds = append(subCmds, decorateCmd(initCmd()))
 
 	return subCmds
 }
 
-var egBenchmark = "\tkeentune benchmark --job bench_test --bench benchmark/wrk/bench_wrk_nginx_long.json -i 10"
+func initCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "init",
+		Short:   "Initialize configuration",
+		Long:    "Initialize configuration, Ping connectivity between nodes",
+		Example: "\tkeentune init",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 0 {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				os.Exit(1)
+			}
+
+			RunInitRemote()
+			return
+		},
+	}
+
+	return cmd
+}
+
+func createRollbackAllCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:     "rollbackall",
+		Short:   "Restore all to initial state",
+		Long:    "Restore all to initial state",
+		Example: "\tkeentune rollbackall",
+		Run: func(cmd *cobra.Command, args []string) {
+			if len(args) != 0 {
+				fmt.Printf("%v Incomplete or Unmatched command.\n\n", ColorString("red", "[ERROR]"))
+				cmd.Help()
+				os.Exit(1)
+			}
+
+			RunRollbackAllRemote()
+			return
+		},
+	}
+
+	return cmd
+}
 
 func rollbackCmd(parentCmd string) *cobra.Command {
 	var flag RollbackFlag
@@ -31,7 +74,7 @@ func rollbackCmd(parentCmd string) *cobra.Command {
 		Example: fmt.Sprintf("\tkeentune %v rollback", parentCmd),
 		Run: func(cmd *cobra.Command, args []string) {
 			flag.Cmd = parentCmd
-			RunRollbackRemote(cmd.Context(), flag)
+			RunRollbackRemote(flag)
 			return
 		},
 	}
@@ -43,8 +86,6 @@ func setTuneFlag(cmd *cobra.Command, flag *TuneFlag) {
 	flags := cmd.Flags()
 	flags.StringVarP(&flag.Name, "job", "j", "", "Name of new knob auto-tuning job")
 	flags.IntVarP(&flag.Round, "iteration", "i", 100, "MAX-iteration of knob auto-tuning")
-
-	flags.StringVar(&flag.Config, "config", "keentuned.conf", "Customized config file for knob auto-tuning")
 
 	flags.BoolVar(&flag.Verbose, "debug", false, "debug mode")
 }
@@ -62,7 +103,7 @@ func stopCmd(flag string) *cobra.Command {
 		Long:    description,
 		Example: fmt.Sprintf("\tkeentune %v stop", flag),
 		Run: func(cmd *cobra.Command, args []string) {
-			StopRemote(cmd.Context(), flag)
+			StopRemote(flag)
 			return
 		},
 	}
@@ -84,7 +125,7 @@ func benchCmd() *cobra.Command {
 				os.Exit(1)
 			}
 
-			RunBenchRemote(cmd.Context(), flag)
+			RunBenchRemote(flag)
 		},
 		Hidden: true,
 	}
@@ -96,25 +137,27 @@ func benchCmd() *cobra.Command {
 }
 
 func newRootCmd() *cobra.Command {
-        var isCatVersion bool
-        cmd := &cobra.Command{
-                Use:    "keentune [command]",
-                Short:  "KeenTune is an AI tuning tool for Linux system and cloud applications",
-                Long:   "KeenTune is an AI tuning tool for Linux system and cloud applications",
-                Example: "\tkeentune param -h\n\tkeentune profile -h\n\tkeentune sensitize -h",
-                RunE: func(cmd *cobra.Command, args []string) error {
-                        if isCatVersion {
-                                initWorkDirectory()
-                                fmt.Printf("keentune version %v\n", config.KeenTune.VersionConf)
-                                return nil
-                        }
+	var isCatVersion bool
+	cmd := &cobra.Command{
+		Use:   "keentune [command]",
+		Short: "KeenTune is an AI tuning tool for Linux system and cloud applications",
+		Long:  "KeenTune is an AI tuning tool for Linux system and cloud applications",
+		Example: "\tkeentune init -h" +
+			"\n\tkeentune param -h\n\tkeentune profile -h" +
+			"\n\tkeentune rollbackall -h\n\tkeentune sensitize -h",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if isCatVersion {
+				initWorkDirectory()
+				fmt.Printf("keentune version %v\n", config.KeenTune.VersionConf)
+				return nil
+			}
 
-                        return cmd.Help()
-                },
-        }
+			return cmd.Help()
+		},
+	}
 
-        cmd.Flags().BoolVarP(&isCatVersion, "version", "v", false, "version message")
-        return cmd
+	cmd.Flags().BoolVarP(&isCatVersion, "version", "v", false, "version message")
+	return cmd
 }
 
 // confirm Interactive reply on terminal: [true] same as yes; false same as no.
