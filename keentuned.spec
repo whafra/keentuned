@@ -62,7 +62,7 @@ fi
 %{_mandir}/man7/keentune-benchmark.7*
 %{_mandir}/man7/keentune-profile.7*
 %{_mandir}/man7/keentune-detect.7*
-%attr(0755, root, root) %{_prefix}/share/bash-completion/completions/keentune.bash
+%{_prefix}/share/bash-completion/completions/keentune.bash
 
 %changelog
 * Thu Sep 22 2022 Wenchao Liu <wb-lwc921938@alibaba-inc.com> - 1.4.0-0
