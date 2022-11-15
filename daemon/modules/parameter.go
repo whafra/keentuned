@@ -302,7 +302,7 @@ func changeMapSliceToDBLMap(domainMap map[string][]map[string]interface{}, abnor
 //        2: map slice, design this data structure to avoid duplication and leakage
 // parseConfStrToMapSlice ...
 func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) (string, map[string][]string, map[string][]map[string]interface{}) {
-	var deleteDomains []string
+	var deleteDomain string
 	var recommendMap = make(map[string][]string)
 	var domainMap = make(map[string][]map[string]interface{})
 	var includeMap = make(map[string][]map[string]interface{})
@@ -327,9 +327,16 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
+		if commonDomain == deleteDomain {
+			continue
+		} else if len(deleteDomain) > 0 {
+			// empty deleteDomain, after the last deleted section skipped
+			deleteDomain = ""
+		}
+
 		recommend, condition, param, err := readLine(pureLine)
 		if len(condition) != 0 {
-			deleteDomains = append(deleteDomains, commonDomain)
+			deleteDomain = commonDomain
 			if commonDomain == myConfDomain {
 				notMetInfo := fmt.Sprintf(detectENVNotMetFmt, commonDomain, myConfCondition, file.GetPlainName(fileName))
 				abnormal.Warning += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
@@ -357,13 +364,9 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
-		domainMap[commonDomain] = append(domainMap[commonDomain], param)
-	}
+		convertedDomain := convertDomain(commonDomain)
 
-	if len(deleteDomains) > 0 {
-		for _, domain := range deleteDomains {
-			delete(domainMap, domain)
-		}
+		domainMap[convertedDomain] = append(domainMap[convertedDomain], param)
 	}
 
 	if len(includeMap) > 0 {
@@ -396,11 +399,11 @@ func parseIncludeConf(pureLine string, abnormal *ABNLResult) map[string][]map[st
 
 func mergedMapSlice(domainMap map[string][]map[string]interface{}, includeMap map[string][]map[string]interface{}) map[string][]map[string]interface{} {
 	var mergedMap = make(map[string][]map[string]interface{})
-	for domainName, params := range domainMap {
+	for domainName, params := range includeMap {
 		mergedMap[domainName] = append(mergedMap[domainName], params...)
 	}
 
-	for domainName, params := range includeMap {
+	for domainName, params := range domainMap {
 		mergedMap[domainName] = append(mergedMap[domainName], params...)
 	}
 
