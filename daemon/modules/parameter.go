@@ -238,16 +238,11 @@ func getMacroValue(macros []string, detectedMacroValue map[string]int) error {
 // ConvertConfFileToJson convert conf file to json
 func ConvertConfFileToJson(fileName string) (ABNLResult, map[string]map[string]interface{}, error) {
 	var abnormal = ABNLResult{}
-	paramBytes, err := ioutil.ReadFile(fileName)
+	replacedStr, err := readConfFile(fileName)
 	if err != nil {
-		return abnormal, nil, fmt.Errorf("read file err: %v", err)
+		return abnormal, nil, err
 	}
 
-	if len(paramBytes) == 0 {
-		return abnormal, nil, fmt.Errorf("read file is empty")
-	}
-
-	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
 	commonDomain, recommendMap, domainMap := parseConfStrToMapSlice(replacedStr, fileName, &abnormal)
 
 	for key, value := range recommendMap {
@@ -263,6 +258,20 @@ func ConvertConfFileToJson(fileName string) (ABNLResult, map[string]map[string]i
 	}
 
 	return changeMapSliceToDBLMap(domainMap, abnormal)
+}
+
+func readConfFile(fileName string) (string, error) {
+	paramBytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return "", fmt.Errorf("read file err: %v", err)
+	}
+
+	if len(paramBytes) == 0 {
+		return "", fmt.Errorf("read file is empty")
+	}
+
+	replacedStr := strings.ReplaceAll(string(paramBytes), "：", ":")
+	return replacedStr, nil
 }
 
 func changeMapSliceToDBLMap(domainMap map[string][]map[string]interface{}, abnormal ABNLResult) (ABNLResult, map[string]map[string]interface{}, error) {
@@ -287,10 +296,16 @@ func changeMapSliceToDBLMap(domainMap map[string][]map[string]interface{}, abnor
 	return abnormal, resultMap, nil
 }
 
+// return:
+//        0: domain name
+//        1: recommend summery info
+//        2: map slice, design this data structure to avoid duplication and leakage
+// parseConfStrToMapSlice ...
 func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) (string, map[string][]string, map[string][]map[string]interface{}) {
-	var deleteDomains []string
+	var deleteDomain string
 	var recommendMap = make(map[string][]string)
 	var domainMap = make(map[string][]map[string]interface{})
+	var includeMap = make(map[string][]map[string]interface{})
 	var commonDomain string
 	for _, line := range strings.Split(replacedStr, "\n") {
 		pureLine := strings.TrimSpace(replaceEqualSign(line))
@@ -307,9 +322,21 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
+		if commonDomain == "main" {
+			includeMap = parseIncludeConf(pureLine, abnormal)
+			continue
+		}
+
+		if commonDomain == deleteDomain {
+			continue
+		} else if len(deleteDomain) > 0 {
+			// empty deleteDomain, after the last deleted section skipped
+			deleteDomain = ""
+		}
+
 		recommend, condition, param, err := readLine(pureLine)
 		if len(condition) != 0 {
-			deleteDomains = append(deleteDomains, commonDomain)
+			deleteDomain = commonDomain
 			if commonDomain == myConfDomain {
 				notMetInfo := fmt.Sprintf(detectENVNotMetFmt, commonDomain, myConfCondition, file.GetPlainName(fileName))
 				abnormal.Warning += fmt.Sprintf("%v%v", notMetInfo, multiRecordSeparator)
@@ -337,16 +364,50 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
-		domainMap[commonDomain] = append(domainMap[commonDomain], param)
+		convertedDomain := convertDomain(commonDomain)
+
+		domainMap[convertedDomain] = append(domainMap[convertedDomain], param)
 	}
 
-	if len(deleteDomains) > 0 {
-		for _, domain := range deleteDomains {
-			delete(domainMap, domain)
-		}
+	if len(includeMap) > 0 {
+		return commonDomain, recommendMap, mergedMapSlice(domainMap, includeMap)
 	}
 
 	return commonDomain, recommendMap, domainMap
+}
+
+func parseIncludeConf(pureLine string, abnormal *ABNLResult) map[string][]map[string]interface{} {
+	if !strings.Contains(pureLine, "include") {
+		return nil
+	}
+
+	pairs := strings.Split(pureLine, ":")
+	if len(pairs) != 2 {
+		return nil
+	}
+
+	includeFile := fmt.Sprintf("%v.conf", strings.TrimSpace(pairs[1]))
+	includeInfo, err := readConfFile(config.GetProfileHomePath(includeFile))
+	if err != nil {
+		abnormal.Warning += fmt.Sprintf("Read include file '%v' failed%v", pairs[1], multiRecordSeparator)
+		return nil
+	}
+
+	_, _, includeMap := parseConfStrToMapSlice(includeInfo, includeFile, abnormal)
+	return includeMap
+}
+
+func mergedMapSlice(domainMap map[string][]map[string]interface{}, includeMap map[string][]map[string]interface{}) map[string][]map[string]interface{} {
+	var mergedMap = make(map[string][]map[string]interface{})
+	for domainName, params := range includeMap {
+		mergedMap[domainName] = append(mergedMap[domainName], params...)
+	}
+
+	for domainName, params := range domainMap {
+		mergedMap[domainName] = append(mergedMap[domainName], params...)
+	}
+
+	return mergedMap
 }
 
 func readLine(line string) (string, string, map[string]interface{}, error) {
@@ -388,7 +449,15 @@ func getParam(paramSlice []string) (string, string, map[string]interface{}, erro
 	}
 
 	var param map[string]interface{}
-	value, err := strconv.ParseInt(valueStr, 10, 64)
+	// remove inline comments
+	var rmCommentVal string
+	if strings.Index(valueStr, "#") > 0 {
+		rmCommentVal = strings.TrimSpace(strings.Split(valueStr, "#")[0])
+	} else {
+		rmCommentVal = valueStr
+	}
+
+	value, err := strconv.ParseInt(rmCommentVal, 10, 64)
 	if err != nil {
 		param = map[string]interface{}{
 			"value": valueStr,
