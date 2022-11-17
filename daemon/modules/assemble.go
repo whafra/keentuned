@@ -463,7 +463,6 @@ func (gp *Group) tidyUnavailableParams(kv map[string]string, domain string, warn
 	for name, msg := range kv {
 		// cache unavailable params to group
 		gp.UnAVLParams[domain][name] = msg
-
 		for priorityIdx := range gp.Params {
 			_, exists := gp.Params[priorityIdx][domain][name]
 			if exists {
