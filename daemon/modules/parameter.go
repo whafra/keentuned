@@ -33,7 +33,7 @@ type Parameter struct {
 // DetectResult detect response
 type DetectResult struct {
 	Success bool        `json:"suc"`
-	Value   int         `json:"value"`
+	Value   string      `json:"value"`
 	Message interface{} `json:"msg"`
 }
 
@@ -125,7 +125,7 @@ func modifyParam(originMap *map[string]interface{}, compareMap map[string]interf
 	return nil
 }
 
-func getExtremeValue(macros []string, detectedMacroValue map[string]int, macroString string) (int64, error) {
+func getExtremeValue(macros []string, detectedMacroValue map[string]string, macroString string) (int64, error) {
 	if len(macros) == 0 {
 		return 0, fmt.Errorf("range type is '%v', but macros length is 0", macroString)
 	}
@@ -151,7 +151,7 @@ func getExtremeValue(macros []string, detectedMacroValue map[string]int, macroSt
 	return calcResult, nil
 }
 
-func convertString(macroString string, macroMap map[string]int) (string, string, []float64) {
+func convertString(macroString string, macroMap map[string]string) (string, string, []float64) {
 	retStr := strings.ReplaceAll(macroString, " ", "")
 	for name, value := range macroMap {
 		retStr = strings.ReplaceAll(retStr, name, fmt.Sprint(value))
@@ -186,7 +186,7 @@ func convertString(macroString string, macroMap map[string]int) (string, string,
 	return retStr, "", nil
 }
 
-func getMacroValue(macros []string, detectedMacroValue map[string]int) error {
+func getMacroValue(macros []string, detectedMacroValue map[string]string) error {
 	if len(macros) == 0 {
 		return nil
 	}
@@ -307,6 +307,7 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 	var domainMap = make(map[string][]map[string]interface{})
 	var includeMap = make(map[string][]map[string]interface{})
 	var commonDomain string
+	var variableMap = make(map[string]string)
 	for _, line := range strings.Split(replacedStr, "\n") {
 		pureLine := strings.TrimSpace(replaceEqualSign(line))
 		if len(pureLine) == 0 {
@@ -322,7 +323,7 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			continue
 		}
 
-		if commonDomain == "main" {
+		if commonDomain == tunedMainDomain {
 			includeMap = parseIncludeConf(pureLine, abnormal)
 			continue
 		}
@@ -332,6 +333,27 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 		} else if len(deleteDomain) > 0 {
 			// empty deleteDomain, after the last deleted section skipped
 			deleteDomain = ""
+		}
+
+		if commonDomain == tunedVariableDomain {
+			variableParts := strings.Split(pureLine, ":")
+			if len(variableParts) <= 1 {
+				continue
+			}
+
+			varName := strings.TrimSpace(variableParts[0])
+			varValue := strings.TrimSpace(strings.Join(variableParts[1:], ":"))
+			value, find := expectedRegx[varName]
+			if find && value != varValue {
+				expectedRegx[varName] = varValue
+			}
+
+			variableMap[varName] = varValue
+			continue
+		}
+
+		if strings.Contains(pureLine, "${") {
+			pureLine = replaceVariables(variableMap, pureLine)
 		}
 
 		recommend, condition, param, err := readLine(pureLine)
@@ -377,7 +399,7 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 }
 
 func parseIncludeConf(pureLine string, abnormal *ABNLResult) map[string][]map[string]interface{} {
-	if !strings.Contains(pureLine, "include") {
+	if !strings.Contains(pureLine, tunedIncludeField) {
 		return nil
 	}
 

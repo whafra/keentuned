@@ -33,12 +33,15 @@ type ABNLResult struct {
 
 func calculateCondition(content string, macros []string) (string, bool) {
 	// detectedMacroValue used for replace macro with value by func convertString
-	detectedMacroValue := make(map[string]int)
+	detectedMacroValue := make(map[string]string)
 	if err := getMacroValue(macros, detectedMacroValue); err != nil {
 		return err.Error(), false
 	}
 
 	express, _, _ := convertString(content, detectedMacroValue)
+	if isExpectedRegx(express) {
+		return express, getCondResultWithVar(express)
+	}
 
 	return express, utils.CalculateCondExp(express)
 }
@@ -58,7 +61,7 @@ func isConditionExp(content string) bool {
 
 func detectConfValue(re *regexp.Regexp, valueStr string, paramName string) (string, map[string]interface{}, error) {
 	macros := utils.RemoveRepeated(re.FindAllString(strings.ReplaceAll(valueStr, " ", ""), -1))
-	detectedMacroValue := make(map[string]int)
+	detectedMacroValue := make(map[string]string)
 
 	if isConditionExp(valueStr) && len(macros) > 0 {
 		expression, condMatched := calculateCondition(valueStr, macros)
@@ -83,7 +86,7 @@ func detectConfValue(re *regexp.Regexp, valueStr string, paramName string) (stri
 	return "", param, nil
 }
 
-func detect(macroMap map[string]string, macroNames []string, detectedMacroValue map[string]int) error {
+func detect(macroMap map[string]string, macroNames []string, detectedMacroValue map[string]string) error {
 	requestMap := map[string]interface{}{
 		"data": macroMap,
 	}
@@ -118,7 +121,7 @@ func detect(macroMap map[string]string, macroNames []string, detectedMacroValue 
 func detectParam(param *Parameter) error {
 	if len(param.Scope) > 0 {
 		var range2Int []interface{}
-		var detectedMacroValue = make(map[string]int)
+		var detectedMacroValue = make(map[string]string)
 		for _, v := range param.Scope {
 			value, ok := v.(float64)
 			if ok {
@@ -139,7 +142,7 @@ func detectParam(param *Parameter) error {
 
 	if len(param.Options) > 0 {
 		var newOptions []string
-		var detectedMacroValue = make(map[string]int)
+		var detectedMacroValue = make(map[string]string)
 		for _, v := range param.Options {
 			re, _ := regexp.Compile(defMarcoString)
 			if !re.MatchString(v) {
