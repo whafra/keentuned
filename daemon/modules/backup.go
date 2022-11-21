@@ -2,6 +2,7 @@ package modules
 
 import (
 	"encoding/json"
+	"fmt"
 	"keentune/daemon/common/utils/http"
 )
 
@@ -20,15 +21,8 @@ const (
 
 const backupAllErr = "All of the domain backup failed"
 
-type backupDetail struct {
-	// Available ...
-	Available bool        `json:"avaliable"`
-	Value     interface{} `json:"value"`
-	Msg       interface{} `json:"msg"`
-}
-
 func (tuner *Tuner) backup() error {
-	err := tuner.concurrent("backup", true)
+	err := tuner.concurrent("backup")
 	if tuner.Flag == JobProfile {
 		return err
 	}
@@ -45,7 +39,7 @@ func (tuner *Tuner) backup() error {
 }
 
 func callBackup(method, url string, request interface{}) (map[string]map[string]string, string, int) {
-	var response map[string]map[string]backupDetail
+	var response map[string]interface{}
 	resp, err := http.RemoteCall(method, url, request)
 	if err != nil {
 		return nil, err.Error(), FAILED
@@ -63,27 +57,23 @@ func callBackup(method, url string, request interface{}) (map[string]map[string]
 	var unAVLParam = make(map[string]map[string]string)
 
 	for domain, param := range req {
-		domainParam, find := response[domain]
-		if !find {
+		_, match := response[domain].(string)
+		if match {
+			// whole domain is not available
 			unAVLParam[domain] = map[string]string{}
 			continue
 		}
 
+		domainParam, _ := response[domain].(map[string]interface{})
 		parameter := param.(map[string]interface{})
 		for name, _ := range parameter {
 			_, exists := domainParam[name]
-			if !exists || !domainParam[name].Available {
+			if !exists || domainParam[name] == nil {
 				_, notExist := unAVLParam[domain]
 				if !notExist {
 					unAVLParam[domain] = make(map[string]string)
 				}
-				msgBytes, _ := json.Marshal(domainParam[name].Msg)
-				msg := string(msgBytes)
-				if msg == "" || msg == "null" {
-					msg = "domain can not backup"
-				}
-
-				unAVLParam[domain][name] = msg
+				unAVLParam[domain][name] = fmt.Sprintf("'%v' can not backup", name)
 			}
 		}
 	}
