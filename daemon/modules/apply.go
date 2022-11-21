@@ -145,7 +145,7 @@ func (gp *Group) Configure(req request) (string, error) {
 	}
 
 	// pay attention to: the results in the same group are the same and only need to be updated once to prevent map concurrency security problems
-	if gp.AllowUpdate[req.ip] {
+	if gp.AllowUpdate[req.ip] && gp.ReadOnly {
 		err = gp.updateParams(paramInfo)
 		if err != nil {
 			return applyResult, fmt.Errorf("update apply result: %v", err)
