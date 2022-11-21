@@ -59,36 +59,36 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 	var paramCollection = make(map[string]Parameter)
 	var setResult string
 	var totalFailed int
+
 	for domain, paramMap := range applyResp {
 		var sucCount, failedCount, skippedCount int
 		var failedInfoSlice [][]string
-		var parameter map[string]interface{}
+
 		setResult += fmt.Sprintf("\t\t[%v]\t", domain)
 
-		switch value := paramMap.(type) {
-		case map[string]interface{}:
-			parameter = value
-		case string:
-			setResult += fmt.Sprintf("%v %v\n", utils.ColorString("yellow", "[Warning]"), value)
-			continue
-		}
+		parameter, _ := paramMap.(map[string]interface{})
 
-		for name, orgValue := range parameter {
-			var appliedInfo Parameter
-			err := utils.Map2Struct(orgValue, &appliedInfo)
-			if err != nil {
-				return "", paramCollection, fmt.Errorf("collect Param err: %v", err)
+		for name, param := range parameter {
+			var detail struct {
+				Success bool        `json:"suc"`
+				Msg     interface{} `json:"msg"`
+				Value   interface{} `json:"value"`
 			}
 
-			appliedInfo.DomainName = domain
-			value, ok := appliedInfo.Value.(string)
-			if ok && strings.Contains(value, "\t") {
-				appliedInfo.Value = strings.ReplaceAll(value, "\t", " ")
+			utils.Map2Struct(param, &detail)
+
+			valueStr, ok := detail.Value.(string)
+			if ok && strings.Contains(valueStr, "\t") {
+				detail.Value = strings.ReplaceAll(valueStr, "\t", " ")
 			}
 
-			paramCollection[name] = appliedInfo
+			paramCollection[name] = Parameter{
+				DomainName: domain,
+				ParaName:   name,
+				Value:      detail.Value,
+			}
 
-			if appliedInfo.Success {
+			if detail.Success {
 				sucCount++
 				continue
 			}
@@ -98,7 +98,8 @@ func collectParam(applyResp map[string]interface{}) (string, map[string]Paramete
 			if failedCount == 1 {
 				failedInfoSlice = append(failedInfoSlice, []string{"param name", "failed reason"})
 			}
-			failedInfoSlice = append(failedInfoSlice, []string{name, appliedInfo.Msg})
+			msg := fmt.Sprint(detail.Msg)
+			failedInfoSlice = append(failedInfoSlice, []string{name, msg})
 		}
 
 		successInfo := fmt.Sprintf("%v Succeeded, %v Failed, %v Skipped", sucCount, failedCount, skippedCount)
@@ -138,9 +139,7 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 	}
 
 	var applyResp struct {
-		Success bool                   `json:"suc"`
-		Data    map[string]interface{} `json:"data"`
-		Msg     interface{}            `json:"msg"`
+		Data map[string]interface{} `json:"data"`
 	}
 
 	select {
@@ -151,22 +150,6 @@ func getApplyResult(sucBytes []byte, id int) (map[string]interface{}, error) {
 		}
 	case <-StopSig:
 		return nil, fmt.Errorf("get apply result is interrupted")
-	}
-
-	if !applyResp.Success {
-		msg, _ := json.Marshal(applyResp.Msg)
-		var paramInfo map[string]interface{}
-		err = json.Unmarshal(msg, &paramInfo)
-		if err != nil {
-			return nil, fmt.Errorf("%s", msg)
-		}
-
-		details, _, _ := collectParam(paramInfo)
-		if strings.Contains(details, "failed details") {
-			return nil, fmt.Errorf(details)
-		}
-
-		return nil, fmt.Errorf("%s", msg)
 	}
 
 	return applyResp.Data, nil
