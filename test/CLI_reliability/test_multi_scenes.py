@@ -81,12 +81,8 @@ class TestMultiScenes(unittest.TestCase):
         res = os.path.exists(self.path)
         self.assertTrue(res)
 
-    def restart_brain_server(self, algorithm):
-        if self.brain == "localhost":
-            cmd = "sh conf/restart_brain.sh {}".format(algorithm)
-        else:
-            cmd = "ssh {} 'sh /opt/restart_brain.sh {}'".format(self.brain, algorithm)
-        
+    def restart_brain_server(self, algorithm, flag):
+        cmd = "sh conf/restart_brain.sh {} {}".format(algorithm, flag)
         self.status, self.out, _  = sysCommand(cmd)
         self.assertEqual(self.status, 0)
         self.assertTrue(self.out.__contains__('restart brain server successfully!'))
@@ -105,33 +101,58 @@ class TestMultiScenes(unittest.TestCase):
         self.assertTrue(result)
         self.check_param_tune_job("param1")
         self.reset_keentuned("param", "sysctl.json")
+
+    def test_param_tune_FUN_tpe(self):
+        self.restart_brain_server("tpe", "tune")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
+
+    def test_param_tune_FUN_hord(self):
+        self.restart_brain_server("hord", "tune")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
+
+    def test_param_tune_FUN_random(self):
+        self.restart_brain_server("random", "tune")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
+
+    def test_param_tune_FUN_lamcts(self):
+        self.restart_brain_server("lamcts", "tune")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
+
+    def test_param_tune_FUN_bgcs(self):
+        self.restart_brain_server("bgcs", "tune")
+        status = runParamTune("param1")
+        self.assertEqual(status, 0)
     
     def test_sensitize_train_FUN_lasso(self):
-        self.restart_brain_server("lasso")
+        self.restart_brain_server("lasso", "train")
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_univariate(self):
-        self.restart_brain_server("univariate")
+        self.restart_brain_server("univariate", "train")
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_gp(self):
-        self.restart_brain_server("gp")
+        self.restart_brain_server("gp", "train")
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_shap(self):
-        self.restart_brain_server("shap")
+        self.restart_brain_server("shap", "train")
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
 
     def test_sensitize_train_FUN_explain(self):
-        self.restart_brain_server("explain")
+        self.restart_brain_server("explain", "train")
         status = runParamTune("param1")
         self.assertEqual(status, 0)
         self.run_sensitize_train("param1")
