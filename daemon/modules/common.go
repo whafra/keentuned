@@ -78,7 +78,7 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 			var msg string
 			var status int
 			if uri != "backup" {
-				msg, status = remoteCall("POST", url, request)
+				msg, status = callRollback("POST", url, request)
 			} else {
 				unAVLParams[index-1], msg, status = callBackup("POST", url, request)
 			}
@@ -119,7 +119,7 @@ func (gp *Group) concurrentSuccess(uri string, request interface{}) (string, boo
 	return *failedInfo, false
 }
 
-func remoteCall(method string, url string, request interface{}) (string, int) {
+func callRollback(method string, url string, request interface{}) (string, int) {
 	resp, err := http.RemoteCall(method, url, request)
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
@@ -129,7 +129,7 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 		return err.Error(), FAILED
 	}
 
-	var response struct {
+	var response map[string]struct {
 		Suc bool        `json:"suc"`
 		Msg interface{} `json:"msg"`
 	}
@@ -138,11 +138,28 @@ func remoteCall(method string, url string, request interface{}) (string, int) {
 		return string(resp), FAILED
 	}
 
-	if !response.Suc {
-		return parseMsg(response.Msg), FAILED
+	var parseFailedMsg, parseWarningMsg string
+
+	for domain, res := range response {
+		if !res.Suc {
+			parseFailedMsg += fmt.Sprintf("\n\t'%v' failed msg: %v", domain, res.Msg)
+			continue
+		}
+
+		if parseStatusCode(res.Msg) == WARNING {
+			parseWarningMsg += fmt.Sprintf("\n\t'%v' waring msg: %v", domain, res.Msg)
+		}
 	}
 
-	return "", parseStatusCode(response.Msg)
+	if parseFailedMsg != "" {
+		return parseFailedMsg, FAILED
+	}
+
+	if parseWarningMsg != "" {
+		return parseWarningMsg, WARNING
+	}
+
+	return "", SUCCESS
 }
 
 func parseStatusCode(msg interface{}) int {
@@ -167,6 +184,11 @@ func parseStatusCode(msg interface{}) int {
 			return WARNING
 		}
 		return SUCCESS
+	case interface{}:
+		if info == nil {
+			return SUCCESS
+		}
+		return WARNING
 	}
 
 	return SUCCESS
@@ -201,5 +223,14 @@ func parseMsg(originMsg interface{}) string {
 	}
 
 	return string(msg)
+}
+
+func (tuner *Tuner) original() error {
+	var domains []string
+	tuner.rollbackReq = map[string]interface{}{
+		"domains": domains,
+		"all":     true,
+	}
+	return tuner.concurrent("rollback")
 }
 
