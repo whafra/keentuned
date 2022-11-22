@@ -1,5 +1,6 @@
 #!/bin/bash
 algorithm=$1
+flag=$2
 
 keentuned_conf=/etc/keentune/conf/keentuned.conf
 
@@ -11,8 +12,12 @@ clear_keentune_env()
 
 restart_brain()
 {
-    sed -i "s/SENSITIZE_ALGORITHM.*=.*/SENSITIZE_ALGORITHM = ${algorithm}/g" $keentuned_conf
-    keentuned > keentune_train_algorithm.log 2>&1 &
+    if [[ $flag == "train" ]];then
+        sed -i "s/SENSITIZE_ALGORITHM.*=.*/SENSITIZE_ALGORITHM = ${algorithm}/g" $keentuned_conf
+    else
+        sed -i "s/AUTO_TUNING_ALGORITHM.*=.*/AUTO_TUNING_ALGORITHM = ${algorithm}/g" $keentuned_conf
+    fi
+    keentuned > keentune_algorithm.log 2>&1 &
     sleep 5
 }
 
