@@ -86,18 +86,15 @@ func detectConfValue(re *regexp.Regexp, valueStr string, paramName string) (stri
 	return "", param, nil
 }
 
-func detect(macroMap map[string]string, macroNames []string, detectedMacroValue map[string]string) error {
-	requestMap := map[string]interface{}{
-		"data": macroMap,
-	}
-
-	url := fmt.Sprintf("%v:%v/detect", config.KeenTune.BenchGroup[0].DestIP, config.KeenTune.Group[0].Port)
+func detect(data []string, macroNames []string, detectedMacroValue map[string]string) error {
+	requestMap := getMethodReqByNames(data)
+	url := fmt.Sprintf("%v:%v/method", config.KeenTune.BenchGroup[0].DestIP, config.KeenTune.Group[0].Port)
 	resp, err := http.RemoteCall("POST", url, requestMap)
 	if err != nil {
 		return fmt.Errorf("remote call err:%v", err)
 	}
 
-	var respMap map[string]DetectResult
+	var respMap map[string]methodResp
 	err = json.Unmarshal(resp, &respMap)
 	if err != nil {
 		return fmt.Errorf("unmarshal detect response err:%v", err)
@@ -108,11 +105,11 @@ func detect(macroMap map[string]string, macroNames []string, detectedMacroValue 
 		if !ok {
 			return fmt.Errorf("get response %v err:%v", name, err)
 		}
-		if !result.Success {
-			return fmt.Errorf("get response %v failed:%v", name, result.Message)
+		if !result.Suc {
+			return fmt.Errorf("get response %v failed:%v", name, result.Result)
 		}
 		macro := fmt.Sprintf("#!%v#", name)
-		detectedMacroValue[macro] = result.Value
+		detectedMacroValue[macro] = result.Result
 	}
 
 	return nil

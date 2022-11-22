@@ -190,7 +190,7 @@ func requestInit(requireConf map[string]interface{}, job string) error {
 }
 
 func (tuner *Tuner) rollback() error {
-	var domains []string
+	var domains= []string{}
 	tuner.rollbackReq = map[string]interface{}{
 		"domains": domains,
 		"all":     false,
