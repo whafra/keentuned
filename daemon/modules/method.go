@@ -50,13 +50,12 @@ func getMethodReqByNames(data []string) []methodReq {
 	return retReqMethod
 }
 
-func getMethodReqByArg(data map[string]interface{}) (map[string]string, []methodReq) {
+func getMethodReqByArg(data map[string]interface{}) ([]string, []methodReq) {
 	var retReqMethod []methodReq
-	var varNames = make(map[string]string)
+	var varNames []string
 	for name, arg := range data {
-		req := arg.(methodReq)
 		retReqMethod = append(retReqMethod, arg.(methodReq))
-		varNames[name] = req.Name
+		varNames = append(varNames, name)
 	}
 
 	return varNames, retReqMethod
@@ -153,26 +152,33 @@ func getDoubleFuncMethodReq(origin string) methodReq {
 func requestAllVariables(destMap map[string]string, reqMap map[string]interface{}) error {
 	varNames, req := getMethodReqByArg(reqMap)
 	url := fmt.Sprintf("%v:%v/method", config.KeenTune.BenchGroup[0].DestIP, config.KeenTune.Group[0].Port)
-	resp, err := http.RemoteCall("POST", url, req)
+	respByte, err := http.RemoteCall("POST", url, req)
 	if err != nil {
 		return fmt.Errorf("remote call err:%v", err)
 	}
 
-	var respMap map[string]methodResp
-	err = json.Unmarshal(resp, &respMap)
+	var resp []methodResp
+	err = json.Unmarshal(respByte, &resp)
 	if err != nil {
-		return fmt.Errorf("unmarshal detect response err:%v", err)
+		return fmt.Errorf("unmarshal method response err:%v", err)
 	}
 
-	for varName, funcName := range varNames {
-		result, ok := respMap[funcName]
-		if !ok {
-			return fmt.Errorf("get response %v err:%v", funcName, err)
-		}
+	if len(varNames) != len(resp) {
+		return fmt.Errorf("method response length is %v, expect %v", len(resp), len(varNames))
+	}
+
+	var failedInfo string
+	for idx, varName := range varNames {
+		result := resp[idx]
 		if !result.Suc {
-			return fmt.Errorf("get response %v failed:%v", funcName, result.Result)
+			failedInfo += fmt.Sprintf("variable '%v' response res '%v' is false\n", varName, result.Result)
+			continue
 		}
 		destMap[varName] = result.Result
+	}
+
+	if failedInfo != "" {
+		return fmt.Errorf("method response failed, %v", failedInfo)
 	}
 
 	return nil
