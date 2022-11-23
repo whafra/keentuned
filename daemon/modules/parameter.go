@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"keentune/daemon/common/config"
@@ -28,13 +27,6 @@ type Parameter struct {
 	Weight     float32       `json:"weight,omitempty"`
 	Success    bool          `json:"suc,omitempty"`
 	Base       interface{}   `json:"base,omitempty"`
-}
-
-// DetectResult detect response
-type DetectResult struct {
-	Success bool        `json:"suc"`
-	Value   string      `json:"value"`
-	Message interface{} `json:"msg"`
 }
 
 const (
@@ -191,25 +183,8 @@ func getMacroValue(macros []string, detectedMacroValue map[string]string) error 
 		return nil
 	}
 
-	detectFile := fmt.Sprintf("%v/detect/detect.json", config.KeenTune.Home)
-	bytes, err := ioutil.ReadFile(detectFile)
-	if err != nil {
-		return fmt.Errorf("read detect json file err:%v", err)
-	}
-
-	var macroExpMap, stockMacroMap map[string]string
-	err = json.Unmarshal(bytes, &macroExpMap)
-	if err != nil {
-		return fmt.Errorf("unmarshal detect json file err:%v", err)
-	}
-
-	stockMacroMap = make(map[string]string)
-	for macro, expression := range macroExpMap {
-		stockMacroMap[strings.ToLower(macro)] = expression
-	}
-
-	var macroNames []string
-	var macroMap = make(map[string]string)
+	var macroOrgNames []string
+	var macroReqNames []string
 	for _, macro := range macros {
 		if _, ok := detectedMacroValue[macro]; ok {
 			continue
@@ -218,21 +193,16 @@ func getMacroValue(macros []string, detectedMacroValue map[string]string) error 
 		name := strings.TrimSuffix(strings.TrimPrefix(macro, "#!"), "#")
 		lowerName := strings.ToLower(name)
 
-		macroNames = append(macroNames, name)
+		macroOrgNames = append(macroOrgNames, name)
 
-		macroCmdExp, find := stockMacroMap[lowerName]
-		if !find {
-			return fmt.Errorf("detect can't find matched macro: %v", macro)
-		}
-
-		macroMap[lowerName] = macroCmdExp
+		macroReqNames = append(macroReqNames, lowerName)
 	}
 
-	if len(macroMap) == 0 {
+	if len(macroReqNames) == 0 {
 		return nil
 	}
 
-	return detect(macroMap, macroNames, detectedMacroValue)
+	return detect(macroReqNames, macroOrgNames, detectedMacroValue)
 }
 
 // ConvertConfFileToJson convert conf file to json
@@ -308,6 +278,8 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 	var includeMap = make(map[string][]map[string]interface{})
 	var commonDomain string
 	var variableMap = make(map[string]string)
+	var variableReq = make(map[string]interface{})
+	var isVarReady bool
 	for _, line := range strings.Split(replacedStr, "\n") {
 		pureLine := strings.TrimSpace(replaceEqualSign(line))
 		if len(pureLine) == 0 {
@@ -335,21 +307,25 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 			deleteDomain = ""
 		}
 
-		if commonDomain == tunedVariableDomain {
-			variableParts := strings.Split(pureLine, ":")
-			if len(variableParts) <= 1 {
-				continue
-			}
-
-			varName := strings.TrimSpace(variableParts[0])
-			varValue := strings.TrimSpace(strings.Join(variableParts[1:], ":"))
-			value, find := expectedRegx[varName]
-			if find && value != varValue {
-				expectedRegx[varName] = varValue
-			}
-
-			variableMap[varName] = varValue
+		if commonDomain == tunedBootloaderDomain {
+			// todo
 			continue
+		}
+
+		if commonDomain == tunedVariableDomain {
+			collectConfVariables(pureLine, variableMap, variableReq)
+			continue
+		}
+
+		if len(variableReq) > 0 && !isVarReady {
+			isVarReady = true
+			err := requestAllVariables(variableMap, variableReq)
+			return "", nil, nil
+			if err != nil {
+				recommend := fmt.Sprintf("errMsg: %v; Please Check the variable in %v\n", err, fileName)
+				recommendMap[commonDomain] = append(recommendMap[commonDomain], recommend)
+				return commonDomain, recommendMap, nil
+			}
 		}
 
 		if strings.Contains(pureLine, "${") {
@@ -396,6 +372,42 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 	}
 
 	return commonDomain, recommendMap, domainMap
+}
+
+func collectConfVariables(pureLine string, variableMap map[string]string, variableReq map[string]interface{}) {
+	variableParts := strings.Split(pureLine, ":")
+	if len(variableParts) <= 1 {
+		return
+	}
+
+	varName := strings.TrimSpace(variableParts[0])
+
+	// skip include field in variable
+	if tunedIncludeField == varName {
+		return
+	}
+
+	if strings.Contains(varName, "assert") {
+		return
+	}
+
+	varValue := strings.TrimSpace(strings.Join(variableParts[1:], ":"))
+	value, find := expectedRegx[varName]
+	if find && value != varValue {
+		expectedRegx[varName] = varValue
+	}
+
+	if varName == noBalanceCores || varName == isolatedCores || varName == isolatedCoresAssert {
+		variableMap[varName] = cpuCoresSpecValue[varName]
+		return
+	}
+
+	if matchString("\\$\\{(.*)\\}", varValue) {
+		getVariableReq(pureLine, variableReq)
+		return
+	}
+
+	variableMap[varName] = varValue
 }
 
 func parseIncludeConf(pureLine string, abnormal *ABNLResult) map[string][]map[string]interface{} {

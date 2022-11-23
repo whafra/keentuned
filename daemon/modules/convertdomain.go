@@ -17,9 +17,10 @@ var specialDomain = map[string]string{
 }
 
 const (
-	tunedVariableDomain = "variables"
-	tunedMainDomain     = "main"
-	tunedIncludeField   = "include"
+	tunedVariableDomain   = "variables"
+	tunedMainDomain       = "main"
+	tunedIncludeField     = "include"
+	tunedBootloaderDomain = "bootloader"
 )
 
 var expectedRegx = map[string]string{
