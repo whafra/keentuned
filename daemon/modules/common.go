@@ -29,7 +29,7 @@ const (
 	BackupNotFound = "Can not find backup file"
 	FileNotExist   = "do not exists"
 	NoNeedRollback = "don't need rollback"
-	NoBackupFile   = "No backup file was found"
+	NoBackupFile   = "No such file"
 )
 
 func (tuner *Tuner) isInterrupted() bool {
@@ -141,13 +141,13 @@ func callRollback(method string, url string, request interface{}) (string, int) 
 	var parseFailedMsg, parseWarningMsg string
 
 	for domain, res := range response {
-		if !res.Suc {
-			parseFailedMsg += fmt.Sprintf("\n\t'%v' failed msg: %v", domain, res.Msg)
+		if parseStatusCode(res.Msg) == WARNING {
+			parseWarningMsg += fmt.Sprintf("\n\t'%v' waring msg: %v", domain, res.Msg)
 			continue
 		}
 
-		if parseStatusCode(res.Msg) == WARNING {
-			parseWarningMsg += fmt.Sprintf("\n\t'%v' waring msg: %v", domain, res.Msg)
+		if !res.Suc {
+			parseFailedMsg += fmt.Sprintf("\n\t'%v' failed msg: %v", domain, res.Msg)
 		}
 	}
 
@@ -168,8 +168,7 @@ func parseStatusCode(msg interface{}) int {
 		var count int
 		for _, value := range info {
 			message := fmt.Sprint(value)
-			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) ||
-				strings.Contains(message, NoNeedRollback) || strings.Contains(message, NoBackupFile) {
+			if strings.Contains(message, BackupNotFound) || strings.Contains(message, FileNotExist) || strings.Contains(message, NoBackupFile) {
 				count++
 			}
 		}
@@ -179,8 +178,7 @@ func parseStatusCode(msg interface{}) int {
 		}
 		return SUCCESS
 	case string:
-		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) ||
-			strings.Contains(info, NoNeedRollback) || strings.Contains(info, NoBackupFile) {
+		if strings.Contains(info, BackupNotFound) || strings.Contains(info, FileNotExist) || strings.Contains(info, NoBackupFile) {
 			return WARNING
 		}
 		return SUCCESS
