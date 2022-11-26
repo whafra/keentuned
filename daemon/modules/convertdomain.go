@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"fmt"
 	"keentune/daemon/common/utils"
 	"regexp"
 	"strings"
@@ -28,6 +27,8 @@ var expectedRegx = map[string]string{
 	"amd_cpuinfo_regex":      "model name\\s+:.*\\bAMD\\b",
 }
 
+const defVarReg = "\\$\\{(.*?)\\}"
+
 func convertDomain(domain string) string {
 	matchedDomain, find := specialDomain[domain]
 	if find {
@@ -38,11 +39,16 @@ func convertDomain(domain string) string {
 }
 
 func replaceVariables(variableMap map[string]string, line string) string {
-	for name, value := range variableMap {
-		variableFmt := fmt.Sprintf("${%v}", name)
-		if strings.Contains(line, variableFmt) && expectedRegx[name] == "" {
-			line = strings.ReplaceAll(line, variableFmt, value)
-		}
+	reg := regexp.MustCompile(defVarReg)
+	if reg == nil {
+		return line
+	}
+
+	variables := reg.FindAllString(line, -1)
+	for _, originVar := range variables {
+		varName := strings.TrimSuffix(strings.TrimPrefix(strings.TrimSpace(originVar), "${"), "}")
+		value := variableMap[varName]
+		line = strings.ReplaceAll(line, originVar, value)
 	}
 
 	return line

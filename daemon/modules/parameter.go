@@ -320,15 +320,14 @@ func parseConfStrToMapSlice(replacedStr, fileName string, abnormal *ABNLResult) 
 		if len(variableReq) > 0 && !isVarReady {
 			isVarReady = true
 			err := requestAllVariables(variableMap, variableReq)
-			return "", nil, nil
 			if err != nil {
 				recommend := fmt.Sprintf("errMsg: %v; Please Check the variable in %v\n", err, fileName)
-				recommendMap[commonDomain] = append(recommendMap[commonDomain], recommend)
-				return commonDomain, recommendMap, nil
+				recommendMap[tunedVariableDomain] = append(recommendMap[tunedVariableDomain], recommend)
+				return tunedVariableDomain, recommendMap, nil
 			}
 		}
 
-		if strings.Contains(pureLine, "${") {
+		if matchString(defVarReg, pureLine) {
 			pureLine = replaceVariables(variableMap, pureLine)
 		}
 
