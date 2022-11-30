@@ -68,13 +68,19 @@ class TestLongStability(unittest.TestCase):
             self.status, self.out, _ = sysCommand(all_cmd)
             self.assertEqual(self.status, 0)
             self.assertTrue(self.out.__contains__('Rollback all successfully') or self.out.__contains__('All Targets No Need to Rollback'))
+            
+            for tune_algorithm in ('bgcs', 'lamcts', 'tpe'):
+                cmd = "echo y | keentune param delete --job {}".format(self.job_name)
+                sysCommand(cmd)
 
-            result = runParamTune(self.job_name, iteration=500)
-            self.assertEqual(result, 0)
-            time.sleep(5)
+                sed_cmd = 'sed -i "s/AUTO_TUNING_ALGORITHM\(.*\)=.*/AUTO_TUNING_ALGORITHM\\1= {}/" /etc/keentune/conf/keentuned.conf'.format(tune_algorithm)
+                sysCommand(sed_cmd)
+                result = runParamTune(self.job_name, iteration=500)
+                self.assertEqual(result, 0)
+                time.sleep(5)
             
             for algorithm in ('lasso', 'univariate', 'shap', 'explain', 'gp'):
-                sed_cmd = 'sed -i "s/SENSITIZE_ALGORITHM\(.*\)=.*/SENSITIZE_ALGORITHM\1= {}/" /etc/keentune/conf/keentuned.conf'.format(algorithm)
+                sed_cmd = 'sed -i "s/SENSITIZE_ALGORITHM\(.*\)=.*/SENSITIZE_ALGORITHM\\1= {}/" /etc/keentune/conf/keentuned.conf'.format(algorithm)
                 sysCommand(sed_cmd)
 
                 cmd = "echo y | keentune sensitize train --data {0} --job {0} -t 10".format(self.job_name)
@@ -90,7 +96,7 @@ class TestLongStability(unittest.TestCase):
             cmd = "keentune profile list | awk '{print$2}'"
             self.status, self.out, _ = sysCommand(cmd)
             for profile_name in self.out.strip().split("\n"):
-                for i in range(100):
+                for i in range(2):
                     self.profile_set(profile_name)
                     time.sleep(2)
                     self.profile_rollback()
