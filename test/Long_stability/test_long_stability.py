@@ -96,7 +96,7 @@ class TestLongStability(unittest.TestCase):
             cmd = "keentune profile list | awk '{print$2}'"
             self.status, self.out, _ = sysCommand(cmd)
             for profile_name in self.out.strip().split("\n"):
-                for i in range(2):
+                for i in range(100):
                     self.profile_set(profile_name)
                     time.sleep(2)
                     self.profile_rollback()
