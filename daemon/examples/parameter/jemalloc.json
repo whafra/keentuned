@@ -1,0 +1,101 @@
+{
+    "jemalloc": {
+      "opt.background_thread": {
+        "desc": "",
+        "dtype": "string",
+        "options": [
+            "true",
+            "false"
+        ]
+      },
+      "opt.max_background_threads": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          1,
+          "#!cpu_core#"
+        ],
+        "step": 1
+      },
+      "opt.metadata_thp": {
+        "desc": "",
+        "dtype": "string",
+        "options": [
+          "disabled",
+          "auto"
+        ]
+      },
+      "opt.dirty_decay_ms": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          1000,
+          100000
+        ],
+        "step": 1
+      },
+      "opt.muzzy_decay_ms": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          1000,
+          100000
+        ],
+        "step": 1
+      },
+      "opt.narenas": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          1,
+          "#!cpu_core#*4"
+        ],
+        "step": 1
+      },
+      "opt.percpu_arena": {
+        "desc": "",
+        "dtype": "string",
+        "options": [
+          "percpu_arena:percpu",
+          "percpu_arena:phycpu"
+        ]
+      },
+      "opt.lg_extent_max_active_fit": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          1,
+          6
+        ],
+        "step": 1
+      },
+      "opt.lg_tcache_max/tcache_max": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          12,
+          23
+        ],
+        "step": 1
+      },
+      "opt.dss": {
+        "desc": "",
+        "dtype": "string",
+        "options": [
+          "disabled",
+          "primary",
+	  "secondary"
+        ]
+      },
+      "opt.oversize_threshold": {
+        "desc": "",
+        "dtype": "int",
+        "range": [
+          17,
+          20
+        ],
+        "step": 1
+      }
+    }
+}
+

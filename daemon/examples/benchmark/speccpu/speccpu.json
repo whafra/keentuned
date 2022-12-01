@@ -1,0 +1,26 @@
+{
+  "benchmark": [
+    {
+      "benchmark_cmd": "python3 {remote_script_path}",
+      "local_script_path": "benchmark/speccpu/speccpu.py",
+      "items": {
+        "Run_time": {
+          "negative": true,
+          "weight": 100,
+          "strict": false
+        },
+        "Rate": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        },
+        "Copies": {
+          "negative": false,
+          "weight": 0,
+          "strict": false
+        }
+    }
+  }
+  ]
+}
+
