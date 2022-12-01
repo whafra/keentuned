@@ -13,11 +13,6 @@
           "negative": false,
           "weight": 0,
           "strict": false
-        },
-        "Copies": {
-          "negative": false,
-          "weight": 0,
-          "strict": false
         }
     }
   }

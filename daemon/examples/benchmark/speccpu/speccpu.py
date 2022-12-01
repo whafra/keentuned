@@ -50,7 +50,6 @@ class Benchmark():
             with open(txt_name, 'r') as f:
                 data = f.read()
 
-            COPIES = 0
             RUN_TIME = 0
             RATE = 0
             for load_name in LOADTYPE.split(' '):
@@ -58,16 +57,13 @@ class Benchmark():
                 if not re.search(pattern, data):
                     logger.error("can not parse output: {}".format(data))
                     return False, []
-                copies = re.search(pattern, data).group(1)
                 run_time = re.search(pattern, data).group(2)
                 rate = re.search(pattern, data).group(3)
 
-                COPIES += int(copies)
                 RUN_TIME += int(run_time)
                 RATE += int(rate)
 
             result = {
-                    "Copies": COPIES,
                     "Run_time": RUN_TIME,
                     "Rate": RATE
             }
