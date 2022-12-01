@@ -32,7 +32,7 @@
           1000,
           100000
         ],
-        "step": 1
+        "step": 1000
       },
       "opt.muzzy_decay_ms": {
         "desc": "",
@@ -41,7 +41,7 @@
           1000,
           100000
         ],
-        "step": 1
+        "step": 1000
       },
       "opt.narenas": {
         "desc": "",
@@ -69,7 +69,7 @@
         ],
         "step": 1
       },
-      "opt.lg_tcache_max/tcache_max": {
+      "opt.lg_tcache_max": {
         "desc": "",
         "dtype": "int",
         "range": [
@@ -78,13 +78,21 @@
         ],
         "step": 1
       },
+      "opt.retain": {
+        "desc": "",
+        "dtype": "string",
+        "options": [
+            "true",
+            "false"
+        ]
+      },
       "opt.dss": {
         "desc": "",
         "dtype": "string",
         "options": [
           "disabled",
           "primary",
-	  "secondary"
+          "secondary"
         ]
       },
       "opt.oversize_threshold": {
